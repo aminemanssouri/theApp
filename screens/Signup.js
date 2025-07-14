@@ -18,10 +18,12 @@ const initialState = {
   inputValues: {
     email: isTestMode ? 'example@gmail.com' : '',
     password: isTestMode ? '**********' : '',
+    confirmPassword: isTestMode ? '**********' : '',
   },
   inputValidities: {
     email: false,
-    password: false
+    password: false,
+    confirmPassword: false
   },
   formIsValid: false,
 }
@@ -93,6 +95,17 @@ const Signup = ({ navigation }) => {
             autoCapitalize="none"
             id="password"
             placeholder="Password"
+            placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
+            icon={icons.padlock}
+            secureTextEntry={true}
+          />
+
+          <Input
+            onInputChanged={inputChangedHandler}
+            errorText={formState.inputValidities['confirmPassword']}
+            autoCapitalize="none"
+            id="confirmPassword"
+            placeholder="Confirm Password"
             placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
             icon={icons.padlock}
             secureTextEntry={true}
