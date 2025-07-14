@@ -1,6 +1,6 @@
-import { View, Text, TouchableOpacity, Image, useWindowDimensions, StatusBar } from 'react-native';
+import { View, Text, TouchableOpacity, Image, useWindowDimensions, StatusBar, Platform } from 'react-native';
 import React from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS,  icons } from '../constants';
 import { useNavigation } from '@react-navigation/native';
 import { commonStyles } from '../styles/CommonStyles';
@@ -19,6 +19,19 @@ const renderScene = SceneMap({
 const MyBookings = ({ navigation }) => {
   const layout = useWindowDimensions();
   const { dark, colors } = useTheme();
+  const insets = useSafeAreaInsets();
+
+  // Calculate bottom spacing to avoid tab bar overlap
+  const getBottomSpacing = () => {
+    const baseTabHeight = 60;
+    const safeAreaBottom = insets.bottom;
+    
+    if (Platform.OS === 'ios') {
+      return baseTabHeight + safeAreaBottom;
+    } else {
+      return baseTabHeight + Math.max(safeAreaBottom, 10);
+    }
+  };
 
   const [index, setIndex] = React.useState(0);
 
@@ -39,65 +52,33 @@ const MyBookings = ({ navigation }) => {
       }}
       renderLabel={({ route, focused, color }) => (
         <Text style={[{ 
-            color: focused ? COLORS.primary : "gray",
-            fontFamily: focused ? "semiBold" : "regular"
+            color: focused ? COLORS.primary : (dark ? COLORS.gray3 : COLORS.grayscale700),
+            fontFamily: focused ? "semiBold" : "regular",
+            fontSize: 16
             }]}>
           {route.title}
         </Text>
       )}
     />
   );
-  const renderHeader = () => {
-    const navigation = useNavigation()
-    return (
-      <View style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginHorizontal: 16
-      }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={commonStyles.header1Icon}
-          >
-            <Image
-              resizeMode='contain'
-              source={icons.arrowLeft}
-              style={{ height: 24, width: 24, tintColor: COLORS.black }}
-            />
-          </TouchableOpacity>
-          <Text style={{ marginLeft: 12, fontSize: 17, fontFamily: "semiBold" }}>My Bookings</Text>
-        </View>
-        <TouchableOpacity
-          onPress={() => console.log("Pressed")}
-          style={commonStyles.header1Icon}
-        >
-          <Image
-            resizeMode='contain'
-            source={icons.more}
-            style={{ height: 24, width: 24, tintColor: COLORS.black }}
-          />
-        </TouchableOpacity>
-      </View>
-    )
-  }
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background  }}>
       <StatusBar hidden={true} />
-      <View style={{ flex: 1, padding: 16, backgroundColor: colors.background  }}>
-         <Header title="My Bookings" />
-        <View style={{
-          flex: 1
-        }}>
-          <TabView
-            navigationState={{ index, routes }}
-            renderScene={renderScene}
-            onIndexChange={setIndex}
-            initialLayout={{ width: layout.width }}
-            renderTabBar={renderTabBar}
-          />
+      <View style={{ 
+        flex: 1, 
+        backgroundColor: colors.background
+      }}>
+        <View style={{ paddingHorizontal: 16, paddingTop: 16 }}>
+          <Header title="My Bookings" />
         </View>
+        <TabView
+          navigationState={{ index, routes }}
+          renderScene={renderScene}
+          onIndexChange={setIndex}
+          initialLayout={{ width: layout.width }}
+          renderTabBar={renderTabBar}
+          style={{ flex: 1 }}
+        />
       </View>
     </SafeAreaView>
   )

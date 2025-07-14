@@ -1,6 +1,6 @@
-import { View, Text, TouchableOpacity, StyleSheet, Image, TextInput, FlatList } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image, TextInput, FlatList, Platform } from 'react-native';
 import React, { useState } from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScrollView } from 'react-native-virtualized-view';
 import { images, COLORS, SIZES, icons } from "../constants";
 import { banners, categories, mostPopularServices } from '../data';
@@ -12,6 +12,19 @@ import { useTheme } from '../theme/ThemeProvider';
 const Home = ({ navigation }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const { dark, colors } = useTheme();
+  const insets = useSafeAreaInsets();
+  
+  // Calculate bottom spacing to avoid tab bar overlap
+  const getBottomSpacing = () => {
+    const baseTabHeight = 60;
+    const safeAreaBottom = insets.bottom;
+    
+    if (Platform.OS === 'ios') {
+      return baseTabHeight + safeAreaBottom + 20; // Extra padding for iOS
+    } else {
+      return baseTabHeight + Math.max(safeAreaBottom, 10) + 20; // Extra padding for Android
+    }
+  };
 
   const renderBannerItem = ({ item }) => (
     <View style={styles.bannerContainer}>
@@ -263,7 +276,13 @@ const Home = ({ navigation }) => {
     <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         {renderHeader()}
-        <ScrollView showsVerticalScrollIndicator={false}>
+        <ScrollView 
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{
+            paddingBottom: getBottomSpacing(),
+          }}
+          style={{ flex: 1 }}
+        >
           {renderSearchBar()}
           {renderBanner()}
           {renderCategories()}

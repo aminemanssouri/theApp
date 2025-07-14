@@ -1,5 +1,5 @@
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
-import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Animated } from 'react-native';
+import React, { useState, useRef } from 'react';
 import { COLORS, SIZES, icons } from '../constants';
 import { FontAwesome } from '@expo/vector-icons';
 import { useTheme } from '../theme/ThemeProvider';
@@ -17,52 +17,97 @@ const ServiceCard = ({
 }) => {
     const [isBookmarked, setIsBookmarked] = useState(false);
     const { dark } = useTheme();
+    
+    // Animation values
+    const scaleAnim = useRef(new Animated.Value(1)).current;
+    const opacityAnim = useRef(new Animated.Value(1)).current;
+
+    const handlePressIn = () => {
+        Animated.parallel([
+            Animated.timing(scaleAnim, {
+                toValue: 0.98,
+                duration: 100,
+                useNativeDriver: true,
+            }),
+            Animated.timing(opacityAnim, {
+                toValue: 0.9,
+                duration: 100,
+                useNativeDriver: true,
+            }),
+        ]).start();
+    };
+
+    const handlePressOut = () => {
+        Animated.parallel([
+            Animated.timing(scaleAnim, {
+                toValue: 1,
+                duration: 100,
+                useNativeDriver: true,
+            }),
+            Animated.timing(opacityAnim, {
+                toValue: 1,
+                duration: 100,
+                useNativeDriver: true,
+            }),
+        ]).start();
+    };
 
     return (
-        <TouchableOpacity 
-           onPress={onPress} 
-            style={[styles.container, { 
-                backgroundColor: dark ? COLORS.dark2 : COLORS.white
-            }]}>
-            <Image
-                source={image}
-                resizeMode='cover'
-                style={styles.courseImage}
-            />
-            <View style={{ flex: 1 }}>
-                <View style={styles.topContainer}>
-                    <View style={styles.categoryContainer}>
-                        <Text style={styles.categoryName}>{providerName}</Text>
+        <Animated.View
+            style={{
+                transform: [{ scale: scaleAnim }],
+                opacity: opacityAnim,
+            }}
+        >
+            <TouchableOpacity 
+                onPress={onPress}
+                onPressIn={handlePressIn}
+                onPressOut={handlePressOut}
+                activeOpacity={0.9}
+                style={[styles.container, { 
+                    backgroundColor: dark ? COLORS.dark2 : COLORS.white
+                }]}>
+                <Image
+                    source={image}
+                    resizeMode='cover'
+                    style={styles.courseImage}
+                />
+                <View style={{ flex: 1 }}>
+                    <View style={styles.topContainer}>
+                        <View style={styles.categoryContainer}>
+                            <Text style={styles.categoryName}>{providerName}</Text>
+                        </View>
+                        <TouchableOpacity
+                            onPress={() => setIsBookmarked(!isBookmarked)}
+                            style={styles.bookmarkButton}>
+                            <Image
+                                source={isBookmarked ? icons.heart : icons.heartOutline}
+                                resizeMode='contain'
+                                style={[styles.bookmarkIcon, { 
+                                    tintColor: isBookmarked? COLORS.red : COLORS.primary
+                                }]}
+                            />
+                        </TouchableOpacity>
                     </View>
-                    <TouchableOpacity
-                        onPress={() => setIsBookmarked(!isBookmarked)}>
-                        <Image
-                            source={isBookmarked ? icons.heart : icons.heartOutline}
-                            resizeMode='contain'
-                            style={[styles.bookmarkIcon, { 
-                                tintColor: isBookmarked? COLORS.red : COLORS.primary
-                            }]}
-                        />
-                    </TouchableOpacity>
+                    <Text style={[styles.name, { 
+                         color: dark ? COLORS.secondaryWhite : COLORS.greyscale900,
+                    }]}>{name}</Text>
+                    <View style={styles.priceContainer}>
+                        <Text style={styles.price}>${price}</Text>
+                        {
+                            isOnDiscount && <Text style={[styles.oldPrice, { 
+                                color: dark ? COLORS.greyscale300 : COLORS.grayscale700,
+                            }]}>{"   "}${oldPrice}</Text>
+                        }
+                    </View>
+                    <View style={styles.ratingContainer}>
+                        <FontAwesome name="star-half-empty" size={16} color="orange" />
+                        <Text style={[styles.rating, { color: dark ? COLORS.greyscale300 : COLORS.grayscale700 }]}> {" "}{rating}</Text>
+                        <Text style={[styles.numReviews, { color: dark ? COLORS.greyscale300 : COLORS.grayscale700 }]}> |  {numReviews} reviews</Text>
+                    </View>
                 </View>
-                <Text style={[styles.name, { 
-                     color: dark ? COLORS.secondaryWhite : COLORS.greyscale900,
-                }]}>{name}</Text>
-                <View style={styles.priceContainer}>
-                    <Text style={styles.price}>${price}</Text>
-                    {
-                        isOnDiscount && <Text style={[styles.oldPrice, { 
-                            color: dark ? COLORS.greyscale300 : COLORS.grayscale700,
-                        }]}>{"   "}${oldPrice}</Text>
-                    }
-                </View>
-                <View style={styles.ratingContainer}>
-                    <FontAwesome name="star-half-empty" size={16} color="orange" />
-                    <Text style={[styles.rating, { color: dark ? COLORS.greyscale300 : COLORS.grayscale700 }]}> {" "}{rating}</Text>
-                    <Text style={[styles.numReviews, { color: dark ? COLORS.greyscale300 : COLORS.grayscale700 }]}> |  {numReviews} reviews</Text>
-                </View>
-            </View>
-        </TouchableOpacity>
+            </TouchableOpacity>
+        </Animated.View>
     )
 }
 

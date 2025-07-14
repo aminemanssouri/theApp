@@ -1,7 +1,7 @@
-import { View, Text, StyleSheet, Image, TouchableOpacity, useWindowDimensions } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, useWindowDimensions, Platform } from 'react-native';
 import React from 'react';
 import { COLORS, SIZES, icons, images } from '../constants';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
 import { Calls, Chats } from '../tabs';
 import { Feather } from "@expo/vector-icons";
@@ -15,6 +15,19 @@ const renderScene = SceneMap({
 const Inbox = () => {
   const layout = useWindowDimensions();
   const { colors, dark } = useTheme();
+  const insets = useSafeAreaInsets();
+
+  // Calculate bottom spacing to avoid tab bar overlap
+  const getBottomSpacing = () => {
+    const baseTabHeight = 60;
+    const safeAreaBottom = insets.bottom;
+    
+    if (Platform.OS === 'ios') {
+      return baseTabHeight + safeAreaBottom + 10;
+    } else {
+      return baseTabHeight + Math.max(safeAreaBottom, 10) + 10;
+    }
+  };
 
   const [index, setIndex] = React.useState(0);
   const [routes] = React.useState([
@@ -83,7 +96,7 @@ const Inbox = () => {
   }
   return (
     <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.container, { backgroundColor: colors.background, paddingBottom: getBottomSpacing() }]}>
         {renderHeader()}
         <TabView
           navigationState={{ index, routes }}
@@ -92,7 +105,7 @@ const Inbox = () => {
           initialLayout={{ width: layout.width }}
           renderTabBar={renderTabBar} />
         {/* Implementing adding post */}
-        <TouchableOpacity style={styles.addPostBtn}>
+        <TouchableOpacity style={[styles.addPostBtn, { bottom: getBottomSpacing() + 20 }]}>
           <Feather name="plus" size={24} color={COLORS.white} />
         </TouchableOpacity>
       </View>

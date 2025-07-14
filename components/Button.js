@@ -3,8 +3,9 @@ import {
     TouchableOpacity,
     StyleSheet,
     ActivityIndicator,
+    Animated,
 } from 'react-native';
-import React from 'react';
+import React, { useRef } from 'react';
 import { COLORS, SIZES } from '../constants';
 
 const Button = (props) => {
@@ -15,24 +16,69 @@ const Button = (props) => {
         ? COLORS.white || props.textColor
         : props.textColor || COLORS.primary
     const isLoading = props.isLoading || false
+    
+    // Animation values
+    const scaleAnim = useRef(new Animated.Value(1)).current;
+    const opacityAnim = useRef(new Animated.Value(1)).current;
+
+    const handlePressIn = () => {
+        Animated.parallel([
+            Animated.timing(scaleAnim, {
+                toValue: 0.95,
+                duration: 100,
+                useNativeDriver: true,
+            }),
+            Animated.timing(opacityAnim, {
+                toValue: 0.8,
+                duration: 100,
+                useNativeDriver: true,
+            }),
+        ]).start();
+    };
+
+    const handlePressOut = () => {
+        Animated.parallel([
+            Animated.timing(scaleAnim, {
+                toValue: 1,
+                duration: 100,
+                useNativeDriver: true,
+            }),
+            Animated.timing(opacityAnim, {
+                toValue: 1,
+                duration: 100,
+                useNativeDriver: true,
+            }),
+        ]).start();
+    };
 
     return (
-        <TouchableOpacity
+        <Animated.View
             style={{
-                ...styles.btn,
-                ...{ backgroundColor: bgColor },
-                ...props.style,
+                transform: [{ scale: scaleAnim }],
+                opacity: opacityAnim,
             }}
-            onPress={props.onPress}
         >
-            {isLoading && isLoading == true ? (
-                <ActivityIndicator size="small" color={COLORS.white} />
-            ) : (
-                <Text style={{ fontSize: 18, fontFamily: "semiBold", ...{ color: textColor } }}>
-                    {props.title}
-                </Text>
-            )}
-        </TouchableOpacity>
+            <TouchableOpacity
+                style={{
+                    ...styles.btn,
+                    ...{ backgroundColor: bgColor },
+                    ...props.style,
+                }}
+                onPress={props.onPress}
+                onPressIn={handlePressIn}
+                onPressOut={handlePressOut}
+                activeOpacity={0.8}
+                disabled={isLoading}
+            >
+                {isLoading && isLoading == true ? (
+                    <ActivityIndicator size="small" color={COLORS.white} />
+                ) : (
+                    <Text style={{ fontSize: 18, fontFamily: "semiBold", ...{ color: textColor } }}>
+                        {props.title}
+                    </Text>
+                )}
+            </TouchableOpacity>
+        </Animated.View>
     )
 }
 const styles = StyleSheet.create({

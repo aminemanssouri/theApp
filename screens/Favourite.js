@@ -1,7 +1,7 @@
-import { View, Text, StyleSheet, TouchableOpacity, Image, FlatList } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, FlatList, Platform } from 'react-native';
 import React, { useRef, useState } from 'react';
 import { COLORS, SIZES, icons } from '../constants';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScrollView } from 'react-native-virtualized-view';
 import { category, myWishlistServices as initialWishlistServices } from '../data';
 import RBSheet from "react-native-raw-bottom-sheet";
@@ -14,6 +14,19 @@ const Favourite = ({ navigation }) => {
     const [selectedWishlistItem, setSelectedWishlistItem] = useState(null);
     const [myWishlistServices, setMyWishlistServices] = useState(initialWishlistServices || []);
     const { colors, dark } = useTheme();
+    const insets = useSafeAreaInsets();
+
+    // Calculate bottom spacing to avoid tab bar overlap
+    const getBottomSpacing = () => {
+        const baseTabHeight = 60;
+        const safeAreaBottom = insets.bottom;
+        
+        if (Platform.OS === 'ios') {
+            return baseTabHeight + safeAreaBottom + 20;
+        } else {
+            return baseTabHeight + Math.max(safeAreaBottom, 10) + 20;
+        }
+    };
 
     const handleRemoveBookmark = () => {
         // Implement your logic to remove the selectedWishlistItem from the bookmark list
@@ -148,7 +161,12 @@ const Favourite = ({ navigation }) => {
         <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
             <View style={[styles.container, { backgroundColor: colors.background }]}>
                 {renderHeader()}
-                <ScrollView showsVerticalScrollIndicator={false}>
+                <ScrollView 
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={{
+                        paddingBottom: getBottomSpacing(),
+                    }}
+                >
                     {renderMyWishlistServices()}
                 </ScrollView>
             </View>

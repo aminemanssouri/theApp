@@ -1,7 +1,7 @@
-import { View, Text, StyleSheet, TouchableOpacity, Image, Switch } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Switch, Platform } from 'react-native';
 import React, { useState, useRef } from 'react';
 import { COLORS, SIZES, icons, images } from '../constants';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScrollView } from 'react-native-virtualized-view';
 import { MaterialIcons } from '@expo/vector-icons';
 import { launchImagePicker } from '../utils/ImagePickerHelper';
@@ -13,6 +13,19 @@ import Button from '../components/Button';
 const Profile = ({ navigation }) => {
   const refRBSheet = useRef();
   const { dark, colors, setScheme } = useTheme();
+  const insets = useSafeAreaInsets();
+  
+  // Calculate bottom spacing to avoid tab bar overlap
+  const getBottomSpacing = () => {
+    const baseTabHeight = 60;
+    const safeAreaBottom = insets.bottom;
+    
+    if (Platform.OS === 'ios') {
+      return baseTabHeight + safeAreaBottom + 20;
+    } else {
+      return baseTabHeight + Math.max(safeAreaBottom, 10) + 20;
+    }
+  };
   /**
    * Render Header
    */
@@ -205,7 +218,12 @@ const Profile = ({ navigation }) => {
     <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         {renderHeader()}
-        <ScrollView showsVerticalScrollIndicator={false}>
+        <ScrollView 
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{
+            paddingBottom: getBottomSpacing(),
+          }}
+        >
           {renderProfile()}
           {renderSettings()}
         </ScrollView>

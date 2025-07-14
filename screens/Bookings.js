@@ -1,7 +1,7 @@
-import { View, Text, StyleSheet, TouchableOpacity, Image, useWindowDimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, useWindowDimensions, Platform } from 'react-native';
 import React from 'react';
 import { COLORS, SIZES, icons } from '../constants'
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeProvider';
 import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
 import { CancelledBooking, CompletedBooking, UpcomingBooking } from '../tabs';
@@ -15,6 +15,19 @@ const renderScene = SceneMap({
 const MyBooking = ({ navigation }) => {
   const layout = useWindowDimensions();
   const { dark, colors } = useTheme();
+  const insets = useSafeAreaInsets();
+
+  // Calculate bottom spacing to avoid tab bar overlap
+  const getBottomSpacing = () => {
+    const baseTabHeight = 60;
+    const safeAreaBottom = insets.bottom;
+    
+    if (Platform.OS === 'ios') {
+      return baseTabHeight + safeAreaBottom + 10;
+    } else {
+      return baseTabHeight + Math.max(safeAreaBottom, 10) + 10;
+    }
+  };
 
   const [index, setIndex] = React.useState(0);
   const [routes] = React.useState([
@@ -80,7 +93,7 @@ const MyBooking = ({ navigation }) => {
   }
   return (
     <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.container, { backgroundColor: colors.background, paddingBottom: getBottomSpacing() }]}>
         {renderHeader()}
         <TabView
           navigationState={{ index, routes }}
