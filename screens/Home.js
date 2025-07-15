@@ -8,12 +8,30 @@ import SubHeaderItem from '../components/SubHeaderItem';
 import Category from '../components/Category';
 import ServiceCard from '../components/ServiceCard';
 import { useTheme } from '../theme/ThemeProvider';
+import { useAuth } from '../context/AuthContext';
 
 const Home = ({ navigation }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const { dark, colors } = useTheme();
   const insets = useSafeAreaInsets();
+  const { user, isAuthenticated, loading } = useAuth();
   
+  if (loading) {
+    return (
+      <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
+        <Text>Loading...</Text>
+      </SafeAreaView>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
+        <Text>You are not authenticated. Please log in.</Text>
+      </SafeAreaView>
+    );
+  }
+
   // Calculate bottom spacing to avoid tab bar overlap
   const getBottomSpacing = () => {
     const baseTabHeight = 60;

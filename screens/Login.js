@@ -11,6 +11,7 @@ import Button from '../components/Button';
 import SocialButton from '../components/SocialButton';
 import OrSeparator from '../components/OrSeparator';
 import { useTheme } from '../theme/ThemeProvider';
+import { supabase } from '../lib/supabase';
 
 const isTestMode = true;
 
@@ -32,6 +33,7 @@ const Login = ({ navigation }) => {
   const [error, setError] = useState(null);
   const [isChecked, setChecked] = useState(false);
   const { colors, dark } = useTheme();
+  const [isLoading, setIsLoading] = useState(false);
 
   const inputChangedHandler = useCallback(
     (inputId, inputValue) => {
@@ -46,6 +48,31 @@ const Login = ({ navigation }) => {
       Alert.alert('An error occured', error)
     }
   }, [error]);
+
+  const handleLogin = async () => {
+    const email = formState.inputValues.email;
+    const password = formState.inputValues.password;
+    setIsLoading(true);
+    setError(null);
+    try {
+      let { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (error) {
+        setError(error.message);
+        console.log("error", error.message);
+        return;
+      }
+      // If login is successful, navigate to Main
+      navigation.navigate('Main');
+    } catch (err) {
+      console.log(err);
+      setError('An unexpected error occurred. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // implementing apple authentication
   const appleAuthHandler = () => {
@@ -115,10 +142,11 @@ const Login = ({ navigation }) => {
             </View>
           </View>
           <Button
-            title="Login"
+            title={isLoading ? 'Logging in...' : 'Login'}
             filled
-            onPress={() => navigation.navigate("Main")}
+            onPress={handleLogin}
             style={styles.button}
+            disabled={isLoading}
           />
           <TouchableOpacity
             onPress={() => navigation.navigate("ForgotPasswordMethods")}>

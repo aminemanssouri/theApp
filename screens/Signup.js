@@ -1,3 +1,4 @@
+// Simplified Signup.js - Now using database trigger
 import { View, Text, StyleSheet, ScrollView, Image, Alert, TouchableOpacity } from 'react-native';
 import React, { useCallback, useEffect, useReducer, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -11,14 +12,15 @@ import Button from '../components/Button';
 import SocialButton from '../components/SocialButton';
 import OrSeparator from '../components/OrSeparator';
 import { useTheme } from '../theme/ThemeProvider';
+import { supabase } from '../lib/supabase';
 
-const isTestMode = true;
+const isTestMode = false; // Set to false for production
 
 const initialState = {
   inputValues: {
-    email: isTestMode ? 'example@gmail.com' : '',
-    password: isTestMode ? '**********' : '',
-    confirmPassword: isTestMode ? '**********' : '',
+    email: isTestMode ? 'test@example.com' : '',
+    password: isTestMode ? 'Test123456!' : '',
+    confirmPassword: isTestMode ? 'Test123456!' : '',
   },
   inputValidities: {
     email: false,
@@ -27,7 +29,6 @@ const initialState = {
   },
   formIsValid: false,
 }
-
 
 const Signup = ({ navigation }) => {
   const [formState, dispatchFormState] = useReducer(reducer, initialState);
@@ -46,23 +47,107 @@ const Signup = ({ navigation }) => {
 
   useEffect(() => {
     if (error) {
-      Alert.alert('An error occured', error)
+      Alert.alert('An error occurred', error)
     }
   }, [error])
 
-  // implementing apple authentication
+  const handleSignUp = async () => {
+    const email = formState.inputValues.email;
+    const password = formState.inputValues.password;
+    const confirmPassword = formState.inputValues.confirmPassword;
+
+    // Validation checks
+    if (!isChecked) {
+      Alert.alert('Agreement Required', 'Please accept the Privacy Policy to continue.');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      Alert.alert('Password Mismatch', 'Passwords do not match. Please try again.');
+      return;
+    }
+
+    if (!formState.formIsValid) {
+      Alert.alert('Invalid Form', 'Please check all fields and try again.');
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // Create user in auth.users table
+      // The database trigger will automatically create the profile
+      const { data, error } = await supabase.auth.signUp({
+        email: email.toLowerCase().trim(),
+        password,
+        options: {
+          data: {
+            email: email.toLowerCase().trim(),
+          }
+        }
+      });
+
+      if (error) {
+        setError(error.message);
+        return;
+      }
+
+      // Check if user was created successfully
+      if (data?.user) {
+        // The trigger automatically created the profile record
+        // No need to manually insert into users table
+        
+        if (data.session) {
+          // User is fully authenticated (session exists)
+          Alert.alert(
+            'Account Created!',
+            'Your account has been created successfully.',
+            [
+              {
+                text: 'Continue',
+                onPress: () => navigation.navigate('FillYourProfile')
+              }
+            ]
+          );
+        } else {
+          // No session yet (email confirmation required)
+          Alert.alert(
+            'Check Your Email',
+            'We\'ve sent you a confirmation email. Please verify your email, then log in to continue.',
+            [
+              {
+                text: 'Go to Login',
+                onPress: () => navigation.navigate('Login')
+              }
+            ]
+          );
+        }
+      } else {
+        setError('Failed to create account. Please try again.');
+      }
+    } catch (err) {
+      console.error('Signup error:', err);
+      setError('An unexpected error occurred. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Social authentication handlers
   const appleAuthHandler = () => {
-    console.log("Apple Authentication")
+    console.log("Apple Authentication - Not implemented yet")
+    Alert.alert('Coming Soon', 'Apple authentication will be available soon.');
   };
 
-  // implementing facebook authentication
   const facebookAuthHandler = () => {
-    console.log("Facebook Authentication")
+    console.log("Facebook Authentication - Not implemented yet")
+    Alert.alert('Coming Soon', 'Facebook authentication will be available soon.');
   };
 
-  // Implementing google authentication
   const googleAuthHandler = () => {
-    console.log("Google Authentication")
+    console.log("Google Authentication - Not implemented yet")
+    Alert.alert('Coming Soon', 'Google authentication will be available soon.');
   };
 
   return (
@@ -80,6 +165,7 @@ const Signup = ({ navigation }) => {
           <Text style={[styles.title, {
             color: dark ? COLORS.white : COLORS.black
           }]}>Create Your Account</Text>
+          
           <Input
             id="email"
             onInputChanged={inputChangedHandler}
@@ -88,7 +174,10 @@ const Signup = ({ navigation }) => {
             placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
             icon={icons.email}
             keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
           />
+          
           <Input
             onInputChanged={inputChangedHandler}
             errorText={formState.inputValidities['password']}
@@ -99,7 +188,7 @@ const Signup = ({ navigation }) => {
             icon={icons.padlock}
             secureTextEntry={true}
           />
-
+          
           <Input
             onInputChanged={inputChangedHandler}
             errorText={formState.inputValidities['confirmPassword']}
@@ -110,6 +199,7 @@ const Signup = ({ navigation }) => {
             icon={icons.padlock}
             secureTextEntry={true}
           />
+          
           <View style={styles.checkBoxContainer}>
             <View style={{ flexDirection: 'row' }}>
               <Checkbox
@@ -121,16 +211,19 @@ const Signup = ({ navigation }) => {
               <View style={{ flex: 1 }}>
                 <Text style={[styles.privacy, {
                   color: dark ? COLORS.white : COLORS.black
-                }]}>By continuing you accept our Privacy Policy</Text>
+                }]}>By continuing you accept our Privacy Policy and Terms of Service</Text>
               </View>
             </View>
           </View>
+          
           <Button
-            title="Sign Up"
+            title={isLoading ? "Creating Account..." : "Sign Up"}
             filled
-            onPress={() => navigation.navigate("FillYourProfile")}
+            onPress={handleSignUp}
             style={styles.button}
+            disabled={isLoading || !formState.formIsValid || !isChecked}
           />
+          
           <View>
             <OrSeparator text="or continue with" />
             <View style={styles.socialBtnContainer}>
@@ -150,13 +243,14 @@ const Signup = ({ navigation }) => {
             </View>
           </View>
         </ScrollView>
+        
         <View style={styles.bottomContainer}>
           <Text style={[styles.bottomLeft, {
             color: dark ? COLORS.white : COLORS.black
-          }]}>Already have an account ?</Text>
+          }]}>Already have an account?</Text>
           <TouchableOpacity
             onPress={() => navigation.navigate("Login")}>
-            <Text style={styles.bottomRight}>{" "}Sign In</Text>
+            <Text style={styles.bottomRight}> Sign In</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -185,17 +279,6 @@ const styles = StyleSheet.create({
     marginVertical: 32
   },
   title: {
-    fontSize: 28,
-    fontFamily: "bold",
-    color: COLORS.black,
-    textAlign: "center"
-  },
-  center: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  title: {
     fontSize: 26,
     fontFamily: "semiBold",
     color: COLORS.black,
@@ -220,13 +303,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: "regular",
     color: COLORS.black,
-  },
-  socialTitle: {
-    fontSize: 19.25,
-    fontFamily: "medium",
-    color: COLORS.black,
-    textAlign: "center",
-    marginVertical: 26
   },
   socialBtnContainer: {
     flexDirection: "row",
@@ -260,4 +336,4 @@ const styles = StyleSheet.create({
   }
 })
 
-export default Signup
+export default Signup;
