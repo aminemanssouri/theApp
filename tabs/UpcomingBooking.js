@@ -15,9 +15,10 @@ const UpcomingBooking = () => {
   const navigation = useNavigation();
 
   return (
-    <View style={[styles.container, {
-      backgroundColor: dark ? COLORS.dark1 : COLORS.tertiaryWhite
-    }]}>
+    
+  <View style={[styles.container, {
+    backgroundColor: dark ? COLORS.dark1 : COLORS.tertiaryWhite
+  }]}>
       <FlatList
         data={bookings} // Use 'bookings' instead of 'upcomingBookings'
         keyExtractor={item => item.id}
@@ -140,8 +141,10 @@ const UpcomingBooking = () => {
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     backgroundColor: COLORS.tertiaryWhite,
-    marginVertical: 22
+    paddingTop: 0,
+    marginTop: 0,
   },
   cardContainer: {
     width: SIZES.width - 32,

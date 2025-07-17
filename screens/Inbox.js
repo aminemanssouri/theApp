@@ -95,15 +95,33 @@ const Inbox = () => {
     )
   }
   return (
-    <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
-      <View style={[styles.container, { backgroundColor: colors.background, paddingBottom: getBottomSpacing() }]}>
+    <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]} edges={['left', 'right']}>
+      <View style={[styles.container, { 
+        backgroundColor: colors.background, 
+        paddingBottom: getBottomSpacing(),
+        paddingTop: Platform.OS === 'ios' ? insets.top : 16 
+      }]}>
         {renderHeader()}
-        <TabView
-          navigationState={{ index, routes }}
-          renderScene={renderScene}
-          onIndexChange={setIndex}
-          initialLayout={{ width: layout.width }}
-          renderTabBar={renderTabBar} />
+        <View
+          style={{
+            flex: 1,
+            marginTop: 0,
+            paddingTop: 0
+          }}
+        >
+          <TabView
+            navigationState={{ index, routes }}
+            renderScene={renderScene}
+            onIndexChange={setIndex}
+            initialLayout={{ width: layout.width }}
+            renderTabBar={renderTabBar}
+            sceneContainerStyle={{
+              backgroundColor: colors.background,
+              paddingTop: 0,
+              marginTop: 0
+            }}
+          />
+        </View>
         {/* Implementing adding post */}
         <TouchableOpacity style={[styles.addPostBtn, { bottom: getBottomSpacing() + 20 }]}>
           <Feather name="plus" size={24} color={COLORS.white} />
@@ -116,12 +134,13 @@ const Inbox = () => {
 const styles = StyleSheet.create({
   area: {
     flex: 1,
-    backgroundColor: COLORS.white
+    backgroundColor: COLORS.white,
+    paddingTop: Platform.OS === 'android' ? 25 : 0,
   },
   container: {
     flex: 1,
     backgroundColor: COLORS.white,
-    padding: 16
+    paddingHorizontal: 16
   },
   headerContainer: {
     flexDirection: "row",
