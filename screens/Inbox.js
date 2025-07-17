@@ -96,7 +96,7 @@ const Inbox = () => {
   }
   return (
     <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
-      <View style={[styles.container, { backgroundColor: colors.background, paddingBottom: getBottomSpacing() }]}>
+      <View style={[styles.container, { backgroundColor: colors.background, flex: 1 }]}>
         {renderHeader()}
         <TabView
           navigationState={{ index, routes }}

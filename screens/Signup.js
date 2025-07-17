@@ -11,6 +11,7 @@ import Button from '../components/Button';
 import SocialButton from '../components/SocialButton';
 import OrSeparator from '../components/OrSeparator';
 import { useTheme } from '../theme/ThemeProvider';
+import { signUp } from '../lib/services/auth';
 
 const isTestMode = true;
 
@@ -40,8 +41,38 @@ const Signup = ({ navigation }) => {
     (inputId, inputValue) => {
       const result = validateInput(inputId, inputValue)
       dispatchFormState({ inputId, validationResult: result, inputValue })
+      
+      // Additional validation for password confirmation
+      if (inputId === 'confirmPassword') {
+        const passwordValue = formState.inputValues.password
+        if (inputValue !== passwordValue) {
+          dispatchFormState({ 
+            inputId: 'confirmPassword', 
+            validationResult: 'Passwords do not match', 
+            inputValue 
+          })
+        }
+      }
+      
+      // Re-validate confirm password when password changes
+      if (inputId === 'password') {
+        const confirmPasswordValue = formState.inputValues.confirmPassword
+        if (confirmPasswordValue && inputValue !== confirmPasswordValue) {
+          dispatchFormState({ 
+            inputId: 'confirmPassword', 
+            validationResult: 'Passwords do not match', 
+            inputValue: confirmPasswordValue 
+          })
+        } else if (confirmPasswordValue && inputValue === confirmPasswordValue) {
+          dispatchFormState({ 
+            inputId: 'confirmPassword', 
+            validationResult: undefined, 
+            inputValue: confirmPasswordValue 
+          })
+        }
+      }
     },
-    [dispatchFormState]
+    [dispatchFormState, formState.inputValues.password, formState.inputValues.confirmPassword]
   )
 
   useEffect(() => {
@@ -63,6 +94,59 @@ const Signup = ({ navigation }) => {
   // Implementing google authentication
   const googleAuthHandler = () => {
     console.log("Google Authentication")
+  };
+
+  // Handle signup with Supabase
+  const handleSignUp = async () => {
+    // Check if all fields are filled and valid
+    const { email, password, confirmPassword } = formState.inputValues
+    const { email: emailError, password: passwordError, confirmPassword: confirmPasswordError } = formState.inputValidities
+    
+    if (!email || !password || !confirmPassword) {
+      Alert.alert('Error', 'Please fill in all fields')
+      return
+    }
+    
+    if (emailError || passwordError || confirmPasswordError) {
+      Alert.alert('Error', 'Please correct the errors in the form')
+      return
+    }
+
+    if (!isChecked) {
+      Alert.alert('Error', 'Please accept the Privacy Policy')
+      return
+    }
+
+    if (password !== confirmPassword) {
+      Alert.alert('Error', 'Passwords do not match')
+      return
+    }
+
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const { data, error } = await signUp(
+        email,
+        password,
+        '', // firstName - will be filled in next screen
+        '', // lastName - will be filled in next screen
+        'client' // userType
+      )
+
+      if (error) {
+        setError(error.message)
+        Alert.alert('Sign Up Failed', error.message)
+      } else {
+        Alert.alert('Success', 'Account created successfully!')
+        navigation.navigate("FillYourProfile")
+      }
+    } catch (err) {
+      setError(err.message)
+      Alert.alert('Error', err.message)
+    } finally {
+      setIsLoading(false)
+    }
   };
 
   return (
@@ -128,8 +212,9 @@ const Signup = ({ navigation }) => {
           <Button
             title="Sign Up"
             filled
-            onPress={() => navigation.navigate("FillYourProfile")}
+            onPress={handleSignUp}
             style={styles.button}
+            isLoading={isLoading}
           />
           <View>
             <OrSeparator text="or continue with" />
