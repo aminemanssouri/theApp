@@ -11,8 +11,9 @@ import Button from '../components/Button';
 import SocialButton from '../components/SocialButton';
 import OrSeparator from '../components/OrSeparator';
 import { useTheme } from '../theme/ThemeProvider';
+import { signIn } from '../lib/services/auth';
 
-const isTestMode = true;
+const isTestMode = false;
 
 const initialState = {
   inputValues: {
@@ -31,6 +32,7 @@ const Login = ({ navigation }) => {
   const [formState, dispatchFormState] = useReducer(reducer, initialState);
   const [error, setError] = useState(null);
   const [isChecked, setChecked] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { colors, dark } = useTheme();
 
   const inputChangedHandler = useCallback(
@@ -46,6 +48,43 @@ const Login = ({ navigation }) => {
       Alert.alert('An error occured', error)
     }
   }, [error]);
+
+  // Handle login with Supabase
+  const handleLogin = async () => {
+    const { email, password } = formState.inputValues;
+    const { email: emailError, password: passwordError } = formState.inputValidities;
+    
+    if (!email || !password) {
+      Alert.alert('Error', 'Please fill in all fields');
+      return;
+    }
+    
+    if (emailError || passwordError) {
+      Alert.alert('Error', 'Please correct the errors in the form');
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const { data, error } = await signIn(email, password);
+
+      if (error) {
+        setError(error.message);
+        Alert.alert('Login Failed', error.message);
+      } else {
+        // Login successful - Supabase automatically handles the session
+        console.log('Login successful:', data.user);
+        navigation.navigate("Main");
+      }
+    } catch (err) {
+      setError(err.message);
+      Alert.alert('Error', err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // implementing apple authentication
   const appleAuthHandler = () => {
@@ -117,8 +156,9 @@ const Login = ({ navigation }) => {
           <Button
             title="Login"
             filled
-            onPress={() => navigation.navigate("Main")}
+            onPress={handleLogin}
             style={styles.button}
+            isLoading={isLoading}
           />
           <TouchableOpacity
             onPress={() => navigation.navigate("ForgotPasswordMethods")}>

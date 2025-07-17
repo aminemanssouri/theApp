@@ -110,14 +110,10 @@ const MyBooking = ({ navigation }) => {
   };
 
   return (
-    <>
-      <StatusBar
-        translucent={false} // 👈 no overlay issues
-        backgroundColor={colors.background}
-        barStyle={dark ? 'light-content' : 'dark-content'}
-      />
 
-      <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
+    <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
+      <View style={[styles.container, { backgroundColor: colors.background, flex: 1 }]}>
+
         {renderHeader()}
 
         <View

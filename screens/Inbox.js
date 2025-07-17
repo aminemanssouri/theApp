@@ -45,11 +45,11 @@ const Inbox = () => {
         backgroundColor: colors.background,
       }}
       renderLabel={({ route, focused }) => (
-        <Text style={[{
+        <Text style={{
           color: focused ? COLORS.primary : 'gray',
           fontSize: 16,
           fontFamily: "bold"
-        }]}>
+        }}>
           {route.title}
         </Text>
       )}
@@ -92,43 +92,28 @@ const Inbox = () => {
           </TouchableOpacity>
         </View>
       </View>
-    )
-  }
+    );
+  };
   return (
-    <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]} edges={['left', 'right']}>
-      <View style={[styles.container, { 
-        backgroundColor: colors.background, 
-        paddingBottom: getBottomSpacing(),
-        paddingTop: Platform.OS === 'ios' ? insets.top : 16 
-      }]}>
+
+    <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
+      <View style={[styles.container, { backgroundColor: colors.background, flex: 1 }]}>
         {renderHeader()}
-        <View
-          style={{
-            flex: 1,
-            marginTop: 0,
-            paddingTop: 0
-          }}
-        >
-          <TabView
-            navigationState={{ index, routes }}
-            renderScene={renderScene}
-            onIndexChange={setIndex}
-            initialLayout={{ width: layout.width }}
-            renderTabBar={renderTabBar}
-            sceneContainerStyle={{
-              backgroundColor: colors.background,
-              paddingTop: 0,
-              marginTop: 0
-            }}
-          />
-        </View>
+        <TabView
+          navigationState={{ index, routes }}
+          renderScene={renderScene}
+          onIndexChange={setIndex}
+          initialLayout={{ width: layout.width }}
+          renderTabBar={renderTabBar} 
+        />
+
         {/* Implementing adding post */}
         <TouchableOpacity style={[styles.addPostBtn, { bottom: getBottomSpacing() + 20 }]}>
           <Feather name="plus" size={24} color={COLORS.white} />
         </TouchableOpacity>
       </View>
     </SafeAreaView>
-  )
+  );
 };
 
 const styles = StyleSheet.create({
