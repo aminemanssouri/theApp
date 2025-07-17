@@ -45,11 +45,11 @@ const Inbox = () => {
         backgroundColor: colors.background,
       }}
       renderLabel={({ route, focused }) => (
-        <Text style={[{
+        <Text style={{
           color: focused ? COLORS.primary : 'gray',
           fontSize: 16,
           fontFamily: "bold"
-        }]}>
+        }}>
           {route.title}
         </Text>
       )}
@@ -92,8 +92,8 @@ const Inbox = () => {
           </TouchableOpacity>
         </View>
       </View>
-    )
-  }
+    );
+  };
   return (
     <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
       <View style={[styles.container, { backgroundColor: colors.background, flex: 1 }]}>
@@ -103,14 +103,15 @@ const Inbox = () => {
           renderScene={renderScene}
           onIndexChange={setIndex}
           initialLayout={{ width: layout.width }}
-          renderTabBar={renderTabBar} />
+          renderTabBar={renderTabBar} 
+        />
         {/* Implementing adding post */}
         <TouchableOpacity style={[styles.addPostBtn, { bottom: getBottomSpacing() + 20 }]}>
           <Feather name="plus" size={24} color={COLORS.white} />
         </TouchableOpacity>
       </View>
     </SafeAreaView>
-  )
+  );
 };
 
 const styles = StyleSheet.create({
