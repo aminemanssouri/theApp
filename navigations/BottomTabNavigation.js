@@ -19,6 +19,10 @@ const BottomTabNavigation = () => {
             screenOptions={{
                 tabBarShowLabel: false,
                 headerShown: false,
+                sceneContainerStyle: {
+                    paddingTop: 0, // Force remove any default top padding
+                    marginTop: 0,  // Force remove any default top margin
+                },
                 tabBarStyle: {
                     position: 'absolute',
                     bottom: Platform.OS === 'android' ? 22 : 0, // Lift above Android navigation
@@ -85,6 +89,11 @@ const BottomTabNavigation = () => {
                 name="Bookings"
                 component={Bookings}
                 options={{
+                    sceneContainerStyle: {
+                        paddingTop: 0,
+                        marginTop: 0,
+                        backgroundColor: 'transparent',
+                    },
                     tabBarIcon: ({ focused }) => (
                         <View style={{
                             alignItems: "center",
@@ -157,6 +166,11 @@ const BottomTabNavigation = () => {
                 name="Inbox"
                 component={Inbox}
                 options={{
+                    sceneContainerStyle: {
+                        paddingTop: 0,
+                        marginTop: 0,
+                        backgroundColor: 'transparent',
+                    },
                     tabBarIcon: ({ focused }) => (
                         <View style={{
                             alignItems: "center",

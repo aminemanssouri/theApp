@@ -1,10 +1,24 @@
-import { View, Text, StyleSheet, TouchableOpacity, Image, useWindowDimensions, Platform } from 'react-native';
 import React from 'react';
-import { COLORS, SIZES, icons } from '../constants'
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  StatusBar,
+  useWindowDimensions,
+  Platform
+} from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '../theme/ThemeProvider';
 import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
-import { CancelledBooking, CompletedBooking, UpcomingBooking } from '../tabs';
+
+import { icons, COLORS, SIZES } from '../constants';
+import { useTheme } from '../theme/ThemeProvider';
+import {
+  UpcomingBooking,
+  CompletedBooking,
+  CancelledBooking
+} from '../tabs';
 
 const renderScene = SceneMap({
   first: UpcomingBooking,
@@ -14,20 +28,8 @@ const renderScene = SceneMap({
 
 const MyBooking = ({ navigation }) => {
   const layout = useWindowDimensions();
-  const { dark, colors } = useTheme();
   const insets = useSafeAreaInsets();
-
-  // Calculate bottom spacing to avoid tab bar overlap
-  const getBottomSpacing = () => {
-    const baseTabHeight = 60;
-    const safeAreaBottom = insets.bottom;
-    
-    if (Platform.OS === 'ios') {
-      return baseTabHeight + safeAreaBottom + 10;
-    } else {
-      return baseTabHeight + Math.max(safeAreaBottom, 10) + 10;
-    }
-  };
+  const { dark, colors } = useTheme();
 
   const [index, setIndex] = React.useState(0);
   const [routes] = React.useState([
@@ -36,113 +38,135 @@ const MyBooking = ({ navigation }) => {
     { key: 'third', title: 'Cancelled' }
   ]);
 
+  const getBottomSpacing = () => {
+    const baseTabHeight = 60;
+    const safeAreaBottom = insets.bottom;
+
+    if (Platform.OS === 'ios') {
+      return baseTabHeight + safeAreaBottom + 10;
+    } else {
+      return baseTabHeight + Math.max(safeAreaBottom, 10) + 10;
+    }
+  };
+
   const renderTabBar = (props) => (
     <TabBar
       {...props}
       indicatorStyle={{
-        backgroundColor: COLORS.primary,
+        backgroundColor: COLORS.primary
       }}
       style={{
-        backgroundColor: colors.background,
+        backgroundColor: colors.background
       }}
       renderLabel={({ route, focused }) => (
-        <Text style={[{
-          color: focused ? COLORS.primary : "gray",
-          fontSize: 16,
-          fontFamily: "semiBold"
-        }]}>
+        <Text
+          style={{
+            color: focused ? COLORS.primary : 'gray',
+            fontSize: 16,
+            fontFamily: 'semiBold'
+          }}
+        >
           {route.title}
         </Text>
       )}
     />
-  )
-  /**
- * Render header
- */
+  );
+
   const renderHeader = () => {
     return (
-      <View style={styles.headerContainer}>
+      <View style={[styles.headerContainer, { paddingTop: insets.top }]}>
         <View style={styles.headerLeft}>
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
             <Image
               source={icons.back}
-              resizeMode='contain'
-              style={[styles.backIcon, {
-                tintColor: dark ? COLORS.white : COLORS.greyscale900
-              }]}
+              style={[
+                styles.icon,
+                { tintColor: dark ? COLORS.white : COLORS.greyscale900 }
+              ]}
+              resizeMode="contain"
             />
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, {
-            color: dark ? COLORS.white : COLORS.greyscale900
-          }]}>
+          <Text
+            style={[
+              styles.headerText,
+              { color: dark ? COLORS.white : COLORS.greyscale900 }
+            ]}
+          >
             My Booking
           </Text>
         </View>
         <TouchableOpacity>
           <Image
             source={icons.moreCircle}
-            resizeMode='contain'
-            style={[styles.moreIcon, {
-              tintColor: dark ? COLORS.white : COLORS.greyscale900
-            }]}
+            style={[
+              styles.icon,
+              { tintColor: dark ? COLORS.white : COLORS.greyscale900 }
+            ]}
+            resizeMode="contain"
           />
         </TouchableOpacity>
       </View>
-    )
-  }
+    );
+  };
+
   return (
+
     <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
       <View style={[styles.container, { backgroundColor: colors.background, flex: 1 }]}>
+
         {renderHeader()}
-        <TabView
-          navigationState={{ index, routes }}
-          renderScene={renderScene}
-          onIndexChange={setIndex}
-          initialLayout={{ width: layout.width }}
-          renderTabBar={renderTabBar}
-        />
-      </View>
-    </SafeAreaView>
-  )
+
+        <View
+          style={[
+            styles.container,
+            {
+              backgroundColor: colors.background,
+              paddingBottom: getBottomSpacing()
+            }
+          ]}
+        >
+          <TabView
+            navigationState={{ index, routes }}
+            renderScene={renderScene}
+            onIndexChange={setIndex}
+            initialLayout={{ width: layout.width }}
+            renderTabBar={renderTabBar}
+          />
+        </View>
+      </SafeAreaView>
+    </>
+  );
 };
 
 const styles = StyleSheet.create({
-  area: {
-    flex: 1,
-    backgroundColor: COLORS.white
+  safeArea: {
+    flex: 1
   },
   container: {
     flex: 1,
-    backgroundColor: COLORS.white,
-    padding: 16
+    paddingHorizontal: 16
   },
   headerContainer: {
-    flexDirection: "row",
-    width: SIZES.width - 32,
-    justifyContent: "space-between",
-    marginBottom: 16
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    height: 60,
+    paddingHorizontal: 16,
+    backgroundColor: 'blue'
   },
   headerLeft: {
-    flexDirection: "row",
-    alignItems: "center"
+    flexDirection: 'row',
+    alignItems: 'center'
   },
-  backIcon: {
-    height: 24,
+  icon: {
     width: 24,
-    tintColor: COLORS.black
+    height: 24
   },
-  headerTitle: {
+  headerText: {
     fontSize: 20,
     fontFamily: 'bold',
-    color: COLORS.black,
     marginLeft: 16
-  },
-  moreIcon: {
-    width: 24,
-    height: 24,
-    tintColor: COLORS.black
-  },
-})
+  }
+});
 
-export default MyBooking
+export default MyBooking;

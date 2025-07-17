@@ -132,7 +132,11 @@ const AppNavigation = () => {
         <Stack.Screen 
           name="Main" 
           component={BottomTabNavigation}
-          options={getTransitionConfig('Main')}
+          options={{
+            headerShown: false,
+            contentStyle: { paddingTop: 0, marginTop: 0 },
+            ...getTransitionConfig('Main')
+          }}
         />
         <Stack.Screen 
           name="EditProfile" 

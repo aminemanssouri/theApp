@@ -72,8 +72,10 @@ const CompletedBooking = () => {
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     backgroundColor: COLORS.tertiaryWhite,
-    marginVertical: 22
+    paddingTop: 0,
+    marginTop: 0,
   },
   cardContainer: {
     width: SIZES.width - 32,
