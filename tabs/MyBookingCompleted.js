@@ -1,63 +1,137 @@
-import React from 'react';
-import { View, Text, FlatList, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, FlatList, Image, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { COLORS } from '../constants';
 import { useNavigation } from '@react-navigation/native';
-import { completedBookings } from '../data';
 import { useTheme } from '../theme/ThemeProvider';
+import { useAuth } from '../context/AuthContext';
+import { getCompletedBookings } from '../lib/services/booking';
 
 const MyBookingCompleted = () => {
   const navigation = useNavigation();
   const { dark, colors } = useTheme();
+  const { user, loading: authLoading } = useAuth();
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchCompletedBookings = async () => {
+    if (!user?.id) return;
+    
+    try {
+      setLoading(true);
+      const data = await getCompletedBookings(user.id);
+      console.log('📊 Completed bookings:', data?.length || 0);
+      setBookings(data || []);
+    } catch (error) {
+      console.error('❌ Error fetching completed bookings:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    let mounted = true;
+    
+    const initFetch = async () => {
+      if (!authLoading && user?.id && mounted) {
+        await fetchCompletedBookings();
+      } else if (!authLoading && !user?.id && mounted) {
+        setLoading(false);
+      }
+    };
+    
+    initFetch();
+    
+    return () => {
+      mounted = false;
+    };
+  }, [user?.id, authLoading]);
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
+
+  if (bookings.length === 0) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <Text style={{
+          color: dark ? COLORS.secondaryWhite : COLORS.greyscale900,
+          textAlign: 'center',
+          marginBottom: 8,
+          fontSize: 18,
+          fontFamily: 'bold'
+        }}>No Completed Bookings</Text>
+        <Text style={{
+          color: dark ? COLORS.grayscale400 : COLORS.grayscale700,
+          textAlign: 'center'
+        }}>You don't have any completed bookings yet.</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
       <FlatList
-        data={completedBookings}
+        data={bookings}
         showsVerticalScrollIndicator={false}
         keyExtractor={item => item.id}
         renderItem={({ item, index }) => (
           <View style={styles.itemContainer}>
             <View style={styles.statusContainer}>
               <Text style={[styles.typeText, { 
-                color: dark? COLORS.white : COLORS.greyscale900
-              }]}>{item.serviceType}</Text>
-              <Text style={[styles.statusText, { color: item.status == "Paid" ? COLORS.green : COLORS.red, marginLeft: 12 }]}>
-                {item.status}
+                color: dark ? COLORS.white : COLORS.greyscale900
+              }]}>{item.service?.name || 'Service'}</Text>
+              <Text style={[styles.statusText, { 
+                color: COLORS.green, 
+                marginLeft: 12 
+              }]}>
+                Completed
               </Text>
             </View>
             <View style={styles.infoContainer}>
               <View style={styles.infoLeft}>
                 <Image
-                  source={item.image}
+                  source={
+                    item.worker?.users?.[0]?.profile_picture 
+                      ? { uri: item.worker.users[0].profile_picture }
+                      : require('../assets/images/users/user1.jpeg')
+                  }
                   style={styles.itemImage}
                 />
                 <View style={styles.itemDetails}>
                   <Text style={[styles.itemName, { 
-                    color: dark? COLORS.white : COLORS.greyscale900
-                  }]}>{item.provider}</Text>
+                    color: dark ? COLORS.white : COLORS.greyscale900
+                  }]}>
+                    {item.worker?.users?.[0] 
+                      ? `${item.worker.users[0].first_name} ${item.worker.users[0].last_name}`
+                      : "Service Provider"}
+                  </Text>
                   <View style={styles.itemSubDetails}>
                     <Text style={[styles.itemPrice, { 
                       color: dark ? COLORS.grayscale200 : COLORS.grayscale700
-                    }]}>${item.price}</Text>
+                    }]}>€{item.total_amount || item.price}</Text>
                     <Text style={[styles.itemDate, { 
                       color: dark ? COLORS.grayscale200 : COLORS.grayscale700
-                    }]}> | {item.date}</Text>
+                    }]}> | {item.booking_date}</Text>
                     <Text style={[styles.itemItems, { 
                       color: dark ? COLORS.grayscale200 : COLORS.grayscale700
-                    }]}> | {item.address}</Text>
+                    }]}> | {item.city}</Text>
                   </View>
                 </View>
               </View>
-              <Text style={styles.receiptText}>{item.receipt}</Text>
+              <Text style={styles.receiptText}>Receipt</Text>
             </View>
             <View style={styles.actionsContainer}>
               <TouchableOpacity
-                onPress={() => console.log("Performing action...")}
+                onPress={() => console.log("Archiving booking...")}
                 style={styles.rateButton}>
                 <Text style={styles.rateButtonText}>Archive</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={() => navigation.navigate("EReceipt")}
+                onPress={() => navigation.navigate("EReceipt", { bookingId: item.id })}
                 style={styles.reorderButton}>
                 <Text style={styles.reorderButtonText}>View</Text>
               </TouchableOpacity>

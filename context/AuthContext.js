@@ -35,16 +35,15 @@ export const AuthProvider = ({ children }) => {
 
     // Listen for auth state changes
     const { data: { subscription } } = onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event, session?.user?.email);
       
       setSession(session);
       setUser(session?.user || null);
       
-      if (event === 'SIGNED_IN') {
-        console.log('User signed in:', session?.user?.email);
-      } else if (event === 'SIGNED_OUT') {
-        console.log('User signed out');
-      }
+      // if (event === 'SIGNED_IN') {
+      //   console.log('User signed in:', session?.user?.email);
+      // } else if (event === 'SIGNED_OUT') {
+      //   console.log('User signed out');
+      // }
     });
 
     return () => {
@@ -64,6 +63,15 @@ export const AuthProvider = ({ children }) => {
       }
     }
   };
+
+  // Debug log the auth state
+  // console.log('🔐 AuthProvider state:', {
+  //   hasUser: !!user,
+  //   userId: user?.id,
+  //   userEmail: user?.email,
+  //   hasSession: !!session,
+  //   loading
+  // });
 
   return (
     <AuthContext.Provider value={value}>

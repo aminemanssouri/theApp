@@ -75,7 +75,7 @@ const Login = ({ navigation }) => {
         Alert.alert('Login Failed', error.message);
       } else {
         // Login successful - Supabase automatically handles the session
-        console.log('Login successful:', data.user);
+        // console.log('Login successful:', data.user);
         navigation.navigate("Main");
       }
     } catch (err) {

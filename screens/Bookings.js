@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, TouchableOpacity, Image, useWindowDimensions } from 'react-native';
-import React from 'react';
+import React, { useRef, useCallback } from 'react';
 import { COLORS, SIZES, icons } from '../constants'
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeProvider';
@@ -12,6 +12,7 @@ const renderScene = SceneMap({
   third: CancelledBooking
 });
 
+
 const MyBooking = ({ navigation }) => {
   const layout = useWindowDimensions();
   const { dark, colors } = useTheme();
@@ -22,6 +23,54 @@ const MyBooking = ({ navigation }) => {
     { key: 'second', title: 'Completed' },
     { key: 'third', title: 'Cancelled' }
   ]);
+
+  // Refs to access child component methods
+  const upcomingRef = useRef(null);
+  const completedRef = useRef(null);
+  const cancelledRef = useRef(null);
+
+  // Handle tab change with refresh
+  const handleIndexChange = useCallback((newIndex) => {
+    setIndex(newIndex);
+    
+    // Trigger refresh on the newly selected tab
+    setTimeout(() => {
+      switch (newIndex) {
+        case 0:
+          // Refresh Upcoming bookings
+          if (upcomingRef.current?.refreshData) {
+            upcomingRef.current.refreshData();
+          }
+          break;
+        case 1:
+          // Refresh Completed bookings
+          if (completedRef.current?.refreshData) {
+            completedRef.current.refreshData();
+          }
+          break;
+        case 2:
+          // Refresh Cancelled bookings
+          if (cancelledRef.current?.refreshData) {
+            cancelledRef.current.refreshData();
+          }
+          break;
+      }
+    }, 100); // Small delay to ensure tab transition is smooth
+  }, []);
+
+  // Custom render scene to pass refs
+  const renderScene = ({ route }) => {
+    switch (route.key) {
+      case 'first':
+        return <UpcomingBooking ref={upcomingRef} />;
+      case 'second':
+        return <CompletedBooking ref={completedRef} />;
+      case 'third':
+        return <CancelledBooking ref={cancelledRef} />;
+      default:
+        return null;
+    }
+  };
 
   const renderTabBar = (props) => (
     <TabBar
@@ -85,7 +134,7 @@ const MyBooking = ({ navigation }) => {
         <TabView
           navigationState={{ index, routes }}
           renderScene={renderScene}
-          onIndexChange={setIndex}
+          onIndexChange={handleIndexChange}
           initialLayout={{ width: layout.width }}
           renderTabBar={renderTabBar}
         />

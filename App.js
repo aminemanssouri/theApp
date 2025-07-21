@@ -6,6 +6,7 @@ import { FONTS } from './constants/fonts'
 import AppNavigation from './navigations/AppNavigation'
 import { LogBox } from 'react-native'
 import { ThemeProvider } from './theme/ThemeProvider'
+import { AuthProvider } from './context/AuthContext'
 
 //Ignore all log notifications
 LogBox.ignoreAllLogs();
@@ -26,10 +27,12 @@ export default function App() {
   }
 
   return (
-    <ThemeProvider>
-      <SafeAreaProvider onLayout={onLayoutRootView}>
-        <AppNavigation />
-      </SafeAreaProvider>
-    </ThemeProvider>
+    <AuthProvider>
+      <ThemeProvider>
+        <SafeAreaProvider onLayout={onLayoutRootView}>
+          <AppNavigation />
+        </SafeAreaProvider>
+      </ThemeProvider>
+    </AuthProvider>
   );
 }
