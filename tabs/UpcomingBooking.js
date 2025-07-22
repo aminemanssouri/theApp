@@ -1,9 +1,9 @@
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, Alert } from 'react-native';
 import React, { useRef, useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { SIZES, COLORS } from '../constants';
 import RBSheet from "react-native-raw-bottom-sheet";
 import { useTheme } from '../theme/ThemeProvider';
-import { getUpcomingBookings } from '../lib/services/booking';
+import { getUpcomingBookings, cancelBooking } from '../lib/services/booking';
 import Button from '../components/Button';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
@@ -15,6 +15,7 @@ const UpcomingBooking = forwardRef((props, ref) => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedBooking, setSelectedBooking] = useState(null);
+  const [cancelling, setCancelling] = useState(false);
   
   // Debug auth context
   const authContext = useAuth();
@@ -71,6 +72,54 @@ const UpcomingBooking = forwardRef((props, ref) => {
     refRBSheet.current.open();
   };
 
+  const handleCancelBooking = async () => {
+    if (!selectedBooking || !user?.id) return;
+    
+    try {
+      setCancelling(true);
+      
+      // Call the backend function to cancel the booking
+      const result = await cancelBooking(selectedBooking.id, user.id, "User cancelled booking");
+      
+      console.log('✅ Booking cancellation result:', result);
+      
+      // Close the bottom sheet
+      refRBSheet.current.close();
+      
+      // Show success message with cancellation fee info if applicable
+      let alertMessage = "Your booking has been cancelled successfully.";
+      
+      if (result && result.cancellation_fee) {
+        alertMessage += `\n\nA cancellation fee of €${result.cancellation_fee} applies due to late cancellation (within 24 hours of service time).`;
+      } else {
+        alertMessage += "\n\nA refund of 80% will be processed according to our policy.";
+      }
+      
+      Alert.alert(
+        "Booking Cancelled",
+        alertMessage,
+        [{ text: "OK" }]
+      );
+      
+      // Refresh the bookings list to reflect the change
+      await fetchBookings();
+      
+    } catch (error) {
+      console.error('❌ Error cancelling booking:', error);
+      
+      // Show specific error message from backend or generic message
+      const errorMessage = error.message || "Failed to cancel the booking. Please try again or contact support.";
+      
+      Alert.alert(
+        "Cancellation Failed", 
+        errorMessage,
+        [{ text: "OK" }]
+      );
+    } finally {
+      setCancelling(false);
+    }
+  };
+
   if (loading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -97,22 +146,7 @@ const UpcomingBooking = forwardRef((props, ref) => {
           marginBottom: 20
         }]}>You don't have any upcoming bookings at the moment.</Text>
         
-        <TouchableOpacity 
-          style={{
-            backgroundColor: COLORS.primary,
-            paddingHorizontal: 20,
-            paddingVertical: 12,
-            borderRadius: 8,
-            marginTop: 10
-          }}
-          onPress={createTestBookings}
-        >
-          <Text style={{
-            color: COLORS.white,
-            fontSize: 16,
-            fontWeight: 'bold'
-          }}>Create Test Booking</Text>
-        </TouchableOpacity>
+  
       </View>
     );
   }
@@ -137,8 +171,8 @@ const UpcomingBooking = forwardRef((props, ref) => {
               <View>
                 <Image
                   source={
-                    item.worker?.users?.[0]?.profile_picture 
-                      ? { uri: item.worker.users[0].profile_picture }
+                    item.worker?.profile_picture 
+                      ? { uri: item.worker.profile_picture }
                       : require('../assets/images/users/user1.jpeg')
                   }
                   resizeMode='cover'
@@ -153,8 +187,8 @@ const UpcomingBooking = forwardRef((props, ref) => {
                 <Text style={[styles.name, {
                   color: dark ? COLORS.secondaryWhite : COLORS.greyscale900
                 }]}>
-                  {item.worker?.users?.[0] 
-                    ? `${item.worker.users[0].first_name} ${item.worker.users[0].last_name}`
+                  {item.worker?.first_name && item.worker?.last_name
+                    ? `${item.worker.first_name} ${item.worker.last_name}`
                     : "Service Provider"}
                 </Text>
                 <Text style={[styles.address, {
@@ -240,13 +274,11 @@ const UpcomingBooking = forwardRef((props, ref) => {
             onPress={() => refRBSheet.current.close()}
           />
           <Button
-            title="Yes, Cancel"
+            title={cancelling ? "Cancelling..." : "Yes, Cancel"}
             filled
             style={styles.removeButton}
-            onPress={() => {
-              refRBSheet.current.close();
-              navigation.navigate("CancelBooking", { bookingId: selectedBooking?.id });
-            }}
+            disabled={cancelling}
+            onPress={handleCancelBooking}
           />
         </View>
       </RBSheet>

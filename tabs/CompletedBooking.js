@@ -105,8 +105,8 @@ const CompletedBooking = forwardRef((props, ref) => {
               <View>
                 <Image
                   source={
-                    item.worker?.users?.[0]?.profile_picture 
-                      ? { uri: item.worker.users[0].profile_picture }
+                    item.worker?.profile_picture 
+                      ? { uri: item.worker.profile_picture }
                       : require('../assets/images/users/user1.jpeg')
                   }
                   resizeMode='cover'
@@ -121,8 +121,8 @@ const CompletedBooking = forwardRef((props, ref) => {
                 <Text style={[styles.name, {
                   color: dark ? COLORS.secondaryWhite : COLORS.greyscale900
                 }]}>
-                  {item.worker?.users?.[0] 
-                    ? `${item.worker.users[0].first_name} ${item.worker.users[0].last_name}`
+                  {item.worker?.first_name && item.worker?.last_name
+                    ? `${item.worker.first_name} ${item.worker.last_name}`
                     : "Service Provider"}
                 </Text>
                 <Text style={[styles.address, {
