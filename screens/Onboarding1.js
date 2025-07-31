@@ -15,9 +15,10 @@ const Onboarding = ({ navigation }) => {
   useEffect(() => {
     const intervalId = setInterval(() => {
       setProgress(prevProgress => {
+        // Stop at 100% (1.0) and don't exceed it
         if (prevProgress >= 1) {
           clearInterval(intervalId);
-          return prevProgress;
+          return 1;
         }
         return prevProgress + 0.5;
       });
@@ -26,12 +27,7 @@ const Onboarding = ({ navigation }) => {
     return () => clearInterval(intervalId);
   }, []);
 
-  useEffect(() => {
-    if (progress >= 1) {
-      // navigate to the onboarding2 Screen
-      navigation.navigate('Onboarding2');
-    }
-  }, [progress, navigation]);
+  // Remove automatic navigation - let users control it manually
 
   return (
   <SafeAreaView style={[Onboarding1Styles.container, {
@@ -63,7 +59,7 @@ const Onboarding = ({ navigation }) => {
             </Text>
 
             <View style={Onboarding1Styles.dotsContainer}>
-              {progress < 1 && <DotsView progress={progress} numDots={4} />}
+              <DotsView progress={progress} numDots={4} />
             </View>
             <Button
               title="Next"

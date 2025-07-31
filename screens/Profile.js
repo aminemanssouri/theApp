@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, TouchableOpacity, Image, Switch, Platform } from 'react-native';
 import React, { useState, useRef } from 'react';
 import { COLORS, SIZES, icons, images } from '../constants';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { getSafeAreaInsets } from '../utils/safeAreaUtils';
 import { ScrollView } from 'react-native-virtualized-view';
 import { MaterialIcons } from '@expo/vector-icons';
 import { launchImagePicker } from '../utils/ImagePickerHelper';
@@ -9,13 +9,11 @@ import SettingsItem from '../components/SettingsItem';
 import { useTheme } from '../theme/ThemeProvider';
 import RBSheet from "react-native-raw-bottom-sheet";
 import Button from '../components/Button';
-import { supabase } from '../lib/supabase';
-import { Alert } from 'react-native';
 
 const Profile = ({ navigation }) => {
   const refRBSheet = useRef();
   const { dark, colors, setScheme } = useTheme();
-  const insets = useSafeAreaInsets();
+  const insets = getSafeAreaInsets();
   
   // Calculate bottom spacing to avoid tab bar overlap
   const getBottomSpacing = () => {
@@ -28,33 +26,6 @@ const Profile = ({ navigation }) => {
       return baseTabHeight + Math.max(safeAreaBottom, 10) + 20;
     }
   };
-
-
-  const handleLogout = async () => {
-  try {
-    // Show loading state
-    
-    // Call Supabase to sign out
-    const { error } = await supabase.auth.signOut();
-    
-    if (error) throw error;
-    
-    // Close the bottom sheet
-    refRBSheet.current.close();
-    
-    // Navigate to Login screen (reset navigation stack)
-    navigation.reset({
-      index: 0,
-      routes: [{ name: 'Login' }]
-    });
-  } catch (error) {
-    Alert.alert('Logout Error', error.message);
-  } finally {
-    // Hide loading state
-    
-  }
-};
-
   /**
    * Render Header
    */
@@ -244,7 +215,7 @@ const Profile = ({ navigation }) => {
     )
   }
   return (
-    <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
+    <View style={[styles.area, { backgroundColor: colors.background }]}>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         {renderHeader()}
         <ScrollView 
@@ -290,23 +261,22 @@ const Profile = ({ navigation }) => {
             title="Cancel"
             style={{
               width: (SIZES.width - 32) / 2 - 8,
-              backgroundColor: dark ? COLORS.dark3 : COLORS.tansparentPrimary,
+              backgroundColor: dark ? COLORS.gray2 : COLORS.tansparentPrimary,
               borderRadius: 32,
-              borderColor: dark ? COLORS.dark3 : COLORS.tansparentPrimary
+              borderColor: dark ? COLORS.gray2 : COLORS.tansparentPrimary
             }}
             textColor={dark ? COLORS.white : COLORS.primary}
             onPress={() => refRBSheet.current.close()}
           />
-        <Button
-  title="Yes, Logout"
-  filled
-  style={styles.logoutButton}
-  onPress={handleLogout}
-  
-/>
+          <Button
+            title="Yes, Logout"
+            filled
+            style={styles.logoutButton}
+            onPress={() => refRBSheet.current.close()}
+          />
         </View>
       </RBSheet>
-    </SafeAreaView>
+    </View>
   )
 };
 

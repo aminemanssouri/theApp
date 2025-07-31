@@ -166,20 +166,7 @@ const Search = ({ navigation }) => {
                       oldPrice={item.oldPrice}
                       rating={item.rating}
                       numReviews={item.numReviews}
-                      worker={item.worker}
-                      hasWorker={item.hasWorker}
-                      onPress={() => {
-                        if (item.hasWorker && item.workerId) {
-                          navigation.navigate("WorkerDetails", { 
-                            workerId: item.workerId,
-                            serviceId: item.serviceId
-                          });
-                        } else {
-                          navigation.navigate("ServiceDetails", { 
-                            serviceId: item.serviceId
-                          });
-                        }
-                      }}
+                      onPress={() => navigation.navigate("ServiceDetails")}
                       categoryId={item.categoryId}
                     />
                   )

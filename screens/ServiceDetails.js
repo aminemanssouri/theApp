@@ -6,15 +6,20 @@ import ReviewStars from '../components/ReviewStars';
 import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
 import { ProfileReviews, ProfileServices } from '../tabs';
 import { useTheme } from '../theme/ThemeProvider';
+import { useAuth } from '../context/AuthContext';
+import { createConversation, getUserConversations } from '../lib/services/chat';
 
 const renderScene = SceneMap({
   first: ProfileServices,
   second: ProfileReviews
 });
 
-const ServiceDetails = ({ navigation }) => {
+const ServiceDetails = (props) => {
   const layout = useWindowDimensions();
   const { dark, colors } = useTheme();
+  const { user } = useAuth();
+  const [msgLoading, setMsgLoading] = React.useState(false);
+  const workerId = 'd7b6ef7e-bfaa-45f7-b196-c6d6c9cf540b'; // For test
 
   const [index, setIndex] = React.useState(0);
   const [routes] = React.useState([
@@ -29,7 +34,7 @@ const ServiceDetails = ({ navigation }) => {
     return (
       <View style={styles.headerContainer}>
         <TouchableOpacity
-          onPress={() => navigation.goBack()}>
+          onPress={() => props.navigation.goBack()}>
           <Image
             source={icons.arrowLeft}
             resizeMode='contain'
@@ -127,17 +132,19 @@ const ServiceDetails = ({ navigation }) => {
 
           <View style={styles.buttonActionContainer}>
             <TouchableOpacity
-              onPress={() => navigation.navigate("Chat")}
-              style={styles.buttonAction}>
+              onPress={handleStartMessaging}
+              style={styles.buttonAction}
+              disabled={msgLoading}
+            >
               <Image
                 source={icons.chat}
                 resizeMode='contain'
                 style={styles.buttonActionIcon}
               />
-              <Text style={styles.buttonActionText}>Message</Text>
+              <Text style={styles.buttonActionText}>{msgLoading ? 'Loading...' : 'Message'}</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={() => navigation.navigate("BookingStep1")}
+              onPress={() => props.navigation.navigate("BookingStep1")}
               style={styles.buttonActionRight}>
               <Image
                 source={icons.calendar2}
@@ -153,6 +160,38 @@ const ServiceDetails = ({ navigation }) => {
       </View>
     )
   }
+
+  // Helper to find existing conversation
+  const findConversationWithWorker = async (userId, workerId) => {
+    const conversations = await getUserConversations(userId);
+    return conversations.find(conv =>
+      conv.participants.some(p => p.id === workerId)
+    );
+  };
+
+  const handleStartMessaging = async () => {
+    if (!user?.id) return;
+    console.log(user.id);
+    setMsgLoading(true);
+    try {
+      // 1. Try to find existing conversation
+      let conversation = await findConversationWithWorker(user.id, "880ed074-be77-41d3-baaf-30375483ea01");
+      let conversationId;
+      if (conversation) {
+        conversationId = conversation.id;
+      } else {
+        // 2. Create new conversation
+        conversationId = await createConversation([user.id, "880ed074-be77-41d3-baaf-30375483ea01"]);
+      }
+      // 3. Navigate to Chat
+      props.navigation.navigate('Chat', { conversationId, workerId: "880ed074-be77-41d3-baaf-30375483ea01" });
+    } catch (err) {
+      alert('Failed to start conversation: ' + (err.message || err));
+    } finally {
+      setMsgLoading(false);
+    }
+  };
+
   return (
     <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
       <View style={[styles.container, { backgroundColor: colors.background }]}>

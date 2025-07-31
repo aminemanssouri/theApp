@@ -11,9 +11,8 @@ import Button from '../components/Button';
 import SocialButton from '../components/SocialButton';
 import OrSeparator from '../components/OrSeparator';
 import { useTheme } from '../theme/ThemeProvider';
+import { signIn } from '../lib/services/auth';
 
-import { signIn,signInWithGoogle } from '../lib/services/auth';
-import { supabase } from '../lib/supabase';
 const isTestMode = false;
 
 const initialState = {
@@ -35,7 +34,6 @@ const Login = ({ navigation }) => {
   const [isChecked, setChecked] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { colors, dark } = useTheme();
-  const [isLoading, setIsLoading] = useState(false);
 
   const inputChangedHandler = useCallback(
     (inputId, inputValue) => {
@@ -50,7 +48,6 @@ const Login = ({ navigation }) => {
       Alert.alert('An error occured', error)
     }
   }, [error]);
-
 
   // Handle login with Supabase
   const handleLogin = async () => {
@@ -100,28 +97,10 @@ const Login = ({ navigation }) => {
   };
 
   // Implementing google authentication
-const googleAuthHandler = async () => {
-  setIsLoading(true)
-  try {
-    const { data, error } = await signInWithGoogle()
-    if (error) throw error
-    
-    console.log('Google Sign In Data:', data);
-    
-    // Check if we have a valid session
-    const { data: sessionData } = await supabase.auth.getSession();
-    if (sessionData?.session) {
-      console.log('Google authentication successful');
-      navigation.navigate("Main");
-    } else {
-      console.log('Authentication completed but no session found');
-    }
-  } catch (error) {
-    Alert.alert('Error', error.message)
-  } finally {
-    setIsLoading(false)
-  }
-};
+  const googleAuthHandler = () => {
+    console.log("Google Authentication")
+  };
+
   return (
     <SafeAreaView style={[styles.area, {
       backgroundColor: colors.background }]}>
@@ -175,11 +154,10 @@ const googleAuthHandler = async () => {
             </View>
           </View>
           <Button
-            title={isLoading ? 'Logging in...' : 'Login'}
+            title="Login"
             filled
             onPress={handleLogin}
             style={styles.button}
-
             isLoading={isLoading}
           />
           <TouchableOpacity

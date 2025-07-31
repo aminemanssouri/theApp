@@ -4,13 +4,17 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { COLORS, FONTS, icons } from '../constants';
 import { Bookings, Favourite, Home, Inbox, Profile } from '../screens';
 import { useTheme } from '../theme/ThemeProvider';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNotifications } from '../context/NotificationContext';
+import NotificationBadge from '../components/NotificationBadge';
+// Removed safe area context dependency
 
 const Tab = createBottomTabNavigator();
 
 const BottomTabNavigation = () => {
     const { dark } = useTheme();
-    const insets = useSafeAreaInsets();
+    const { unreadCount } = useNotifications();
+    // Manual safe area calculation
+    const getSafeAreaBottom = () => Platform.OS === 'ios' ? 34 : 0;
     const { width } = Dimensions.get('window');
     const isSmallScreen = width < 375;
 
@@ -28,7 +32,7 @@ const BottomTabNavigation = () => {
                     bottom: Platform.OS === 'android' ? 22 : 0, // Lift above Android navigation
                     left: isSmallScreen ? 5 : 10,
                     right: isSmallScreen ? 5 : 10,
-                    height: Platform.OS === 'ios' ? 75 + insets.bottom : 60,
+                    height: Platform.OS === 'ios' ? 75 + getSafeAreaBottom() : 60,
                     backgroundColor: dark ? COLORS.dark1 : COLORS.white,
                     borderTopWidth: 0,
                     borderRadius: 20, // Rounded corners for modern look
@@ -37,7 +41,7 @@ const BottomTabNavigation = () => {
                     shadowOffset: { width: 0, height: 4 },
                     shadowOpacity: 0.1,
                     shadowRadius: 8,
-                    paddingBottom: Platform.OS === 'ios' ? insets.bottom : 8,
+                    paddingBottom: Platform.OS === 'ios' ? getSafeAreaBottom() : 8,
                     paddingTop: 8,
                     paddingHorizontal: 10,
                 },
@@ -167,38 +171,41 @@ const BottomTabNavigation = () => {
                 component={Inbox}
                 options={{
                     sceneContainerStyle: {
+                        backgroundColor: 'transparent',
                         paddingTop: 0,
                         marginTop: 0,
-                        backgroundColor: 'transparent',
                     },
                     tabBarIcon: ({ focused }) => (
-                        <View style={{
-                            alignItems: "center",
-                            justifyContent: "center",
-                            backgroundColor: focused ? `${COLORS.primary}15` : 'transparent',
-                            borderRadius: 12,
-                            paddingHorizontal: 12,
-                            paddingVertical: 6,
-                        }}>
-                            <Image
-                                source={focused ? icons.chatBubble2 : icons.chatBubble2Outline}
-                                resizeMode='contain'
-                                style={{
-                                    height: 20,
-                                    width: 20,
-                                    tintColor: focused ? COLORS.primary : dark ? COLORS.gray3 : COLORS.gray3,
-                                }}
-                            />
-                            <Text style={{
-                                ...FONTS.body5,
-                                color: focused ? COLORS.primary : dark ? COLORS.gray3 : COLORS.gray3,
-                                fontWeight: focused ? '600' : '400',
-                                marginTop: 2,
-                                fontSize: 9,
-                                textAlign: 'center',
-                            }} numberOfLines={1}>
-                                Inbox
-                            </Text>
+                        <View style={{ position: 'relative' }}>
+                            <View style={{
+                                alignItems: "center",
+                                justifyContent: "center",
+                                backgroundColor: focused ? `${COLORS.primary}15` : 'transparent',
+                                borderRadius: 12,
+                                paddingHorizontal: 12,
+                                paddingVertical: 6,
+                            }}>
+                                <Image
+                                    source={focused ? icons.chatBubble2 : icons.chatBubble2Outline}
+                                    resizeMode='contain'
+                                    style={{
+                                        height: 20,
+                                        width: 20,
+                                        tintColor: focused ? COLORS.primary : dark ? COLORS.gray3 : COLORS.gray3,
+                                    }}
+                                />
+                                <Text style={{
+                                    ...FONTS.body5,
+                                    color: focused ? COLORS.primary : dark ? COLORS.gray3 : COLORS.gray3,
+                                    fontWeight: focused ? '600' : '400',
+                                    marginTop: 2,
+                                    fontSize: 9,
+                                    textAlign: 'center',
+                                }} numberOfLines={1}>
+                                    Inbox
+                                </Text>
+                            </View>
+                            <NotificationBadge count={unreadCount} />
                         </View>
                     ),
                 }}
