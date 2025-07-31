@@ -1,12 +1,23 @@
 import { View, Text, TouchableOpacity, StyleSheet, Image, TextInput, FlatList, Platform } from 'react-native';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScrollView } from 'react-native-virtualized-view';
 import { images, COLORS, SIZES, icons } from "../constants";
-import { banners, categories, mostPopularServices } from '../data';
+import { banners } from '../data'; // Keep banners as static for now
+import { 
+  fetchHomepageData,
+  fetchServiceCategories,
+  fetchAllCategories,
+  fetchActiveServices,
+  transformCategories, 
+  transformServices,
+  getWorkersForService
+} from '../lib/services/home';
+import { supabase } from '../lib/supabase';
 import SubHeaderItem from '../components/SubHeaderItem';
 import Category from '../components/Category';
 import ServiceCard from '../components/ServiceCard';
+import ServiceDebugger from '../components/ServiceDebugger'; // Import the service debugger
 import { useTheme } from '../theme/ThemeProvider';
 import { useAuth } from '../context/AuthContext';
 
@@ -16,21 +27,158 @@ const Home = ({ navigation }) => {
   const insets = useSafeAreaInsets();
   const { user, isAuthenticated, loading } = useAuth();
   
-  if (loading) {
-    return (
-      <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
-        <Text>Loading...</Text>
-      </SafeAreaView>
-    );
-  }
 
-  if (!isAuthenticated) {
-    return (
-      <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
-        <Text>You are not authenticated. Please log in.</Text>
-      </SafeAreaView>
-    );
-  }
+  // Supabase data states
+  const [categories, setCategories] = useState([]);
+  const [allCategories, setAllCategories] = useState([]);
+  const [services, setServices] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showAllCategories, setShowAllCategories] = useState(false);
+  
+  // Move useState hooks to component level
+  const [search, setSearch] = useState("");
+  const [selectedCategories, setSelectedCategories] = useState(["all"]); // Start with "all" instead of hardcoded "1"
+
+  // Toggle category selection function
+  const toggleCategory = (categoryId) => {
+    if (categoryId === "all") {
+      // If "All" is selected, clear other selections
+      setSelectedCategories(["all"]);
+    } else {
+      // Remove "all" if a specific category is selected
+      const updatedCategories = selectedCategories.filter(id => id !== "all");
+      const index = updatedCategories.indexOf(categoryId);
+
+      if (index === -1) {
+        // Add the category if not selected
+        updatedCategories.push(categoryId);
+      } else {
+        // Remove the category if already selected
+        updatedCategories.splice(index, 1);
+      }
+
+      // If no categories selected, default to "all"
+      setSelectedCategories(updatedCategories.length > 0 ? updatedCategories : ["all"]);
+    }
+  };
+
+  // Fetch data from Supabase on component mount
+  useEffect(() => {
+    loadHomepageData();
+    
+    // Add debug function to test SQL function directly using our helper function
+    const testSQLFunction = async () => {
+      try {
+        console.log('⚠️ TESTING SQL FUNCTION DIRECTLY ⚠️');
+        
+        // First get all services to test with
+        const { data: serviceData, error: serviceError } = await supabase
+          .from('services')
+          .select('id, name')
+          .limit(10);
+          
+        if (serviceError || !serviceData || !serviceData.length) {
+          console.error('❌ Could not find services to test with');
+          return;
+        }
+        
+        console.log(`Found ${serviceData.length} services to test:`);
+        
+        // Test with each service ID
+        for (const service of serviceData) {
+          console.log(`\n🔍 Testing service: ${service.name} (${service.id})`);
+          
+          // Use our helper function with the correct parameter syntax
+          const { data, error } = await getWorkersForService(service.id);
+          
+          if (error) {
+            console.error(`❌ SQL function error for ${service.name}:`, error);
+          } else {
+            console.log(`✅ SQL function result for ${service.name}: Found ${data?.length || 0} workers`);
+            if (data && data.length > 0) {
+              console.log(`First worker for ${service.name}:`, data[0].worker_full_name || `${data[0].first_name} ${data[0].last_name}`);
+            } else {
+              console.log(`No workers found for ${service.name}`);
+              
+              // Now check if there are actually worker_services for this service
+              const { data: workerServices, error: wsError } = await supabase
+                .from('worker_services')
+                .select('*')
+                .eq('service_id', service.id);
+                
+              if (wsError) {
+                console.error(`❌ Error checking worker_services for ${service.name}:`, wsError);
+              } else {
+                console.log(`✅ Direct check: ${workerServices?.length || 0} worker_services found for ${service.name}`);
+                if (workerServices && workerServices.length > 0) {
+                  console.log(`First worker_service for ${service.name}:`, workerServices[0]);
+                }
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.error('❌ Test function error:', err);
+      }
+    };
+    
+    // Run the test after a short delay
+    setTimeout(testSQLFunction, 2000);
+  }, []);
+
+  const loadHomepageData = async () => {
+    try {
+      setLoading(true);
+      console.log('🚀 LOADING HOMEPAGE DATA...');
+      
+      // Use the simplified fetchHomepageData function
+      const { categories: homepageCategories, services: homepageServices, error } = 
+        await fetchHomepageData();
+      
+      if (error) {
+        console.error('❌ ERROR FETCHING DATA:', error);
+        setLoading(false);
+        return;
+      }
+      
+      console.log(`✅ Got ${homepageCategories?.length || 0} categories and ${homepageServices?.length || 0} services`);
+      
+      // Fetch all categories for "See all" functionality
+      const { data: allCats } = await fetchAllCategories();
+      const allTransformedCategories = transformCategories(allCats || []);
+      
+      // Set data to state
+      console.log('🔄 Updating state with data...');
+      setCategories(homepageCategories || []);
+      setAllCategories(allTransformedCategories || []);
+      setServices(homepageServices || []); // Services are already processed
+      
+      console.log('✅ STATE UPDATED');
+      
+      if (homepageServices?.length === 0) {
+        console.warn('⚠️ NO SERVICES FOUND TO DISPLAY');
+      } else {
+        console.log(`✅ SET ${homepageServices?.length || 0} SERVICES TO STATE`);
+        
+        // Log first service details
+        if (homepageServices && homepageServices.length > 0) {
+          const firstService = homepageServices[0];
+          console.log('FIRST SERVICE:', {
+            id: firstService.id,
+            name: firstService.name,
+            providerName: firstService.providerName
+          });
+        }
+      }
+      
+      console.log('✅ HOMEPAGE DATA LOADED SUCCESSFULLY');
+    } catch (error) {
+      console.error('❌ Error loading homepage data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
 
   // Calculate bottom spacing to avoid tab bar overlap
   const getBottomSpacing = () => {
@@ -114,7 +262,6 @@ const Home = ({ navigation }) => {
   * render search bar
   */
   const renderSearchBar = () => {
-    const [search, setSearch] = useState("");
     const handleInputFocus = () => {
       // Redirect to another screen
       navigation.navigate('Search');
@@ -185,20 +332,23 @@ const Home = ({ navigation }) => {
    * Render categories
    */
   const renderCategories = () => {
+    // Display either all categories or just the first 8
+    const displayCategories = showAllCategories ? allCategories : categories;
+    const hasMoreCategories = allCategories.length > categories.length;
 
     return (
       <View>
         <SubHeaderItem
           title="Categories"
-          navTitle="See all"
-          onPress={() => console.log("See all services")}
+          navTitle=""
+          onPress={null}
         />
         <FlatList
-          data={categories}
-          keyExtractor={(item, index) => index.toString()}
+          data={displayCategories}
+          keyExtractor={(item) => item.id.toString()}
           horizontal={false}
-          numColumns={4} // Render two items per row
-          renderItem={({ item, index }) => (
+          numColumns={4} // Render four items per row
+          renderItem={({ item }) => (
             <Category
               name={item.name}
               icon={item.icon}
@@ -207,6 +357,16 @@ const Home = ({ navigation }) => {
             />
           )}
         />
+        {hasMoreCategories && (
+          <TouchableOpacity 
+            style={styles.seeAllButton}
+            onPress={() => setShowAllCategories(!showAllCategories)}
+          >
+            <Text style={styles.seeAllButtonText}>
+              {showAllCategories ? "Show fewer categories" : "See all categories"}
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
     )
   }
@@ -215,11 +375,34 @@ const Home = ({ navigation }) => {
    * Render Top Services
    */
   const renderTopServices = () => {
-    const [selectedCategories, setSelectedCategories] = useState(["1"]);
+    console.log(`🔍 RENDERING SERVICES. Total services: ${services.length}, Selected categories: ${selectedCategories.join(', ')}`);
+    
+    // Debug log service data
+    if (services && services.length > 0) {
+      console.log('💡 SAMPLE SERVICE DATA:', {
+        id: services[0].id,
+        name: services[0].name,
+        providerName: services[0].providerName,
+        hasWorker: services[0].hasWorker,
+        categoryId: services[0].categoryId,
+        workerId: services[0].workerId
+      });
+    } else {
+      console.warn('⚠️ NO SERVICES AVAILABLE TO RENDER');
+    }
+    
+    // Filter services based on selected categories
+    const filteredServices = selectedCategories.includes("all") 
+      ? services // Show all services if "all" is selected
+      : services.filter(service => selectedCategories.includes(service.categoryId));
+      
+    console.log(`✅ Filtered to ${filteredServices.length} services based on selected categories`);
 
-    const filteredServices = mostPopularServices.filter(service => selectedCategories.includes("1") || selectedCategories.includes(service.categoryId));
+    // Use the categories directly from state (which already include the "All" option)
+    const filterCategories = categories;
+    console.log('Filter categories:', categories.map(c => `${c.id}:${c.name}`).join(', '));
 
-    // Category item
+    // Category item for filtering
     const renderCategoryItem = ({ item }) => (
       <TouchableOpacity
         style={{
@@ -238,54 +421,63 @@ const Home = ({ navigation }) => {
       </TouchableOpacity>
     );
 
-    // Toggle category selection
-    const toggleCategory = (categoryId) => {
-      const updatedCategories = [...selectedCategories];
-      const index = updatedCategories.indexOf(categoryId);
-
-      if (index === -1) {
-        updatedCategories.push(categoryId);
-      } else {
-        updatedCategories.splice(index, 1);
-      }
-
-      setSelectedCategories(updatedCategories);
-    };
-
     return (
       <View>
         <SubHeaderItem
           title="Popular Services"
           navTitle="See all"
-          onPress={() => navigation.navigate("PopularServices")}
+          onPress={() => navigation.navigate("AllServices", { showPopular: true })}
         />
         <FlatList
-          data={categories}
-          keyExtractor={item => item.id}
+          data={filterCategories}
+          keyExtractor={(item, index) => `category-${item.id}-${index}`}
           showsHorizontalScrollIndicator={false}
           horizontal
           renderItem={renderCategoryItem}
+          style={{ marginBottom: 16 }}
         />
-        <FlatList
-          data={filteredServices}
-          keyExtractor={item => item.id}
-          renderItem={({ item }) => {
-            return (
-              <ServiceCard
-                name={item.name}
-                image={item.image}
-                providerName={item.providerName}
-                price={item.price}
-                isOnDiscount={item.isOnDiscount}
-                oldPrice={item.oldPrice}
-                rating={item.rating}
-                numReviews={item.numReviews}
-                onPress={() => navigation.navigate("ServiceDetails")}
-                categoryId={item.categoryId}
-              />
-            )
-          }}
-        />
+        {filteredServices.length > 0 ? (
+          <FlatList
+            data={filteredServices}
+            keyExtractor={(item, index) => `service-${item.id}-${index}`}
+            renderItem={({ item }) => {
+              return (
+                <ServiceCard
+                  name={item.name}
+                  image={item.image}
+                  providerName={item.providerName}
+                  price={item.price}
+                  isOnDiscount={item.isOnDiscount}
+                  oldPrice={item.oldPrice}
+                  rating={item.rating}
+                  numReviews={item.numReviews}
+                  worker={item.worker}
+                  hasWorker={item.hasWorker}
+                  onPress={() => {
+                    if (item.hasWorker && item.workerId) {
+                      navigation.navigate("WorkerDetails", { 
+                        workerId: item.workerId,
+                        serviceId: item.serviceId
+                      });
+                    } else {
+                      navigation.navigate("ServiceDetails", { 
+                        serviceId: item.serviceId, 
+                        workerId: item.workerId
+                      });
+                    }
+                  }}
+                  categoryId={item.categoryId}
+                />
+              )
+            }}
+          />
+        ) : (
+          <View style={styles.noServicesContainer}>
+            <Text style={[styles.noServicesText, { color: colors.text }]}>
+              No services found in this category
+            </Text>
+          </View>
+        )}
       </View>
     )
   }
@@ -303,8 +495,19 @@ const Home = ({ navigation }) => {
         >
           {renderSearchBar()}
           {renderBanner()}
-          {renderCategories()}
-          {renderTopServices()}
+          {/* Service Debugger Component - Remove for production */}
+          {!loading && services && services.length > 0 && <ServiceDebugger services={services} />}
+          
+          {loading ? (
+            <View style={styles.loadingContainer}>
+              <Text style={[styles.loadingText, { color: colors.text }]}>Loading...</Text>
+            </View>
+          ) : (
+            <>
+              {renderCategories()}
+              {renderTopServices()}
+            </>
+          )}
         </ScrollView>
       </View>
     </SafeAreaView>
@@ -455,6 +658,40 @@ const styles = StyleSheet.create({
   categoryContainer: {
     flexDirection: "row",
     flexWrap: "wrap"
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 50
+  },
+  loadingText: {
+    fontSize: 16,
+    fontFamily: "medium"
+  },
+  noServicesContainer: {
+    paddingVertical: 32,
+    alignItems: 'center'
+  },
+  noServicesText: {
+    fontSize: 16,
+    fontFamily: "medium",
+    textAlign: 'center'
+  },
+  seeAllButton: {
+    alignSelf: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    marginVertical: 15,
+    borderRadius: 20,
+    backgroundColor: COLORS.primary + '15', // Primary color with opacity
+    borderWidth: 1,
+    borderColor: COLORS.primary
+  },
+  seeAllButtonText: {
+    color: COLORS.primary,
+    fontFamily: 'medium',
+    fontSize: 14
   }
 })
 

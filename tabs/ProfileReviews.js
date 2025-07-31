@@ -1,17 +1,32 @@
 import { View, Text, StyleSheet, Image, TouchableOpacity, FlatList } from 'react-native';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { COLORS, icons } from '../constants';
 import { ScrollView } from 'react-native-virtualized-view';
-import { reviews } from '../data';
+import { reviews as dummyReviews } from '../data';
 import ReviewCard from '../components/ReviewCard';
 import { Fontisto } from "@expo/vector-icons";
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../theme/ThemeProvider';
 
-const ProfileReviews = () => {
+const ProfileReviews = ({ worker }) => {
   const navigation = useNavigation();
   const [selectedRating, setSelectedRating] = useState("All");
   const { colors, dark } = useTheme();
+  const [reviews, setReviews] = useState([]);
+  
+  // Use worker reviews if available, otherwise fall back to dummy reviews
+  useEffect(() => {
+    if (worker?.reviews && worker.reviews.length > 0) {
+      setReviews(worker.reviews.map(review => ({
+        id: review.id,
+        name: review.client_name || "Client",
+        photo: null,
+        avgRating: review.rating,
+        review: review.comment,
+        postedOn: review.created_at
+      })));
+    }
+  }, [worker]);
 
   const renderRatingButton = (rating) => (
     <TouchableOpacity
@@ -29,7 +44,7 @@ const ProfileReviews = () => {
   return (
     <ScrollView
       showsVerticalScrollIndicator={false}
-      style={[styles.container, { backgroundColor: colors.background }]}>
+      style={[styles.container, { backgroundColor: dark ? COLORS.dark : colors.background }]}>
       <View style={styles.reviewHeaderContainer}>
         <View style={styles.reviewHeaderLeft}>
           <Image
@@ -55,20 +70,26 @@ const ProfileReviews = () => {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.ratingButtonContainer}
       />
-      <FlatList
-        data={filteredReviews}
-        keyExtractor={item => item.id}
-        renderItem={({ item, index }) => (
-          <ReviewCard
-            avatar={item.avatar}
-            name={item.name}
-            description={item.description}
-            avgRating={item.avgRating}
-            date={item.date}
-            numLikes={item.numLikes}
-          />
-        )}
-      />
+      {filteredReviews.length > 0 ? (
+        <FlatList
+          data={filteredReviews}
+          keyExtractor={item => item.id}
+          renderItem={({ item, index }) => (
+            <ReviewCard
+              avatar={item.avatar}
+              name={item.name}
+              description={item.description || item.review}
+              avgRating={item.avgRating}
+              date={item.date || item.postedOn}
+              numLikes={item.numLikes}
+            />
+          )}
+        />
+      ) : (
+        <View style={styles.emptyReviewsContainer}>
+          <Text style={styles.emptyReviewsText}>No reviews yet.</Text>
+        </View>
+      )}
     </ScrollView>
   )
 };
@@ -76,7 +97,18 @@ const ProfileReviews = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.white
+    paddingHorizontal: 24,
+    paddingTop: 16
+  },
+  emptyReviewsContainer: {
+    padding: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyReviewsText: {
+    fontSize: 16,
+    color: COLORS.gray,
+    textAlign: 'center',
   },
   reviewHeaderContainer: {
     flexDirection: "row",

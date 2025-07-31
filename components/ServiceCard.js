@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, TouchableOpacity, Image, Animated } from 'react-native';
 import React, { useState, useRef } from 'react';
-import { COLORS, SIZES, icons } from '../constants';
+import { COLORS, SIZES, icons, images } from '../constants';
 import { FontAwesome } from '@expo/vector-icons';
 import { useTheme } from '../theme/ThemeProvider';
 
@@ -13,7 +13,9 @@ const ServiceCard = ({
     oldPrice,
     rating,
     numReviews,
-    onPress
+    onPress,
+    worker,
+    hasWorker
 }) => {
     const [isBookmarked, setIsBookmarked] = useState(false);
     const { dark } = useTheme();
@@ -67,16 +69,23 @@ const ServiceCard = ({
                 style={[styles.container, { 
                     backgroundColor: dark ? COLORS.dark2 : COLORS.white
                 }]}>
+                {/* Left side - service image */}
                 <Image
                     source={image}
                     resizeMode='cover'
                     style={styles.courseImage}
                 />
+                
                 <View style={{ flex: 1 }}>
+                    {/* Provider name tag */}
                     <View style={styles.topContainer}>
                         <View style={styles.categoryContainer}>
-                            <Text style={styles.categoryName}>{providerName}</Text>
+                            <Text style={styles.categoryName}>
+                                {(hasWorker && worker && worker.display_name) || providerName || "Service Provider"}
+                            </Text>
                         </View>
+                        
+                        {/* Bookmark button */}
                         <TouchableOpacity
                             onPress={() => setIsBookmarked(!isBookmarked)}
                             style={styles.bookmarkButton}>
@@ -89,9 +98,31 @@ const ServiceCard = ({
                             />
                         </TouchableOpacity>
                     </View>
+                    
+                    {/* Service name */}
                     <Text style={[styles.name, { 
                          color: dark ? COLORS.secondaryWhite : COLORS.greyscale900,
-                    }]}>{name}</Text>
+                    }]} numberOfLines={1} ellipsizeMode="tail">{name || "Service"}</Text>
+                    
+                    {/* Worker info if available */}
+                    {hasWorker && worker && (
+                        <View style={styles.workerInfoContainer}>
+                            <Image
+                                source={images.user5} // Using placeholder image since profile_image isn't in schema
+                                style={styles.workerThumbnail}
+                            />
+                            <View>
+                                <Text style={[styles.workerName]}>
+                                    {worker.display_name || worker.worker_full_name || worker.full_name || providerName || `${worker.first_name || ''} ${worker.last_name || ''}`.trim() || "Professional"}
+                                </Text>
+                                <Text style={styles.workerJobsText}>
+                                    {worker.total_jobs || worker.completed_jobs || 0} jobs completed
+                                </Text>
+                            </View>
+                        </View>
+                    )}
+                    
+                    {/* Price section */}
                     <View style={styles.priceContainer}>
                         <Text style={styles.price}>${price}</Text>
                         {
@@ -100,10 +131,14 @@ const ServiceCard = ({
                             }]}>{"   "}${oldPrice}</Text>
                         }
                     </View>
+                    
+                    {/* Rating section */}
                     <View style={styles.ratingContainer}>
                         <FontAwesome name="star-half-empty" size={16} color="orange" />
                         <Text style={[styles.rating, { color: dark ? COLORS.greyscale300 : COLORS.grayscale700 }]}> {" "}{rating}</Text>
-                        <Text style={[styles.numReviews, { color: dark ? COLORS.greyscale300 : COLORS.grayscale700 }]}> |  {numReviews} reviews</Text>
+                        <Text style={[styles.numReviews, { color: dark ? COLORS.greyscale300 : COLORS.grayscale700 }]}>
+                            {" "} | {" "}{hasWorker ? "Jobs" : "Reviews"}: {numReviews}
+                        </Text>
                     </View>
                 </View>
             </TouchableOpacity>
@@ -119,7 +154,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 10,
         flexDirection: 'row',
         alignItems:"center",
-        height: 148,
+        height: 160, // Increased height to accommodate worker info
         backgroundColor: COLORS.white,
         shadowColor: COLORS.black,
         shadowOffset: {
@@ -164,7 +199,29 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontFamily: 'bold',
         color: COLORS.black,
-        marginVertical: 10,
+        marginVertical: 6,
+    },
+    // Worker specific styles
+    workerInfoContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 8,
+    },
+    workerThumbnail: {
+        width: 24,
+        height: 24,
+        borderRadius: 12,
+        marginRight: 8,
+    },
+    workerName: {
+        fontSize: 13,
+        fontFamily: 'semiBold',
+        color: COLORS.greyscale900,
+    },
+    workerJobsText: {
+        fontSize: 12,
+        fontFamily: 'regular',
+        color: COLORS.greyscale700,
     },
     priceContainer: {
         flexDirection: "row",
