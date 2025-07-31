@@ -1,15 +1,90 @@
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image } from 'react-native';
-import React, { useState } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { SIZES, COLORS } from '../constants';
 import { useTheme } from '../theme/ThemeProvider';
 import { useNavigation } from '@react-navigation/native';
+import { useAuth } from '../context/AuthContext';
+import { getCancelledBookings } from '../lib/services/booking';
 import { FontAwesome } from "@expo/vector-icons";
-import { cancelledBookings } from '../data';
 
-const CancelledBooking = () => {
-  const [bookings, setBookings] = useState(cancelledBookings);
+const CancelledBooking = forwardRef((props, ref) => {
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
   const { dark } = useTheme();
   const navigation = useNavigation();
+  const { user, loading: authLoading } = useAuth();
+
+  const fetchCancelledBookings = async () => {
+    if (!user?.id) return;
+    
+    try {
+      setLoading(true);
+      const data = await getCancelledBookings(user.id);
+      console.log('📊 Cancelled bookings:', data?.length || 0);
+      setBookings(data || []);
+    } catch (error) {
+      console.error('❌ Error fetching cancelled bookings:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Expose refresh method to parent component
+  useImperativeHandle(ref, () => ({
+    refreshData: fetchCancelledBookings
+  }));
+
+  useEffect(() => {
+    let mounted = true;
+    
+    const initFetch = async () => {
+      if (!authLoading && user?.id && mounted) {
+        await fetchCancelledBookings();
+      } else if (!authLoading && !user?.id && mounted) {
+        setLoading(false);
+      }
+    };
+    
+    initFetch();
+    
+    return () => {
+      mounted = false;
+    };
+  }, [user?.id, authLoading]);
+
+  if (loading) {
+    return (
+      <View style={[styles.container, {
+        backgroundColor: dark ? COLORS.dark1 : COLORS.tertiaryWhite,
+        justifyContent: 'center',
+        alignItems: 'center'
+      }]}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
+
+  if (bookings.length === 0) {
+    return (
+      <View style={[styles.container, {
+        backgroundColor: dark ? COLORS.dark1 : COLORS.tertiaryWhite,
+        justifyContent: 'center',
+        alignItems: 'center'
+      }]}>
+        <Text style={{
+          color: dark ? COLORS.secondaryWhite : COLORS.greyscale900,
+          textAlign: 'center',
+          marginBottom: 8,
+          fontSize: 18,
+          fontFamily: 'bold'
+        }}>No Cancelled Bookings</Text>
+        <Text style={{
+          color: dark ? COLORS.grayscale400 : COLORS.grayscale700,
+          textAlign: 'center'
+        }}>You don't have any cancelled bookings.</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.container, {
@@ -20,35 +95,50 @@ const CancelledBooking = () => {
         keyExtractor={item => item.id}
         showsVerticalScrollIndicator={false}
         renderItem={({ item }) => (
-          <TouchableOpacity style={[styles.cardContainer, {
-            backgroundColor: dark ? COLORS.dark2 : COLORS.white,
-          }]}>
+          <TouchableOpacity 
+            style={[styles.cardContainer, {
+              backgroundColor: dark ? COLORS.dark2 : COLORS.white,
+            }]}
+            onPress={() => navigation.navigate("BookingDetails", { id: item.id })}
+          >
 
             <View style={styles.detailsContainer}>
               <View>
                 <Image
-                  source={item.image}
+                  source={
+                    item.worker?.profile_picture 
+                      ? { uri: item.worker.profile_picture }
+                      : require('../assets/images/users/user1.jpeg')
+                  }
                   resizeMode='cover'
                   style={styles.serviceImage}
                 />
                 <View style={styles.reviewContainer}>
                   <FontAwesome name="star" size={12} color="orange" />
-                  <Text style={styles.rating}>{item.rating}</Text>
+                  <Text style={styles.rating}>{item.worker?.average_rating || "N/A"}</Text>
                 </View>
               </View>
               <View style={styles.detailsRightContainer}>
                 <Text style={[styles.name, {
                   color: dark ? COLORS.secondaryWhite : COLORS.greyscale900
-                }]}>{item.provider}</Text>
+                }]}>
+                  {item.worker?.first_name && item.worker?.last_name
+                    ? `${item.worker.first_name} ${item.worker.last_name}`
+                    : "Service Provider"}
+                </Text>
                 <Text style={[styles.address, {
                   color: dark ? COLORS.grayscale400 : COLORS.grayscale700,
-                }]}>{item.address}</Text>
+                }]}>{item.address}, {item.city}</Text>
                 <View style={styles.priceContainer}>
                   <View style={styles.priceItemContainer}>
-                    <Text style={styles.totalPrice}>${item.price}</Text>
+                    <Text style={styles.totalPrice}>€{item.total_amount || item.price}</Text>
                   </View>
-                  <View style={styles.statusContainer}>
-                    <Text style={styles.statusText}>{item.status}</Text>
+                  <View style={[styles.statusContainer, {
+                    borderColor: COLORS.red
+                  }]}>
+                    <Text style={[styles.statusText, {
+                      color: COLORS.red
+                    }]}>Cancelled</Text>
                   </View>
                 </View>
               </View>
@@ -59,7 +149,7 @@ const CancelledBooking = () => {
             }]} />
             <View style={styles.buttonContainer}>
               <TouchableOpacity
-                onPress={() => navigation.navigate("ReviewSummary")}
+                onPress={() => navigation.navigate("EReceipt", { bookingId: item.id })}
                 style={styles.receiptBtn}>
                 <Text style={styles.receiptBtnText}>View</Text>
               </TouchableOpacity>
@@ -69,7 +159,7 @@ const CancelledBooking = () => {
       />
     </View>
   )
-};
+});
 
 const styles = StyleSheet.create({
   container: {

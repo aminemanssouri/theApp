@@ -1,15 +1,90 @@
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image } from 'react-native';
-import React, { useState } from 'react';
-import { completedBookings } from '../data';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { SIZES, COLORS } from '../constants';
 import { useTheme } from '../theme/ThemeProvider';
 import { useNavigation } from '@react-navigation/native';
+import { useAuth } from '../context/AuthContext';
+import { getCompletedBookings } from '../lib/services/booking';
 import { FontAwesome } from "@expo/vector-icons";
 
-const CompletedBooking = () => {
-  const [bookings, setBookings] = useState(completedBookings);
+const CompletedBooking = forwardRef((props, ref) => {
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
   const { dark } = useTheme();
   const navigation = useNavigation();
+  const { user, loading: authLoading } = useAuth();
+
+  const fetchCompletedBookings = async () => {
+    if (!user?.id) return;
+    
+    try {
+      setLoading(true);
+      const data = await getCompletedBookings(user.id);
+      console.log('📊 Completed bookings:', data?.length || 0);
+      setBookings(data || []);
+    } catch (error) {
+      console.error('❌ Error fetching completed bookings:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Expose refresh method to parent component
+  useImperativeHandle(ref, () => ({
+    refreshData: fetchCompletedBookings
+  }));
+
+  useEffect(() => {
+    let mounted = true;
+    
+    const initFetch = async () => {
+      if (!authLoading && user?.id && mounted) {
+        await fetchCompletedBookings();
+      } else if (!authLoading && !user?.id && mounted) {
+        setLoading(false);
+      }
+    };
+    
+    initFetch();
+    
+    return () => {
+      mounted = false;
+    };
+  }, [user?.id, authLoading]);
+
+  if (loading) {
+    return (
+      <View style={[styles.container, {
+        backgroundColor: dark ? COLORS.dark1 : COLORS.tertiaryWhite,
+        justifyContent: 'center',
+        alignItems: 'center'
+      }]}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
+
+  if (bookings.length === 0) {
+    return (
+      <View style={[styles.container, {
+        backgroundColor: dark ? COLORS.dark1 : COLORS.tertiaryWhite,
+        justifyContent: 'center',
+        alignItems: 'center'
+      }]}>
+        <Text style={{
+          color: dark ? COLORS.secondaryWhite : COLORS.greyscale900,
+          textAlign: 'center',
+          marginBottom: 8,
+          fontSize: 18,
+          fontFamily: 'bold'
+        }}>No Completed Bookings</Text>
+        <Text style={{
+          color: dark ? COLORS.grayscale400 : COLORS.grayscale700,
+          textAlign: 'center'
+        }}>You don't have any completed bookings yet.</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.container, {
@@ -20,34 +95,45 @@ const CompletedBooking = () => {
         keyExtractor={item => item.id}
         showsVerticalScrollIndicator={false}
         renderItem={({ item }) => (
-          <TouchableOpacity style={[styles.cardContainer, {
-            backgroundColor: dark ? COLORS.dark2 : COLORS.white,
-          }]}>
+          <TouchableOpacity 
+            style={[styles.cardContainer, {
+              backgroundColor: dark ? COLORS.dark2 : COLORS.white,
+            }]}
+            onPress={() => navigation.navigate("BookingDetails", { id: item.id })}
+          >
             <View style={styles.detailsContainer}>
               <View>
                 <Image
-                  source={item.image}
+                  source={
+                    item.worker?.profile_picture 
+                      ? { uri: item.worker.profile_picture }
+                      : require('../assets/images/users/user1.jpeg')
+                  }
                   resizeMode='cover'
                   style={styles.serviceImage}
                 />
                 <View style={styles.reviewContainer}>
                   <FontAwesome name="star" size={12} color="orange" />
-                  <Text style={styles.rating}>{item.rating}</Text>
+                  <Text style={styles.rating}>{item.worker?.average_rating || "N/A"}</Text>
                 </View>
               </View>
               <View style={styles.detailsRightContainer}>
                 <Text style={[styles.name, {
                   color: dark ? COLORS.secondaryWhite : COLORS.greyscale900
-                }]}>{item.provider}</Text>
+                }]}>
+                  {item.worker?.first_name && item.worker?.last_name
+                    ? `${item.worker.first_name} ${item.worker.last_name}`
+                    : "Service Provider"}
+                </Text>
                 <Text style={[styles.address, {
                   color: dark ? COLORS.grayscale400 : COLORS.grayscale700,
-                }]}>{item.address}</Text>
+                }]}>{item.address}, {item.city}</Text>
                 <View style={styles.priceContainer}>
                   <View style={styles.priceItemContainer}>
-                    <Text style={styles.totalPrice}>${item.price}</Text>
+                    <Text style={styles.totalPrice}>€{item.total_amount || item.price}</Text>
                   </View>
                   <View style={styles.statusContainer}>
-                    <Text style={styles.statusText}>{item.status}</Text>
+                    <Text style={styles.statusText}>Completed</Text>
                   </View>
                 </View>
               </View>
@@ -58,7 +144,7 @@ const CompletedBooking = () => {
             }]} />
             <View style={styles.buttonContainer}>
               <TouchableOpacity
-                onPress={() => navigation.navigate("EReceipt")}
+                onPress={() => navigation.navigate("EReceipt", { bookingId: item.id })}
                 style={styles.receiptBtn}>
                 <Text style={styles.receiptBtnText}>View E-Receipt</Text>
               </TouchableOpacity>
@@ -68,7 +154,7 @@ const CompletedBooking = () => {
       />
     </View>
   )
-};
+});
 
 const styles = StyleSheet.create({
   container: {

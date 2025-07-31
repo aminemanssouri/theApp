@@ -19,12 +19,15 @@ import Category from '../components/Category';
 import ServiceCard from '../components/ServiceCard';
 import ServiceDebugger from '../components/ServiceDebugger'; // Import the service debugger
 import { useTheme } from '../theme/ThemeProvider';
+import { useAuth } from '../context/AuthContext';
 
 const Home = ({ navigation }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const { dark, colors } = useTheme();
   const insets = useSafeAreaInsets();
+  const { user, isAuthenticated, loading } = useAuth();
   
+
   // Supabase data states
   const [categories, setCategories] = useState([]);
   const [allCategories, setAllCategories] = useState([]);
@@ -176,6 +179,7 @@ const Home = ({ navigation }) => {
     }
   };
   
+
   // Calculate bottom spacing to avoid tab bar overlap
   const getBottomSpacing = () => {
     const baseTabHeight = 60;

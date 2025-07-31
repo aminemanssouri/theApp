@@ -1,407 +1,192 @@
-import { View, Text, StyleSheet, ScrollView, Alert, Image, TouchableOpacity, Modal, TouchableWithoutFeedback, FlatList, TextInput } from 'react-native';
-import React, { useCallback, useEffect, useReducer, useState } from 'react';
-import { COLORS, SIZES, FONTS, icons } from '../constants';
+import { View, Text, StyleSheet, ScrollView, Alert, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Header from '../components/Header';
-import { reducer } from '../utils/reducers/formReducers';
-import { validateInput } from '../utils/actions/formActions';
-import { MaterialCommunityIcons, Feather, Ionicons } from "@expo/vector-icons";
-import { launchImagePicker } from '../utils/ImagePickerHelper';
+import { COLORS } from '../constants';
 import Input from '../components/Input';
-import { getFormatedDate } from "react-native-modern-datepicker";
-import DatePickerModal from '../components/DatePickerModal';
 import Button from '../components/Button';
 import { useTheme } from '../theme/ThemeProvider';
-
-const isTestMode = true;
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../context/AuthContext';
 
 const initialState = {
   inputValues: {
-    fullName: isTestMode ? 'John Doe' : '',
-    email: isTestMode ? 'example@gmail.com' : '',
-    nickname: isTestMode ? "" : "",
-    phoneNumber: ''
+    fullName: '',
+    nickname: '',
+    email: '',
+    phone: '',
+    date_of_birth: '',
   },
-  inputValidities: {
-    fullName: false,
-    email: false,
-    nickname: false,
-    phoneNumber: false,
-  },
-  formIsValid: false,
-}
-
+};
 
 const FillYourProfile = ({ navigation }) => {
-  const [image, setImage] = useState(null);
-  const [error, setError] = useState();
-  const [formState, dispatchFormState] = useReducer(reducer, initialState);
-  const [areas, setAreas] = useState([]);
-  const [selectedArea, setSelectedArea] = useState(null);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [openStartDatePicker, setOpenStartDatePicker] = useState(false);
+  const [formState, setFormState] = useState(initialState);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
   const { colors, dark } = useTheme();
+  const { user, isAuthenticated, loading } = useAuth();
 
-  const today = new Date();
-  const startDate = getFormatedDate(
-    new Date(today.setDate(today.getDate() + 1)),
-    "YYYY/MM/DD"
-  );
-
-  const [startedDate, setStartedDate] = useState("12/12/2023");
-
-  const handleOnPressStartDate = () => {
-    setOpenStartDatePicker(!openStartDatePicker);
+  const handleInputChange = (field, value) => {
+    setFormState((prev) => ({
+      ...prev,
+      inputValues: {
+        ...prev.inputValues,
+        [field]: value,
+      },
+    }));
   };
 
-  const inputChangedHandler = useCallback(
-    (inputId, inputValue) => {
-      const result = validateInput(inputId, inputValue)
-      dispatchFormState({ inputId, validationResult: result, inputValue })
-    },
-    [dispatchFormState]
-  )
-
-  useEffect(() => {
-    if (error) {
-      Alert.alert('An error occured', error)
-    }
-  }, [error])
-
-  const pickImage = async () => {
+  const handleProfileSubmit = async () => {
+    if (isLoading) return;
     try {
-      const tempUri = await launchImagePicker()
-
-      if (!tempUri) return
-
-      // set the image
-      setImage({ uri: tempUri })
-    } catch (error) { }
+      setIsLoading(true);
+      setError(null);
+      // Use user from context
+      if (!user) {
+        throw new Error('Could not get user information. Please try logging in again.');
+      }
+      const userId = user.id;
+      const { fullName, nickname, email, phone, date_of_birth } = formState.inputValues;
+      // Parse fullName into first and last name
+      const nameParts = fullName.trim().split(' ');
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
+      // Update user metadata in auth.users table
+      const { error: metadataError } = await supabase.auth.updateUser({
+        data: {
+          full_name: fullName,
+          first_name: firstName,
+          last_name: lastName,
+          phone: phone,
+          date_of_birth: date_of_birth,
+        },
+      });
+      if (metadataError) {
+        console.error('Error updating user metadata:', metadataError);
+      }
+      // Update user_profiles table
+      const { error: profileError } = await supabase
+        .from('users')
+        .upsert({
+          id: userId,
+          first_name: firstName,
+          last_name: lastName || nickname,
+          email: email,
+          phone: phone,
+          date_of_birth: date_of_birth,
+          updated_at: new Date().toISOString(),
+        }, {
+          onConflict: 'id',
+        });
+      if (profileError) {
+        throw profileError;
+      }
+      Alert.alert('Success', 'Profile saved successfully!');
+      navigation.navigate('CreateNewPIN');
+    } catch (err) {
+      console.error('Profile submission error:', err);
+      let errorMessage = 'An error occurred while saving your profile.';
+      if (err.message && err.message.includes('relation "user_profiles" does not exist')) {
+        errorMessage = 'Database setup incomplete. Please contact support.';
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      setError(errorMessage);
+      Alert.alert('Error', errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  // fectch codes from rescountries api
-  useEffect(() => {
-    fetch("https://restcountries.com/v2/all")
-      .then(response => response.json())
-      .then(data => {
-        let areaData = data.map((item) => {
-          return {
-            code: item.alpha2Code,
-            item: item.name,
-            callingCode: `+${item.callingCodes[0]}`,
-            flag: `https://flagsapi.com/${item.alpha2Code}/flat/64.png`
-          }
-        });
-
-        setAreas(areaData);
-        if (areaData.length > 0) {
-          let defaultData = areaData.filter((a) => a.code == "US");
-
-          if (defaultData.length > 0) {
-            setSelectedArea(defaultData[0])
-          }
-        }
-      })
-  }, [])
-
-  // render countries codes modal
-  function RenderAreasCodesModal() {
-
-    const renderItem = ({ item }) => {
-      return (
-        <TouchableOpacity
-          style={{
-            padding: 10,
-            flexDirection: "row"
-          }}
-          onPress={() => {
-            setSelectedArea(item),
-              setModalVisible(false)
-          }}>
-          <Image
-            source={{ uri: item.flag }}
-            contentFit='contain'
-            style={{
-              height: 30,
-              width: 30,
-              marginRight: 10
-            }}
-          />
-          <Text style={{ fontSize: 16, color: "#fff" }}>{item.item}</Text>
-        </TouchableOpacity>
-      )
-    }
+  if (loading) {
     return (
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}>
-        <TouchableWithoutFeedback
-          onPress={() => setModalVisible(false)}>
-          <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-            <View
-              style={{
-                height: SIZES.height,
-                width: SIZES.width,
-                backgroundColor: COLORS.primary,
-                borderRadius: 12
-              }}>
-              <TouchableOpacity
-                onPress={() => setModalVisible(false)}
-                style={styles.closeBtn}>
-                <Ionicons name="close-outline" size={24} color={COLORS.primary} />
-              </TouchableOpacity>
-              <FlatList
-                data={areas}
-                renderItem={renderItem}
-                horizontal={false}
-                keyExtractor={(item) => item.code}
-                style={{
-                  padding: 20,
-                  marginBottom: 20
-                }}
-              />
-            </View>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
-    )
+      <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
+        <Text>Loading...</Text>
+      </SafeAreaView>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
+        <Text>You must be logged in to fill your profile.</Text>
+      </SafeAreaView>
+    );
   }
 
   return (
-    <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <Header title="Fill Your Profile" />
-        <ScrollView showsVerticalScrollIndicator={false}>
-          <View style={{ alignItems: "center", marginVertical: 12 }}>
-            <View style={styles.avatarContainer}>
-              <Image
-                source={image === null ? icons.userDefault2 : image}
-                resizeMode="cover"
-                style={styles.avatar} />
-              <TouchableOpacity
-                onPress={pickImage}
-                style={styles.pickImage}>
-                <MaterialCommunityIcons
-                  name="pencil-outline"
-                  size={24}
-                  color={COLORS.white} />
-              </TouchableOpacity>
-            </View>
-          </View>
-          <View>
-            <Input
-              id="fullName"
-              onInputChanged={inputChangedHandler}
-              errorText={formState.inputValidities['fullName']}
-              placeholder="Full Name"
-              placeholderTextColor={COLORS.gray} />
-            <Input
-              id="nickname"
-              onInputChanged={inputChangedHandler}
-              errorText={formState.inputValidities['nickname']}
-              placeholder="Nickname"
-              placeholderTextColor={COLORS.gray} />
-            <Input
-              id="email"
-              onInputChanged={inputChangedHandler}
-              errorText={formState.inputValidities['email']}
-              placeholder="Email"
-              placeholderTextColor={COLORS.gray}
-              keyboardType="email-address" />
-            <View style={{
-              width: SIZES.width - 32
-            }}>
-              <TouchableOpacity
-                style={[styles.inputBtn, {
-                  backgroundColor: dark ? COLORS.dark2 : COLORS.greyscale500,
-                  borderColor: dark ? COLORS.dark2 : COLORS.greyscale500,
-                }]}
-                onPress={handleOnPressStartDate}>
-                <Text style={{ ...FONTS.body4, color: COLORS.grayscale400 }}>{startedDate}</Text>
-                <Feather name="calendar" size={24} color={COLORS.grayscale400} />
-              </TouchableOpacity>
-            </View>
-            <View style={[styles.inputContainer, {
-              backgroundColor: dark ? COLORS.dark2 : COLORS.greyscale500,
-              borderColor: dark ? COLORS.dark2 : COLORS.greyscale500,
-            }]}>
-              <TouchableOpacity
-                style={styles.selectFlagContainer}
-                onPress={() => setModalVisible(true)}>
-                <View style={{ justifyContent: "center" }}>
-                  <Image
-                    source={icons.down}
-                    resizeMode='contain'
-                    style={styles.downIcon}
-                  />
-                </View>
-                <View style={{ justifyContent: "center", marginLeft: 5 }}>
-                  <Image
-                    source={{ uri: selectedArea?.flag }}
-                    contentFit="contain"
-                    style={styles.flagIcon}
-                  />
-                </View>
-                <View style={{ justifyContent: "center", marginLeft: 5 }}>
-                  <Text style={{ color: dark ? COLORS.white : "#111", fontSize: 12 }}>{selectedArea?.callingCode}</Text>
-                </View>
-              </TouchableOpacity>
-              {/* Phone Number Text Input */}
-              <TextInput
-                style={styles.input}
-                placeholder="Enter your phone number"
-                placeholderTextColor={COLORS.gray}
-                selectionColor="#111"
-                keyboardType="numeric"
-              />
-            </View>
-          </View>
-        </ScrollView>
-      </View>
-      <DatePickerModal
-        open={openStartDatePicker}
-        startDate={startDate}
-        selectedDate={startedDate}
-        onClose={() => setOpenStartDatePicker(false)}
-        onChangeStartDate={(date) => setStartedDate(date)}
-      />
-      {RenderAreasCodesModal()}
-      <View style={styles.bottomContainer}>
-        <Button
-          title="Skip"
-          style={{
-            width: (SIZES.width - 32) / 2 - 8,
-            borderRadius: 32,
-            backgroundColor: dark ? COLORS.dark3 : COLORS.tansparentPrimary,
-            borderColor: dark ? COLORS.dark3 : COLORS.tansparentPrimary
-          }}
-          textColor={dark ? COLORS.white : COLORS.primary}
-          onPress={() => navigation.navigate("CreateNewPIN")}
+    <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}> 
+      <ScrollView contentContainerStyle={styles.container}>
+        <Text style={[styles.title, { color: colors.text }]}>Fill Your Profile</Text>
+        <Input
+          id="fullName"
+          placeholder="Full Name"
+          value={formState.inputValues.fullName}
+          onInputChanged={(id, value) => handleInputChange('fullName', value)}
+        />
+        <Input
+          id="nickname"
+          placeholder="Nickname (optional)"
+          value={formState.inputValues.nickname}
+          onInputChanged={(id, value) => handleInputChange('nickname', value)}
+        />
+        <Input
+          id="email"
+          placeholder="Email"
+          value={formState.inputValues.email}
+          onInputChanged={(id, value) => handleInputChange('email', value)}
+          keyboardType="email-address"
+        />
+        <Input
+          id="phone"
+          placeholder="Phone Number"
+          value={formState.inputValues.phone}
+          onInputChanged={(id, value) => handleInputChange('phone', value)}
+          keyboardType="phone-pad"
+        />
+        <Input
+          id="date_of_birth"
+          placeholder="Date of Birth (YYYY-MM-DD)"
+          value={formState.inputValues.date_of_birth}
+          onInputChanged={(id, value) => handleInputChange('date_of_birth', value)}
         />
         <Button
-          title="Continue"
+          title={isLoading ? 'Saving...' : 'Save Profile'}
           filled
-          style={styles.continueButton}
-          onPress={() => navigation.navigate("CreateNewPIN")}
+          onPress={handleProfileSubmit}
+          disabled={isLoading}
+          style={styles.button}
         />
-      </View>
+        {error && <Text style={styles.error}>{error}</Text>}
+      </ScrollView>
     </SafeAreaView>
-  )
+  );
 };
 
 const styles = StyleSheet.create({
   area: {
     flex: 1,
-    backgroundColor: COLORS.white
+    backgroundColor: COLORS.white,
   },
   container: {
-    flex: 1,
+    flexGrow: 1,
     padding: 16,
-    backgroundColor: COLORS.white
-  },
-  avatarContainer: {
-    marginVertical: 12,
-    alignItems: "center",
-    width: 130,
-    height: 130,
-    borderRadius: 65,
-  },
-  avatar: {
-    height: 130,
-    width: 130,
-    borderRadius: 65,
-  },
-  pickImage: {
-    height: 42,
-    width: 42,
-    borderRadius: 21,
-    backgroundColor: COLORS.primary,
-    alignItems: 'center',
     justifyContent: 'center',
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
   },
-  inputContainer: {
-    flexDirection: "row",
-    borderColor: COLORS.greyscale500,
-    borderWidth: .4,
-    borderRadius: 12,
-    height: 52,
-    width: SIZES.width - 32,
-    alignItems: 'center',
-    marginVertical: 12,
-    backgroundColor: COLORS.greyscale500,
+  title: {
+    fontSize: 24,
+    fontFamily: 'semiBold',
+    marginBottom: 24,
+    textAlign: 'center',
   },
-  downIcon: {
-    width: 10,
-    height: 10,
-    tintColor: "#111"
+  button: {
+    marginTop: 24,
+    borderRadius: 30,
   },
-  selectFlagContainer: {
-    width: 90,
-    height: 50,
-    marginHorizontal: 5,
-    flexDirection: "row",
+  error: {
+    color: 'red',
+    marginTop: 16,
+    textAlign: 'center',
   },
-  flagIcon: {
-    width: 30,
-    height: 30
-  },
-  input: {
-    flex: 1,
-    marginVertical: 10,
-    height: 40,
-    fontSize: 14,
-    color: "#111"
-  },
-  inputBtn: {
-    borderWidth: 1,
-    borderRadius: 12,
-    borderColor: COLORS.greyscale500,
-    height: 52,
-    paddingLeft: 8,
-    fontSize: 18,
-    justifyContent: "space-between",
-    marginTop: 4,
-    backgroundColor: COLORS.greyscale500,
-    flexDirection: "row",
-    alignItems: "center",
-    paddingRight: 8
-  },
-  rowContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between"
-  },
-  bottomContainer: {
-    position: "absolute",
-    bottom: 32,
-    right: 16,
-    left: 16,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    width: SIZES.width - 32,
-    alignItems: "center"
-  },
-  continueButton: {
-    width: (SIZES.width - 32) / 2 - 8,
-    borderRadius: 32,
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary
-  },
-  closeBtn: {
-    width: 42,
-    height: 42,
-    borderRadius: 999,
-    backgroundColor: COLORS.white,
-    position: "absolute",
-    right: 16,
-    top: 32,
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 9999
-  }
-})
+});
 
-export default FillYourProfile
+export default FillYourProfile;
