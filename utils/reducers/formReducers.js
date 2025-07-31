@@ -1,5 +1,14 @@
 export const reducer = (state, action) => {
-    const { validationResult, inputId, inputValue } = action
+    const { validationResult, inputId, inputValue, type, inputValues, inputValidities, formIsValid } = action
+
+    // Handle UPDATE_FORM action for updating entire form state
+    if (type === 'UPDATE_FORM') {
+        return {
+            inputValues: inputValues || state.inputValues,
+            inputValidities: inputValidities || state.inputValidities,
+            formIsValid: formIsValid !== undefined ? formIsValid : state.formIsValid,
+        }
+    }
 
     const updatedValues = {
         ...state.inputValues,

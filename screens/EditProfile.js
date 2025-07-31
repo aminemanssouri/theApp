@@ -13,36 +13,47 @@ import DatePickerModal from '../components/DatePickerModal';
 import Button from '../components/Button';
 import RNPickerSelect from 'react-native-picker-select';
 import { useTheme } from '../theme/ThemeProvider';
-
-const isTestMode = true;
-
-const initialState = {
-  inputValues: {
-    fullName: isTestMode ? 'John Doe' : '',
-    email: isTestMode ? 'example@gmail.com' : '',
-    nickname: isTestMode ? "" : "",
-    phoneNumber: ''
-  },
-  inputValidities: {
-    fullName: false,
-    email: false,
-    nickname: false,
-    phoneNumber: false,
-  },
-  formIsValid: false,
-}
-
+import { useAuth } from '../context/AuthContext';
+import { updateUserProfile } from '../lib/services/auth';
 
 const EditProfile = ({ navigation }) => {
+  const { user, userProfile, refreshUserProfile } = useAuth();
   const [image, setImage] = useState(null);
   const [error, setError] = useState();
-  const [formState, dispatchFormState] = useReducer(reducer, initialState);
+  const [loading, setLoading] = useState(false);
   const [areas, setAreas] = useState([]);
   const [selectedArea, setSelectedArea] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [openStartDatePicker, setOpenStartDatePicker] = useState(false);
   const [selectedGender, setSelectedGender] = useState('');
   const { colors, dark } = useTheme();
+
+  // Initialize form state with user data
+  const getInitialState = () => ({
+    inputValues: {
+      firstName: userProfile?.first_name || '',
+      lastName: userProfile?.last_name || '',
+      email: user?.email || '',
+      phoneNumber: userProfile?.phone || '',
+      occupation: userProfile?.occupation || '',
+      address: userProfile?.address || '',
+      city: userProfile?.city || '',
+      zipCode: userProfile?.zip_code || ''
+    },
+    inputValidities: {
+      firstName: true,
+      lastName: true,
+      email: true,
+      phoneNumber: true,
+      occupation: true,
+      address: true,
+      city: true,
+      zipCode: true
+    },
+    formIsValid: true,
+  });
+
+  const [formState, dispatchFormState] = useReducer(reducer, getInitialState());
 
   const genderOptions = [
     { label: 'Male', value: 'male' },
@@ -55,14 +66,21 @@ const EditProfile = ({ navigation }) => {
   };
 
   const today = new Date();
-  const startDate = getFormatedDate(
-    new Date(today.setDate(today.getDate() + 1)),
-    "YYYY/MM/DD"
+  const startDate = new Date(today.setDate(today.getDate() - 36500)).toISOString().split('T')[0]; // Allow dates up to 100 years ago in YYYY-MM-DD format
+
+  const [startedDate, setStartedDate] = useState(
+    userProfile?.date_of_birth 
+      ? getFormatedDate(new Date(userProfile.date_of_birth), "DD/MM/YYYY")
+      : "Select Date of Birth"
   );
 
-  const [startedDate, setStartedDate] = useState("12/12/2023");
   const handleOnPressStartDate = () => {
     setOpenStartDatePicker(!openStartDatePicker);
+  };
+
+  const handleDateChange = (date) => {
+    setStartedDate(date);
+    setOpenStartDatePicker(false);
   };
 
   const inputChangedHandler = useCallback(
@@ -75,7 +93,7 @@ const EditProfile = ({ navigation }) => {
 
   useEffect(() => {
     if (error) {
-      Alert.alert('An error occured', error)
+      Alert.alert('An error occurred', error)
     }
   }, [error])
 
@@ -88,6 +106,62 @@ const EditProfile = ({ navigation }) => {
       // set the image
       setImage({ uri: tempUri })
     } catch (error) { }
+  };
+
+  // Handle profile update
+  const handleUpdateProfile = async () => {
+    if (!formState.formIsValid) {
+      Alert.alert('Validation Error', 'Please check your input fields');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Parse date of birth
+      const dateOfBirth = startedDate !== "Select Date of Birth" 
+        ? new Date(startedDate.split('/').reverse().join('-')).toISOString()
+        : null;
+
+      // Prepare update data
+      const updateData = {
+        first_name: formState.inputValues.firstName,
+        last_name: formState.inputValues.lastName,
+        email: formState.inputValues.email,
+        phone: formState.inputValues.phoneNumber,
+        date_of_birth: dateOfBirth,
+        address: formState.inputValues.address,
+        city: formState.inputValues.city,
+        zip_code: formState.inputValues.zipCode,
+        updated_at: new Date().toISOString()
+      };
+
+      // Update user profile in database
+      const { data, error } = await updateUserProfile(user.id, updateData);
+
+      if (error) {
+        throw error;
+      }
+
+      // Refresh user profile data
+      await refreshUserProfile();
+
+      Alert.alert(
+        'Success', 
+        'Profile updated successfully!',
+        [
+          {
+            text: 'OK',
+            onPress: () => navigation.goBack()
+          }
+        ]
+      );
+
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      Alert.alert('Update Failed', error.message || 'Failed to update profile');
+    } finally {
+      setLoading(false);
+    }
   };
 
   // fectch codes from rescountries api
@@ -114,6 +188,24 @@ const EditProfile = ({ navigation }) => {
         }
       })
   }, [])
+
+  // Update form state when userProfile changes
+  useEffect(() => {
+    if (userProfile) {
+      const newFormState = getInitialState();
+      dispatchFormState({ 
+        type: 'UPDATE_FORM', 
+        inputValues: newFormState.inputValues,
+        inputValidities: newFormState.inputValidities,
+        formIsValid: newFormState.formIsValid
+      });
+      
+      // Update date of birth
+      if (userProfile.date_of_birth) {
+        setStartedDate(getFormatedDate(new Date(userProfile.date_of_birth), "DD/MM/YYYY"));
+      }
+    }
+  }, [userProfile]);
 
   // render countries codes modal
   function RenderAreasCodesModal() {
@@ -199,18 +291,20 @@ const EditProfile = ({ navigation }) => {
           </View>
           <View>
             <Input
-              id="fullName"
+              id="firstName"
               onInputChanged={inputChangedHandler}
-              errorText={formState.inputValidities['fullName']}
-              placeholder="Full Name"
+              errorText={formState.inputValidities['firstName']}
+              placeholder="First Name"
               placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
+              initialValue={formState.inputValues.firstName}
             />
             <Input
-              id="nickname"
+              id="lastName"
               onInputChanged={inputChangedHandler}
-              errorText={formState.inputValidities['nickname']}
-              placeholder="Nickname"
+              errorText={formState.inputValidities['lastName']}
+              placeholder="Last Name"
               placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
+              initialValue={formState.inputValues.lastName}
             />
             <Input
               id="email"
@@ -218,9 +312,15 @@ const EditProfile = ({ navigation }) => {
               errorText={formState.inputValidities['email']}
               placeholder="Email"
               placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
-              keyboardType="email-address" />
+              keyboardType="email-address"
+              initialValue={formState.inputValues.email}
+              editable={false} // Email should not be editable from profile
+            />
+            
+            {/* Date of Birth Section */}
             <View style={{
-              width: SIZES.width - 32
+              width: SIZES.width - 32,
+              marginTop: 8
             }}>
               <TouchableOpacity
                 style={[styles.inputBtn, {
@@ -229,10 +329,14 @@ const EditProfile = ({ navigation }) => {
                 }]}
                 onPress={handleOnPressStartDate}
               >
-                <Text style={{ ...FONTS.body4, color: COLORS.grayscale400 }}>{startedDate}</Text>
-                <Feather name="calendar" size={24} color={COLORS.grayscale400} />
+                <Text style={{ ...FONTS.body4, color: dark ? COLORS.white : COLORS.grayscale400 }}>
+                  {startedDate === "Select Date of Birth" ? "Date of Birth (Optional)" : startedDate}
+                </Text>
+                <Feather name="calendar" size={24} color={dark ? COLORS.white : COLORS.grayscale400} />
               </TouchableOpacity>
             </View>
+            
+            {/* Phone Number Section */}
             <View style={[styles.inputContainer, {
               backgroundColor: dark ? COLORS.dark2 : COLORS.greyscale500,
               borderColor: dark ? COLORS.dark2 : COLORS.greyscale500,
@@ -244,7 +348,7 @@ const EditProfile = ({ navigation }) => {
                   <Image
                     source={icons.down}
                     resizeMode='contain'
-                    style={styles.downIcon}
+                    style={[styles.downIcon, { tintColor: dark ? COLORS.white : "#111" }]}
                   />
                 </View>
                 <View style={{ justifyContent: "center", marginLeft: 5 }}>
@@ -260,53 +364,48 @@ const EditProfile = ({ navigation }) => {
               </TouchableOpacity>
               {/* Phone Number Text Input */}
               <TextInput
-                style={styles.input}
+                style={[styles.input, { color: dark ? COLORS.white : "#111" }]}
                 placeholder="Enter your phone number"
                 placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
                 selectionColor="#111"
                 keyboardType="numeric"
+                value={formState.inputValues.phoneNumber}
+                onChangeText={(text) => inputChangedHandler('phoneNumber', text)}
               />
             </View>
-            <View>
-              <RNPickerSelect
-                placeholder={{ label: 'Select', value: '' }}
-                items={genderOptions}
-                onValueChange={(value) => handleGenderChange(value)}
-                value={selectedGender}
-                style={{
-                  inputIOS: {
-                    fontSize: 16,
-                    paddingHorizontal: 10,
-                    borderRadius: 4,
-                    color: COLORS.greyscale600,
-                    paddingRight: 30,
-                    height: 52,
-                    width: SIZES.width - 32,
-                    alignItems: 'center',
-                    backgroundColor: dark ? COLORS.dark2 : COLORS.greyscale500,
-                    borderRadius: 16
-                  },
-                  inputAndroid: {
-                    fontSize: 16,
-                    paddingHorizontal: 10,
-                    borderRadius: 8,
-                    color: COLORS.greyscale600,
-                    paddingRight: 30,
-                    height: 52,
-                    width: SIZES.width - 32,
-                    alignItems: 'center',
-                    backgroundColor: dark ? COLORS.dark2 : COLORS.greyscale500,
-                    borderRadius: 16
-                  },
-                }}
-              />
-            </View>
+            
+            {/* Address Section */}
+            <Input
+              id="address"
+              onInputChanged={inputChangedHandler}
+              errorText={formState.inputValidities['address']}
+              placeholder="Address (Optional)"
+              placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
+              initialValue={formState.inputValues.address}
+            />
+            <Input
+              id="city"
+              onInputChanged={inputChangedHandler}
+              errorText={formState.inputValidities['city']}
+              placeholder="City (Optional)"
+              placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
+              initialValue={formState.inputValues.city}
+            />
+            <Input
+              id="zipCode"
+              onInputChanged={inputChangedHandler}
+              errorText={formState.inputValidities['zipCode']}
+              placeholder="ZIP Code (Optional)"
+              placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
+              initialValue={formState.inputValues.zipCode}
+            />
             <Input
               id="occupation"
               onInputChanged={inputChangedHandler}
               errorText={formState.inputValidities['occupation']}
-              placeholder="Occupation"
+              placeholder="Occupation (Optional)"
               placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
+              initialValue={formState.inputValues.occupation}
             />
           </View>
         </ScrollView>
@@ -316,7 +415,7 @@ const EditProfile = ({ navigation }) => {
         startDate={startDate}
         selectedDate={startedDate}
         onClose={() => setOpenStartDatePicker(false)}
-        onChangeStartDate={(date) => setStartedDate(date)}
+        onChangeStartDate={handleDateChange}
       />
       {RenderAreasCodesModal()}
       <View style={styles.bottomContainer}>
@@ -324,7 +423,8 @@ const EditProfile = ({ navigation }) => {
           title="Update"
           filled
           style={styles.continueButton}
-          onPress={() => navigation.navigate("Profile")}
+          onPress={handleUpdateProfile}
+          isLoading={loading}
         />
       </View>
     </SafeAreaView>
@@ -372,7 +472,7 @@ const styles = StyleSheet.create({
     height: 52,
     width: SIZES.width - 32,
     alignItems: 'center',
-    marginVertical: 16,
+    marginVertical: 8, // Increased from 2 to 8 for better spacing
     backgroundColor: COLORS.greyscale500,
   },
   downIcon: {
@@ -405,7 +505,8 @@ const styles = StyleSheet.create({
     paddingLeft: 8,
     fontSize: 18,
     justifyContent: "space-between",
-    marginTop: 4,
+    marginTop: 8, // Increased from 2 to 8
+    marginBottom: 8, // Increased from 2 to 8
     backgroundColor: COLORS.greyscale500,
     flexDirection: "row",
     alignItems: "center",
@@ -421,13 +522,13 @@ const styles = StyleSheet.create({
     right: 16,
     left: 16,
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "space-between", // Back to original
     width: SIZES.width - 32,
     alignItems: "center"
   },
   continueButton: {
-    width: SIZES.width - 32,
-    borderRadius: 32,
+    width: SIZES.width - 32, // Back to full width
+    borderRadius: 32, // Back to original
     backgroundColor: COLORS.primary,
     borderColor: COLORS.primary
   },
