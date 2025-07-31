@@ -3,7 +3,6 @@
     "name": "ProvidaPro",
     "slug": "ProvidaPro",
     "version": "1.0.0",
-    "scheme": "bricollano",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "automatic",
@@ -26,9 +25,6 @@
     },
     "web": {
       "favicon": "./assets/images/favicon.png"
-    },
-    "plugins": [
-      "expo-web-browser"
-    ]
+    }
   }
 }

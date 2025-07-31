@@ -1,10 +1,19 @@
 import React from 'react';
 import { View, Platform } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+// Manual safe area calculations
+const getSafeAreaInsets = () => {
+  return {
+    top: Platform.OS === 'ios' ? 44 : 0,
+    bottom: Platform.OS === 'ios' ? 34 : 0,
+    left: 0,
+    right: 0,
+  };
+};
 
 // Custom hook to get tab bar height
 export const useTabBarHeight = () => {
-  const insets = useSafeAreaInsets();
+  const insets = getSafeAreaInsets();
   
   const getTabBarHeight = () => {
     const baseHeight = 60;
@@ -33,7 +42,7 @@ export const TabBarSpacer = ({ children, style = {} }) => {
 
 // Component for screens with bottom tab navigation
 export const TabScreenContainer = ({ children, style = {} }) => {
-  const insets = useSafeAreaInsets();
+  const insets = getSafeAreaInsets();
   const tabBarHeight = useTabBarHeight();
   
   return (
@@ -53,7 +62,7 @@ export const TabScreenContainer = ({ children, style = {} }) => {
 
 // Safe area configuration for tab screens
 export const getTabScreenSafeArea = () => {
-  const insets = useSafeAreaInsets();
+  const insets = getSafeAreaInsets();
   const tabBarHeight = useTabBarHeight();
   
   return {

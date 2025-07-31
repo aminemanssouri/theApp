@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, TouchableOpacity, Image, FlatList, Platform } from 'react-native';
 import React, { useRef, useState } from 'react';
 import { COLORS, SIZES, icons } from '../constants';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { getSafeAreaInsets } from '../utils/safeAreaUtils';
 import { ScrollView } from 'react-native-virtualized-view';
 import { category, myWishlistServices as initialWishlistServices } from '../data';
 import RBSheet from "react-native-raw-bottom-sheet";
@@ -14,7 +14,7 @@ const Favourite = ({ navigation }) => {
     const [selectedWishlistItem, setSelectedWishlistItem] = useState(null);
     const [myWishlistServices, setMyWishlistServices] = useState(initialWishlistServices || []);
     const { colors, dark } = useTheme();
-    const insets = useSafeAreaInsets();
+    const insets = getSafeAreaInsets();
 
     // Calculate bottom spacing to avoid tab bar overlap
     const getBottomSpacing = () => {
@@ -158,7 +158,7 @@ const Favourite = ({ navigation }) => {
     }
 
     return (
-        <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
+        <View style={[styles.area, { backgroundColor: colors.background }]}>
             <View style={[styles.container, { backgroundColor: colors.background }]}>
                 {renderHeader()}
                 <ScrollView 
@@ -236,7 +236,7 @@ const Favourite = ({ navigation }) => {
                     />
                 </View>
             </RBSheet>
-        </SafeAreaView>
+        </View>
     )
 };
 

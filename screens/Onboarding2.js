@@ -10,14 +10,15 @@ import { useTheme } from '../theme/ThemeProvider';
 
 const Onboarding2 = ({ navigation }) => {
   const [progress, setProgress] = useState(0);
-  const { colors } = useTheme()
+  const { colors } = useTheme();
 
   useEffect(() => {
     const intervalId = setInterval(() => {
-      setProgress((prevProgress) => {
+      setProgress(prevProgress => {
+        // Stop at 100% (1.0) and don't exceed it
         if (prevProgress >= 1) {
           clearInterval(intervalId);
-          return prevProgress;
+          return 1;
         }
         return prevProgress + 0.5;
       });
@@ -26,12 +27,7 @@ const Onboarding2 = ({ navigation }) => {
     return () => clearInterval(intervalId);
   }, []);
 
-  useEffect(() => {
-    if (progress >= 1) {
-      // navigate to the onboarding3 screen
-      navigation.navigate('Onboarding3');
-    }
-  }, [progress, navigation]);
+  // Remove automatic navigation - let users control it manually
 
   return (
     <SafeAreaView style={[Onboarding1Styles.container, {
@@ -45,33 +41,36 @@ const Onboarding2 = ({ navigation }) => {
           />
           <Image
             source={images.ornament}
-            resizeMode='contain'
+            resizeMode="contain"
             style={Onboarding1Styles.ornament}
           />
-          <View style={Onboarding1Styles.buttonContainer}>
+          <View style={[Onboarding1Styles.buttonContainer, {
+            backgroundColor: colors.background
+          }]}>
             <View style={Onboarding1Styles.titleContainer}>
-              <Text style={[Onboarding1Styles.title, { color: colors.text }]}>Enjoy the convenience of</Text>
-              <Text style={Onboarding1Styles.subTitle}>CONVENIENCE</Text>
+              <Text style={[Onboarding1Styles.title, {
+                color: colors.text
+              }]}>Book Services</Text>
+              <Text style={Onboarding1Styles.subTitle}>Easily & Quickly</Text>
             </View>
 
             <Text style={[Onboarding1Styles.description, { color: colors.text }]}>
-            Access home services whenever and wherever you need them. 
-            From routine maintenance to emergency repairs, we've got you covered.
+            Find and book trusted service providers for cleaning, repairs, and more with just a few taps.
             </Text>
 
             <View style={Onboarding1Styles.dotsContainer}>
-              {progress < 1 && <DotsView progress={progress} numDots={4} />}
+              <DotsView progress={progress} numDots={4} />
             </View>
             <Button
               title="Next"
               filled
-              onPress={() => navigation.navigate('Onboarding2')}
+              onPress={() => navigation.navigate('Onboarding3')}
               style={Onboarding1Styles.nextButton}
             />
             <Button
               title="Skip"
               onPress={() => navigation.navigate('Login')}
-              textColor={COLORS.primary}
+              textColor={colors.primary}
               style={Onboarding1Styles.skipButton}
             />
           </View>

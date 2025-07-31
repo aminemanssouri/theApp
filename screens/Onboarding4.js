@@ -15,9 +15,10 @@ const Onboarding4 = ({ navigation }) => {
   useEffect(() => {
     const intervalId = setInterval(() => {
       setProgress(prevProgress => {
+        // Stop at 100% (1.0) and don't exceed it
         if (prevProgress >= 1) {
           clearInterval(intervalId);
-          return prevProgress;
+          return 1;
         }
         return prevProgress + 0.5;
       });
@@ -26,12 +27,7 @@ const Onboarding4 = ({ navigation }) => {
     return () => clearInterval(intervalId);
   }, []);
 
-  useEffect(() => {
-    if (progress >= 1) {
-      // navigate to the welcome screen
-      navigation.navigate('Welcome');
-    }
-  }, [progress, navigation]);
+  // Remove automatic navigation - let users control it manually
 
   return (
     <SafeAreaView style={[Onboarding1Styles.container, {
@@ -52,19 +48,21 @@ const Onboarding4 = ({ navigation }) => {
             backgroundColor: colors.background
           }]}>
             <View style={Onboarding1Styles.titleContainer}>
-              <Text style={[Onboarding1Styles.title, { color: colors.text }]}>Premium Home Assistance</Text>
-              <Text style={Onboarding1Styles.subTitle}>PROVIDA PRO</Text>
+              <Text style={[Onboarding1Styles.title, {
+                color: colors.text
+              }]}>Rate & Review</Text>
+              <Text style={Onboarding1Styles.subTitle}>Share Your Experience</Text>
             </View>
 
             <Text style={[Onboarding1Styles.description, { color: colors.text }]}>
-            Let us handle the chores, so you can focus on what matters most.
+            Help others by rating your service experience and providing valuable feedback.
             </Text>
 
             <View style={Onboarding1Styles.dotsContainer}>
-              {progress < 1 && <DotsView progress={progress} numDots={4} />}
+              <DotsView progress={progress} numDots={4} />
             </View>
             <Button
-              title="Next"
+              title="Get Started"
               filled
               onPress={() => navigation.navigate('Welcome')}
               style={Onboarding1Styles.nextButton}
@@ -72,7 +70,7 @@ const Onboarding4 = ({ navigation }) => {
             <Button
               title="Skip"
               onPress={() => navigation.navigate('Login')}
-              textColor={COLORS.primary}
+              textColor={colors.primary}
               style={Onboarding1Styles.skipButton}
             />
           </View>

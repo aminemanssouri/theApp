@@ -1,6 +1,6 @@
 import { View, Text, TouchableOpacity, Image, useWindowDimensions, StatusBar, Platform } from 'react-native';
 import React from 'react';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { getSafeAreaInsets } from '../utils/safeAreaUtils';
 import { COLORS,  icons } from '../constants';
 import { useNavigation } from '@react-navigation/native';
 import { commonStyles } from '../styles/CommonStyles';
@@ -19,7 +19,7 @@ const renderScene = SceneMap({
 const MyBookings = ({ navigation }) => {
   const layout = useWindowDimensions();
   const { dark, colors } = useTheme();
-  const insets = useSafeAreaInsets();
+  const insets = getSafeAreaInsets();
 
   // Calculate bottom spacing to avoid tab bar overlap
   const getBottomSpacing = () => {
@@ -62,7 +62,7 @@ const MyBookings = ({ navigation }) => {
     />
   );
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background  }}>
+    <View style={{ flex: 1, backgroundColor: colors.background  }}>
       <StatusBar hidden={true} />
       <View style={{ 
         flex: 1, 
@@ -80,7 +80,7 @@ const MyBookings = ({ navigation }) => {
           style={{ flex: 1 }}
         />
       </View>
-    </SafeAreaView>
+    </View>
   )
 }
 

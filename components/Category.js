@@ -3,7 +3,7 @@ import React from 'react';
 import { COLORS, SIZES } from '../constants';
 import { useTheme } from '../theme/ThemeProvider';
 
-const Category = ({ name, icon, iconColor, backgroundColor }) => {
+const Category = ({   name, icon, iconColor, backgroundColor }) => {
     const { dark } = useTheme();
 
   return (
@@ -20,15 +20,9 @@ const Category = ({ name, icon, iconColor, backgroundColor }) => {
                 }]}
             />
         </TouchableOpacity>
-        <Text 
-          style={[styles.name, { 
-              color: dark ? COLORS.white : COLORS.greyscale900
-          }]}
-          numberOfLines={1}
-          ellipsizeMode="tail"
-        >
-          {name}
-        </Text>
+        <Text style={[styles.name, { 
+            color: dark? COLORS.white : COLORS.greyscale900
+        }]}>{name}</Text>
     </View>
   )
 };
