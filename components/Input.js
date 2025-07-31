@@ -1,11 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, Image } from 'react-native';
 import { COLORS, SIZES } from '../constants';
 import { useTheme } from '../theme/ThemeProvider';
 
 const Input = (props) => {
   const [isFocused, setIsFocused] = useState(false);
+  const [value, setValue] = useState(props.initialValue || '');
   const { dark } = useTheme();
+
+  // Update value when initialValue changes
+  useEffect(() => {
+    if (props.initialValue !== undefined) {
+      setValue(props.initialValue);
+    }
+  }, [props.initialValue]);
 
   const handleFocus = () => {
     setIsFocused(true);
@@ -16,6 +24,7 @@ const Input = (props) => {
   };
 
   const onChangeText = (text) => {
+    setValue(text);
     props.onInputChanged(props.id, text);
   };
 
@@ -43,6 +52,7 @@ const Input = (props) => {
         )}
         <TextInput
           {...props}
+          value={value}
           onChangeText={onChangeText}
           onFocus={handleFocus}
           onBlur={handleBlur}
@@ -71,7 +81,7 @@ const styles = StyleSheet.create({
     paddingVertical: SIZES.padding2,
     borderRadius: 12,
     borderWidth: 1,
-    marginVertical: 5,
+    marginVertical: 6, // Increased from 3 to 6 for better spacing
     flexDirection: 'row',
     height: 52,
     alignItems: 'center',
@@ -90,7 +100,7 @@ const styles = StyleSheet.create({
     paddingTop: 0,
   },
   errorContainer: {
-    marginVertical: 4,
+    marginVertical: 2,
   },
   errorText: {
     color: 'red',
