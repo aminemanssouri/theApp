@@ -12,6 +12,7 @@ import Button from '../components/Button';
 import { supabase } from '../lib/supabase';
 import { Alert } from 'react-native';
 import { useAuth } from '../context/AuthContext';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 
 const Profile = ({ navigation }) => {
