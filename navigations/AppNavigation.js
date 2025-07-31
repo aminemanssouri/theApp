@@ -3,7 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useState, useEffect } from 'react';
 import { Platform } from 'react-native';
-import { AddNewCard, AddNewPaymentMethod, AddNewPaymentMethodDeclined, AddNewPaymentMethodSuccess, BookingDetails, BookingStep1, Call, CancelBooking, CancelBookingPaymentMethods, ChangeEmail, ChangePIN, ChangePassword, Chat, CreateNewPIN, CreateNewPassword, CustomerService, EReceipt, EditProfile, FillYourProfile, Fingerprint, ForgotPasswordEmail, ForgotPasswordMethods, ForgotPasswordPhoneNumber, HelpCenter, InviteFriends, Login, MyBookings, Notifications, OTPVerification, Onboarding1, Onboarding2, Onboarding3, Onboarding4, PaymentMethod, PaymentMethods, PopularServices, ReviewSummary, Search, ServiceDetails, ServiceDetailsReviews, SettingsLanguage, SettingsNotifications, SettingsPayment, SettingsPrivacyPolicy, SettingsSecurity, Signup, Welcome, YourAddress } from '../screens';
+import { AddNewCard, AddNewPaymentMethod, AddNewPaymentMethodDeclined, AddNewPaymentMethodSuccess, AllServices, BookingDetails, BookingStep1, Call, CancelBooking, CancelBookingPaymentMethods, ChangeEmail, ChangePIN, ChangePassword, Chat, CreateNewPIN, CreateNewPassword, CustomerService, EReceipt, EditProfile, FillYourProfile, Fingerprint, ForgotPasswordEmail, ForgotPasswordMethods, ForgotPasswordPhoneNumber, HelpCenter, InviteFriends, Login, MyBookings, Notifications, OTPVerification, Onboarding1, Onboarding2, Onboarding3, Onboarding4, PaymentMethod, PaymentMethods, PopularServices, ReviewSummary, Search, ServiceDetails, ServiceDetailsReviews, SettingsLanguage, SettingsNotifications, SettingsPayment, SettingsPrivacyPolicy, SettingsSecurity, Signup, Welcome, WorkerDetails, YourAddress } from '../screens';
 import BottomTabNavigation from './BottomTabNavigation';
 import { getTransitionConfig } from '../utils/navigationTransitions';
 
@@ -234,6 +234,11 @@ const AppNavigation = () => {
           options={getTransitionConfig('PopularServices')}
         />
         <Stack.Screen 
+          name="AllServices" 
+          component={AllServices}
+          options={getTransitionConfig('AllServices')}
+        />
+        <Stack.Screen 
           name="ServiceDetails" 
           component={ServiceDetails}
           options={getTransitionConfig('ServiceDetails')}
@@ -242,6 +247,11 @@ const AppNavigation = () => {
           name="ServiceDetailsReviews" 
           component={ServiceDetailsReviews}
           options={getTransitionConfig('ServiceDetailsReviews')}
+        />
+        <Stack.Screen 
+          name="WorkerDetails" 
+          component={WorkerDetails}
+          options={getTransitionConfig('WorkerDetails')}
         />
         <Stack.Screen 
           name="BookingStep1" 

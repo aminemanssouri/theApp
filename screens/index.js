@@ -36,6 +36,7 @@ import Notifications from "./Notifications";
 import Favourite from "./Favourite";
 import Search from "./Search";
 import PopularServices from "./PopularServices";
+import AllServices from "./AllServices";
 import ServiceDetails from "./ServiceDetails";
 import ServiceDetailsReviews from "./ServiceDetailsReviews";
 import BookingStep1 from "./BookingStep1";
@@ -51,6 +52,7 @@ import CancelBooking from "./CancelBooking";
 import CancelBookingPaymentMethods from "./CancelBookingPaymentMethods";
 import MyBookings from "./MyBookings";
 import ReviewSummary from "./ReviewSummary";
+import WorkerDetails from "./WorkerDetails";
 
 export {
     Onboarding1,
@@ -91,6 +93,7 @@ export {
     Favourite,
     Search,
     PopularServices,
+    AllServices,
     ServiceDetails,
     ServiceDetailsReviews,
     BookingStep1,
@@ -105,5 +108,6 @@ export {
     CancelBooking,
     CancelBookingPaymentMethods,
     MyBookings,
-    ReviewSummary
+    ReviewSummary,
+    WorkerDetails
 }
