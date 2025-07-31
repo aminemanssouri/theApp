@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, TouchableOpacity, Image, Switch, Platform } from 'react-native';
 import React, { useState, useRef } from 'react';
 import { COLORS, SIZES, icons, images } from '../constants';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { getSafeAreaInsets } from '../utils/safeAreaUtils';
 import { ScrollView } from 'react-native-virtualized-view';
 import { MaterialIcons } from '@expo/vector-icons';
 import { launchImagePicker } from '../utils/ImagePickerHelper';
@@ -13,11 +13,13 @@ import { supabase } from '../lib/supabase';
 import { Alert } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 
+
 const Profile = ({ navigation }) => {
   const refRBSheet = useRef();
   const { dark, colors, setScheme } = useTheme();
   const { user, userProfile, loading: authLoading } = useAuth();
   const insets = useSafeAreaInsets();
+
   
   // Calculate bottom spacing to avoid tab bar overlap
   const getBottomSpacing = () => {
@@ -55,6 +57,7 @@ const Profile = ({ navigation }) => {
     
   }
 };
+
 
   /**
    * Render Header
@@ -268,7 +271,7 @@ const Profile = ({ navigation }) => {
     )
   }
   return (
-    <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
+    <View style={[styles.area, { backgroundColor: colors.background }]}>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         {renderHeader()}
         <ScrollView 
@@ -314,23 +317,22 @@ const Profile = ({ navigation }) => {
             title="Cancel"
             style={{
               width: (SIZES.width - 32) / 2 - 8,
-              backgroundColor: dark ? COLORS.dark3 : COLORS.tansparentPrimary,
+              backgroundColor: dark ? COLORS.gray2 : COLORS.tansparentPrimary,
               borderRadius: 32,
-              borderColor: dark ? COLORS.dark3 : COLORS.tansparentPrimary
+              borderColor: dark ? COLORS.gray2 : COLORS.tansparentPrimary
             }}
             textColor={dark ? COLORS.white : COLORS.primary}
             onPress={() => refRBSheet.current.close()}
           />
-        <Button
-  title="Yes, Logout"
-  filled
-  style={styles.logoutButton}
-  onPress={handleLogout}
-  
-/>
+          <Button
+            title="Yes, Logout"
+            filled
+            style={styles.logoutButton}
+            onPress={() => refRBSheet.current.close()}
+          />
         </View>
       </RBSheet>
-    </SafeAreaView>
+    </View>
   )
 };
 

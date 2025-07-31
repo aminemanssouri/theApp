@@ -1,193 +1,575 @@
-import { View, Text, TouchableOpacity, Image, FlatList, StyleSheet } from 'react-native';
-import React from 'react';
-import { messsagesData } from '../data';
-import { COLORS, SIZES } from '../constants';
+import { View, Text, Image, TouchableOpacity, StyleSheet, ActivityIndicator, FlatList, Animated, Platform } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import { getUserConversations, getConversationMessages, subscribeToUserMessages, markMessagesRead } from '../lib/services/chat';
+import { useAuth } from '../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../theme/ThemeProvider';
+import { COLORS, SIZES } from '../constants';
+import { Ionicons } from '@expo/vector-icons';
 
-const Chats = () => {
-    const navigation = useNavigation();
-    const { dark } = useTheme();
+const Chats = ({ searchQuery = '' }) => {
+  const navigation = useNavigation();
+  const { user } = useAuth();
+  const { colors, dark } = useTheme();
+  const [conversations, setConversations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(30)).current;
 
-    const renderItem = ({ item, index }) => (
-        <TouchableOpacity
-            key={index}
-            onPress={() =>
-                navigation.navigate('Chat', {
-                    userName: item.fullName,
-                })
-            }
-            style={[
-                styles.userContainer, {
-                    borderBottomWidth: dark ? 0 : 1,
-                },
-                index % 2 !== 0 ? {
-                    backgroundColor: dark ? COLORS.dark1 : COLORS.tertiaryWhite,
-                    borderBottomWidth: dark ? 0 : 1,
-                    borderTopWidth: dark ? 0 : 0
-                } : null,
-            ]}>
-            <View style={styles.userImageContainer}>
-                {item.isOnline && item.isOnline === true && (
-                    <View style={styles.onlineIndicator} />
-                )}
+  const animateIn = () => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 400,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 400,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
 
-                <Image
-                    source={item.userImg}
-                    resizeMode="contain"
-                    style={styles.userImage}
-                />
-            </View>
-            <View style={{ flexDirection: "row", width: SIZES.width - 104 }}>
-                <View style={[styles.userInfoContainer]}>
-                    <Text style={[styles.userName, {
-                        color: dark ? COLORS.white : COLORS.black
-                    }]}>{item.fullName}</Text>
-                    <Text style={styles.lastSeen}>{item.lastMessage}</Text>
-                </View>
-                <View style={{
-                    position: "absolute",
-                    right: 4,
-                    alignItems: "center"
-                }}>
-                    <Text style={[styles.lastMessageTime, {
-                        color: dark ? COLORS.white : COLORS.black
-                    }]}>{item.lastMessageTime}</Text>
-                    <View>
-                        {
-                            item.messageInQueue > 0 && (
-                                <TouchableOpacity style={{
-                                    width: 20,
-                                    height: 20,
-                                    borderRadius: 999,
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    backgroundColor: item.messageInQueue ? COLORS.primary : "transparent",
-                                    marginTop: 12
-                                }}>
-                                    <Text style={[styles.messageInQueue]}>{`${item.messageInQueue}`}</Text>
-                                </TouchableOpacity>
-                            )
-                        }
-                    </View>
-                </View>
-            </View>
-        </TouchableOpacity>
+  const loadConversations = async () => {
+    if (!user?.id) return;
+    
+    try {
+      setLoading(true);
+      const convs = await getUserConversations(user.id);
+      
+      // For each conversation, fetch the latest message
+      const convsWithLastMsg = await Promise.all(
+        convs.map(async (conv) => {
+          const msgs = await getConversationMessages(conv.id);
+          const lastMsg = msgs && msgs.length > 0 ? msgs[msgs.length - 1] : null;
+          return {
+            ...conv,
+            last_message: lastMsg ? lastMsg.content : '',
+            last_message_time: lastMsg ? lastMsg.created_at : null,
+            unread_count: conv.unreadCount || 0,
+          };
+        })
+      );
+      
+      setConversations(convsWithLastMsg);
+      animateIn();
+    } catch (err) {
+      setError(err.message || 'Failed to load conversations');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    loadConversations();
+
+    // Subscribe to new messages for this user
+    const channel = subscribeToUserMessages(user?.id, (newMessage) => {
+      setConversations(prev => 
+        prev.map(conv => {
+          if (conv.id === newMessage.conversation_id) {
+            const newUnreadCount = newMessage.sender_id !== user.id 
+              ? (conv.unread_count || 0) + 1 
+              : conv.unread_count;
+            
+            return {
+              ...conv,
+              last_message: newMessage.content,
+              last_message_time: newMessage.created_at,
+              unread_count: newUnreadCount,
+            };
+          }
+          return conv;
+        })
+      );
+    });
+    
+    return () => {
+      if (channel) channel.unsubscribe();
+    };
+  }, [user]);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    loadConversations();
+  };
+
+  const handleConversationPress = async (conversationId, participantId) => {
+    try {
+      await markMessagesRead(conversationId, user.id);
+      
+      setConversations(prev => 
+        prev.map(conv => 
+          conv.id === conversationId 
+            ? { ...conv, unread_count: 0 }
+            : conv
+        )
+      );
+      
+      navigation.navigate('Chat', { 
+        conversationId, 
+        workerId: participantId 
+      });
+    } catch (error) {
+      console.error('Error marking messages as read:', error);
+      navigation.navigate('Chat', { 
+        conversationId, 
+        workerId: participantId 
+      });
+    }
+  };
+
+  // Filter by search query
+  const filteredConversations = conversations.filter(item => {
+    const q = searchQuery?.trim().toLowerCase() || '';
+    if (!q) return true;
+    
+    return item.participants.some(participant => {
+      const firstName = (participant.first_name || '').toLowerCase();
+      const lastName = (participant.last_name || '').toLowerCase();
+      const fullName = `${firstName} ${lastName}`.trim();
+      const displayName = participant.display_name || '';
+      const email = participant.email || '';
+      
+      return (
+        firstName.includes(q) ||
+        lastName.includes(q) ||
+        fullName.includes(q) ||
+        displayName.toLowerCase().includes(q) ||
+        email.toLowerCase().includes(q)
+      );
+    });
+  });
+
+  const formatLastMessageTime = (dateStr) => {
+    if (!dateStr) return '';
+    
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffInHours = (now - date) / (1000 * 60 * 60);
+    
+    if (diffInHours < 1) {
+      return 'Just now';
+    } else if (diffInHours < 24) {
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } else if (diffInHours < 48) {
+      return 'Yesterday';
+    } else {
+      return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    }
+  };
+
+  const truncateMessage = (message, maxLength = 50) => {
+    if (!message) return '';
+    return message.length > maxLength ? message.substring(0, maxLength) + '...' : message;
+  };
+
+  const highlightText = (text, query) => {
+    if (!query.trim() || !text) return text;
+    
+    const regex = new RegExp(`(${query.trim()})`, 'gi');
+    const parts = text.split(regex);
+    
+    return parts.map((part, index) => 
+      regex.test(part) ? (
+        <Text key={index} style={{ backgroundColor: COLORS.primary, color: COLORS.white, fontWeight: 'bold' }}>
+          {part}
+        </Text>
+      ) : part
     );
+  };
+
+  const renderEmptyState = () => {
+    if (searchQuery.trim()) {
+      return (
+        <View style={[styles.emptyContainer, { backgroundColor: colors.background }]}>
+          <View style={[styles.emptyIcon, { backgroundColor: colors.background }]}>
+            <Ionicons 
+              name="search-outline" 
+              size={48} 
+              color={dark ? COLORS.grayscale400 : COLORS.grayscale600} 
+            />
+          </View>
+          <Text style={[styles.emptyTitle, { color: dark ? COLORS.white : COLORS.black }]}>
+            No results found
+          </Text>
+          <Text style={[styles.emptySubtitle, { color: dark ? COLORS.grayscale400 : COLORS.grayscale600 }]}>
+            Try searching with a different name or check your spelling
+          </Text>
+        </View>
+      );
+    }
+    
+    return (
+      <View style={[styles.emptyContainer, { backgroundColor: colors.background }]}>
+        <View style={[styles.emptyIcon, { backgroundColor: colors.background }]}>
+          <Ionicons 
+            name="chatbubbles-outline" 
+            size={48} 
+            color={dark ? COLORS.grayscale400 : COLORS.grayscale600} 
+          />
+        </View>
+        <Text style={[styles.emptyTitle, { color: dark ? COLORS.white : COLORS.black }]}>
+          No conversations yet
+        </Text>
+        <Text style={[styles.emptySubtitle, { color: dark ? COLORS.grayscale400 : COLORS.grayscale600 }]}>
+          Start a conversation with a service provider to get help
+        </Text>
+      </View>
+    );
+  };
+
+  const renderConversationItem = ({ item, index }) => {
+    const participant = item.participants[0] || {};
+    const fullName = (participant.first_name || '') + ' ' + (participant.last_name || '');
+    const avatarUrl = participant.avatar_url;
+    const lastMessage = item.last_message || '';
+    const lastMessageTime = formatLastMessageTime(item.last_message_time);
+    const hasUnread = item.unread_count > 0;
 
     return (
-        <View>
-            <FlatList
-                data={messsagesData}
-                showsVerticalScrollIndicator={false}
-                renderItem={renderItem}
-                keyExtractor={(item) => item.id.toString()}
+      <Animated.View
+        style={[
+          { 
+            opacity: fadeAnim, 
+            transform: [{ translateY: slideAnim }],
+            backgroundColor: 'transparent'
+          }
+        ]}
+      >
+        <TouchableOpacity
+          onPress={() => {
+            handleConversationPress(item.id, participant.id);
+          }}
+          style={[
+            styles.conversationItem,
+            { 
+              backgroundColor: dark ? COLORS.dark2 : COLORS.white,
+              elevation: dark ? 2 : 1,
+              shadowColor: dark ? '#000' : '#000',
+              shadowOffset: { width: 0, height: dark ? 2 : 1 },
+              shadowOpacity: dark ? 0.3 : 0.1,
+              shadowRadius: dark ? 4 : 2,
+              ...Platform.select({
+                ios: { 
+                  backgroundColor: dark ? COLORS.dark2 : COLORS.white,
+                  shadowColor: dark ? '#000' : '#000',
+                  shadowOffset: { width: 0, height: dark ? 2 : 1 },
+                  shadowOpacity: dark ? 0.3 : 0.1,
+                  shadowRadius: dark ? 4 : 2,
+                },
+                android: { 
+                  backgroundColor: dark ? COLORS.dark2 : COLORS.white,
+                  elevation: dark ? 2 : 1,
+                }
+              })
+            },
+            index === 0 && { marginTop: 8 }
+          ]}
+          activeOpacity={0.7}
+        >
+          {/* Avatar with online status */}
+          <View style={[styles.avatarContainer, { backgroundColor: 'transparent' }]}>
+            <Image
+              source={avatarUrl ? { uri: avatarUrl } : require('../assets/images/avatar.jpeg')}
+              style={styles.avatar}
             />
+            <View style={[styles.onlineIndicator, { backgroundColor: COLORS.success }]} />
+          </View>
+
+          {/* Conversation content */}
+          <View style={[styles.conversationContent, { backgroundColor: 'transparent' }]}>
+            <View style={[styles.conversationHeader, { backgroundColor: 'transparent' }]}>
+              <Text style={[styles.participantName, { color: dark ? COLORS.white : COLORS.black }]}>
+                {searchQuery.trim() ? 
+                  highlightText(fullName.trim() || 'Service Provider', searchQuery) : 
+                  (fullName.trim() || 'Service Provider')
+                }
+              </Text>
+              <Text style={[styles.lastMessageTime, { color: dark ? COLORS.grayscale400 : COLORS.grayscale600 }]}>
+                {lastMessageTime}
+              </Text>
+            </View>
+            
+            <View style={[styles.conversationFooter, { backgroundColor: 'transparent' }]}>
+              <Text 
+                style={[
+                  styles.lastMessage, 
+                  { 
+                    color: hasUnread 
+                      ? (dark ? COLORS.white : COLORS.black) 
+                      : (dark ? COLORS.grayscale400 : COLORS.grayscale600),
+                    fontFamily: hasUnread ? 'medium' : 'regular'
+                  }
+                ]}
+                numberOfLines={1}
+              >
+                {truncateMessage(lastMessage) || 'Start a conversation...'}
+              </Text>
+              
+              {hasUnread && (
+                <View style={styles.unreadBadge}>
+                  <Text style={styles.unreadCount}>
+                    {item.unread_count > 9 ? '9+' : item.unread_count}
+                  </Text>
+                </View>
+              )}
+            </View>
+          </View>
+
+          {/* Action button */}
+          <TouchableOpacity style={[styles.actionButton, { backgroundColor: 'transparent' }]}>
+            <Ionicons 
+              name="ellipsis-vertical" 
+              size={16} 
+              color={dark ? COLORS.grayscale400 : COLORS.grayscale600} 
+            />
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Animated.View>
+    );
+  };
+
+  if (loading && !refreshing) {
+    return (
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+        <Text style={[styles.loadingText, { color: dark ? COLORS.white : COLORS.black }]}>
+          Loading conversations...
+        </Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={[styles.errorContainer, { backgroundColor: colors.background }]}>
+        <Ionicons name="alert-circle" size={48} color={COLORS.error} />
+        <Text style={[styles.errorText, { color: dark ? COLORS.white : COLORS.black }]}>
+          {error}
+        </Text>
+        <TouchableOpacity style={styles.retryButton} onPress={loadConversations}>
+          <Text style={styles.retryButtonText}>Retry</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  return (
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* Search Results Counter */}
+      {searchQuery.trim() && (
+        <View style={[styles.searchResultsContainer, { backgroundColor: colors.background }]}>
+          <Text style={[styles.searchResultsText, { color: dark ? COLORS.grayscale400 : COLORS.grayscale600 }]}>
+            {filteredConversations.length} conversation{filteredConversations.length !== 1 ? 's' : ''} found
+          </Text>
         </View>
-    )
-}
+      )}
+      
+      <FlatList
+        data={filteredConversations}
+        renderItem={renderConversationItem}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={[styles.listContainer, { backgroundColor: colors.background }]}
+        style={{ backgroundColor: colors.background }}
+        showsVerticalScrollIndicator={false}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
+        ListEmptyComponent={renderEmptyState}
+        ItemSeparatorComponent={() => <View style={[styles.separator, { backgroundColor: colors.background }]} />}
+      />
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
-    iconBtnContainer: {
-        height: 40,
-        width: 40,
-        borderRadius: 999,
-        backgroundColor: COLORS.white,
-        alignItems: "center",
-        justifyContent: "center"
-    },
-    notiContainer: {
-        alignItems: "center",
-        justifyContent: "center",
-        height: 16,
-        width: 16,
-        borderRadius: 999,
-        backgroundColor: COLORS.red,
-        position: "absolute",
-        top: 1,
-        right: 1,
-        zIndex: 999,
-    },
-    notiText: {
-        fontSize: 10,
-        color: COLORS.white,
-        fontFamily: "medium"
-    },
-    headerTitle: {
-        fontSize: 22,
-        fontFamily: "bold",
-        color: COLORS.black
-    },
-    searchBar: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: COLORS.white,
-        height: 50,
-        marginVertical: 22,
-        paddingHorizontal: 12,
-        borderRadius: 20,
-    },
-    searchInput: {
-        width: '100%',
-        height: '100%',
-        marginHorizontal: 12,
-    },
-    flatListContainer: {
-        paddingBottom: 100,
-    },
-    userContainer: {
-        width: '100%',
-        flexDirection: 'row',
-        alignItems: 'center',
-        borderBottomColor: COLORS.secondaryWhite,
-        borderBottomWidth: 1,
-    },
-    oddBackground: {
-        backgroundColor: COLORS.tertiaryWhite,
-    },
-    userImageContainer: {
-        paddingVertical: 15,
-        marginRight: 22,
-    },
-    onlineIndicator: {
-        height: 14,
-        width: 14,
-        borderRadius: 7,
-        backgroundColor: COLORS.primary,
-        borderColor: COLORS.white,
-        borderWidth: 2,
-        position: 'absolute',
-        top: 14,
-        right: 2,
-        zIndex: 1000,
-    },
-    userImage: {
-        height: 50,
-        width: 50,
-        borderRadius: 25,
-    },
-    userInfoContainer: {
-        flexDirection: 'column',
-    },
-    userName: {
-        fontSize: 14,
-        color: COLORS.black,
-        fontFamily: "bold",
-        marginBottom: 4,
-    },
-    lastSeen: {
-        fontSize: 14,
-        color: "gray",
-    },
-    lastMessageTime: {
-        fontSize: 12,
-        fontFamily: "regular"
-    },
-    messageInQueue: {
-        fontSize: 12,
-        fontFamily: "regular",
-        color: COLORS.white
-    }
+  container: {
+    flex: 1,
+    backgroundColor: 'transparent',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    fontFamily: 'regular',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+    backgroundColor: 'transparent',
+  },
+  errorText: {
+    marginTop: 16,
+    fontSize: 16,
+    textAlign: 'center',
+    fontFamily: 'regular',
+  },
+  retryButton: {
+    marginTop: 24,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    backgroundColor: COLORS.primary,
+    borderRadius: 24,
+  },
+  retryButtonText: {
+    color: COLORS.white,
+    fontSize: 16,
+    fontFamily: 'bold',
+  },
+  listContainer: {
+    paddingHorizontal: 8,
+    paddingBottom: 20,
+    backgroundColor: 'transparent',
+  },
+  conversationItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    marginHorizontal: 2,
+    backgroundColor: 'transparent',
+    elevation: 0,
+    shadowColor: 'transparent',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    ...Platform.select({
+      ios: { backgroundColor: 'transparent' },
+      android: { backgroundColor: 'transparent' }
+    }),
+  },
+  avatarContainer: {
+    position: 'relative',
+    marginRight: 16,
+    backgroundColor: 'transparent',
+  },
+  avatar: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+  },
+  onlineIndicator: {
+    position: 'absolute',
+    bottom: 2,
+    right: 2,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    borderWidth: 3,
+    borderColor: COLORS.white,
+  },
+  conversationContent: {
+    flex: 1,
+    marginRight: 12,
+    backgroundColor: 'transparent',
+  },
+  conversationHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+    backgroundColor: 'transparent',
+  },
+  participantName: {
+    fontSize: 16,
+    fontFamily: 'bold',
+    flex: 1,
+  },
+  lastMessageTime: {
+    fontSize: 12,
+    fontFamily: 'regular',
+  },
+  conversationFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+  },
+  lastMessage: {
+    fontSize: 14,
+    flex: 1,
+    marginRight: 8,
+  },
+  unreadBadge: {
+    backgroundColor: COLORS.primary,
+    borderRadius: 12,
+    minWidth: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  unreadCount: {
+    color: COLORS.white,
+    fontSize: 12,
+    fontFamily: 'bold',
+    textAlign: 'center',
+  },
+  actionButton: {
+    padding: 8,
+    backgroundColor: 'transparent',
+  },
+  separator: {
+    height: 8,
+    backgroundColor: 'transparent',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+    paddingVertical: 64,
+    backgroundColor: 'transparent',
+  },
+  emptyIcon: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
+    backgroundColor: 'transparent',
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontFamily: 'bold',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  emptySubtitle: {
+    fontSize: 16,
+    fontFamily: 'regular',
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  searchResultsContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: 'transparent',
+    borderBottomWidth: 0,
+    borderBottomColor: 'transparent',
+  },
+  searchResultsText: {
+    fontSize: 14,
+    fontFamily: 'regular',
+  },
 });
 
-export default Chats
+export default Chats;

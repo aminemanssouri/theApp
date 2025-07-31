@@ -1,6 +1,6 @@
 import { View, Text, TouchableOpacity, StyleSheet, Image, TextInput, FlatList, Platform } from 'react-native';
 import React, { useState } from 'react';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { getSafeAreaInsets } from '../utils/safeAreaUtils';
 import { ScrollView } from 'react-native-virtualized-view';
 import { images, COLORS, SIZES, icons } from "../constants";
 import { banners, categories, mostPopularServices } from '../data';
@@ -12,7 +12,7 @@ import { useTheme } from '../theme/ThemeProvider';
 const Home = ({ navigation }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const { dark, colors } = useTheme();
-  const insets = useSafeAreaInsets();
+  const insets = getSafeAreaInsets();
   
   // Calculate bottom spacing to avoid tab bar overlap
   const getBottomSpacing = () => {
@@ -273,7 +273,7 @@ const Home = ({ navigation }) => {
   }
 
   return (
-    <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
+    <View style={[styles.area, { backgroundColor: colors.background }]}>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         {renderHeader()}
         <ScrollView 
@@ -289,7 +289,7 @@ const Home = ({ navigation }) => {
           {renderTopServices()}
         </ScrollView>
       </View>
-    </SafeAreaView>
+    </View>
   )
 };
 

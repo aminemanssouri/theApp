@@ -15,9 +15,10 @@ const Onboarding3 = ({ navigation }) => {
   useEffect(() => {
     const intervalId = setInterval(() => {
       setProgress(prevProgress => {
+        // Stop at 100% (1.0) and don't exceed it
         if (prevProgress >= 1) {
           clearInterval(intervalId);
-          return prevProgress;
+          return 1;
         }
         return prevProgress + 0.5;
       });
@@ -26,12 +27,7 @@ const Onboarding3 = ({ navigation }) => {
     return () => clearInterval(intervalId);
   }, []);
 
-  useEffect(() => {
-    if (progress >= 1) {
-      // navigate to the onboarding4 screen
-      navigation.navigate('Onboarding4');
-    }
-  }, [progress, navigation]);
+  // Remove automatic navigation - let users control it manually
 
   return (
     <SafeAreaView style={[Onboarding1Styles.container, {
@@ -52,16 +48,18 @@ const Onboarding3 = ({ navigation }) => {
             backgroundColor: colors.background
           }]}>
             <View style={Onboarding1Styles.titleContainer}>
-              <Text style={[Onboarding1Styles.title, { color: colors.text }]}>Efficient</Text>
-              <Text style={Onboarding1Styles.subTitle}>A Reliable Service</Text>
+              <Text style={[Onboarding1Styles.title, {
+                color: colors.text
+              }]}>Track Progress</Text>
+              <Text style={Onboarding1Styles.subTitle}>Real-time Updates</Text>
             </View>
 
             <Text style={[Onboarding1Styles.description, { color: colors.text }]}>
-            Discover a network of trusted professionals ready to tackle any task, ensuring your home is always in tip-top shape.
+            Stay informed with real-time updates on your service progress and provider location.
             </Text>
 
             <View style={Onboarding1Styles.dotsContainer}>
-              {progress < 1 && <DotsView progress={progress} numDots={4} />}
+              <DotsView progress={progress} numDots={4} />
             </View>
             <Button
               title="Next"
@@ -72,7 +70,7 @@ const Onboarding3 = ({ navigation }) => {
             <Button
               title="Skip"
               onPress={() => navigation.navigate('Login')}
-              textColor={COLORS.primary}
+              textColor={colors.primary}
               style={Onboarding1Styles.skipButton}
             />
           </View>

@@ -1,5 +1,5 @@
 import * as SplashScreen from 'expo-splash-screen'
-import { SafeAreaProvider } from 'react-native-safe-area-context'
+import { View } from 'react-native'
 import { useFonts } from 'expo-font'
 import { useCallback } from 'react'
 import { FONTS } from './constants/fonts'
@@ -7,6 +7,7 @@ import AppNavigation from './navigations/AppNavigation'
 import { LogBox } from 'react-native'
 import { ThemeProvider } from './theme/ThemeProvider'
 import { AuthProvider } from './context/AuthContext'
+import { NotificationProvider } from './context/NotificationContext'
 
 //Ignore all log notifications
 LogBox.ignoreAllLogs();
@@ -29,9 +30,11 @@ export default function App() {
   return (
     <AuthProvider>
       <ThemeProvider>
-        <SafeAreaProvider onLayout={onLayoutRootView}>
-          <AppNavigation />
-        </SafeAreaProvider>
+        <NotificationProvider>
+          <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
+            <AppNavigation />
+          </View>
+        </NotificationProvider>
       </ThemeProvider>
     </AuthProvider>
   );

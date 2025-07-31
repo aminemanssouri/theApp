@@ -11,8 +11,8 @@ import Button from '../components/Button';
 import SocialButton from '../components/SocialButton';
 import OrSeparator from '../components/OrSeparator';
 import { useTheme } from '../theme/ThemeProvider';
-import { signIn,signInWithGoogle } from '../lib/services/auth';
-import { supabase } from '../lib/supabase';
+import { signIn } from '../lib/services/auth';
+
 const isTestMode = false;
 
 const initialState = {
@@ -97,28 +97,10 @@ const Login = ({ navigation }) => {
   };
 
   // Implementing google authentication
-const googleAuthHandler = async () => {
-  setIsLoading(true)
-  try {
-    const { data, error } = await signInWithGoogle()
-    if (error) throw error
-    
-    console.log('Google Sign In Data:', data);
-    
-    // Check if we have a valid session
-    const { data: sessionData } = await supabase.auth.getSession();
-    if (sessionData?.session) {
-      console.log('Google authentication successful');
-      navigation.navigate("Main");
-    } else {
-      console.log('Authentication completed but no session found');
-    }
-  } catch (error) {
-    Alert.alert('Error', error.message)
-  } finally {
-    setIsLoading(false)
-  }
-};
+  const googleAuthHandler = () => {
+    console.log("Google Authentication")
+  };
+
   return (
     <SafeAreaView style={[styles.area, {
       backgroundColor: colors.background }]}>

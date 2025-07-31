@@ -3,7 +3,6 @@
     "name": "",
     "slug": "bricollano",
     "version": "1.0.0",
-    "scheme": "bricollano",
     "orientation": "portrait",
     "icon": "./assets/logos/BRICOLLANO-logo-black.png",
     "userInterfaceStyle": "automatic",
@@ -25,10 +24,12 @@
       }
     },
     "web": {
+
       "favicon": "./assets/logos/BRICOLLANO-logo-black.png"
     },
     "plugins": [
       "expo-web-browser"
     ]
+
   }
 }

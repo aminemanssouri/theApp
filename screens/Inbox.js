@@ -1,67 +1,162 @@
-import { View, Text, StyleSheet, Image, TouchableOpacity, useWindowDimensions, Platform } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, useWindowDimensions, Platform, TextInput, Modal, Pressable, Alert } from 'react-native';
 import React from 'react';
 import { COLORS, SIZES, icons, images } from '../constants';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
-import { Calls, Chats } from '../tabs';
+import { getSafeAreaInsets } from '../utils/safeAreaUtils';
+import { TabView, TabBar } from 'react-native-tab-view';
+import { Chats } from '../tabs';
 import { Feather } from "@expo/vector-icons";
 import { useTheme } from '../theme/ThemeProvider';
-
-const renderScene = SceneMap({
-  first: Chats,
-  second: Calls,
-});
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../context/AuthContext';
+import { markMessagesRead } from '../lib/services/chat';
 
 const Inbox = () => {
   const layout = useWindowDimensions();
   const { colors, dark } = useTheme();
-  const insets = useSafeAreaInsets();
-
-  // Calculate bottom spacing to avoid tab bar overlap
-  const getBottomSpacing = () => {
-    const baseTabHeight = 60;
-    const safeAreaBottom = insets.bottom;
-    
-    if (Platform.OS === 'ios') {
-      return baseTabHeight + safeAreaBottom + 10;
-    } else {
-      return baseTabHeight + Math.max(safeAreaBottom, 10) + 10;
-    }
-  };
+  const insets = getSafeAreaInsets();
+  const { user } = useAuth();
 
   const [index, setIndex] = React.useState(0);
   const [routes] = React.useState([
-    { key: 'first', title: 'Chats' },
-    { key: 'second', title: 'Calls' }
+    { key: 'first', title: 'Chats' }
   ]);
+
+  const [showSearch, setShowSearch] = React.useState(false);
+  const [searchQuery, setSearchQuery] = React.useState('');
+  const [showOptions, setShowOptions] = React.useState(false);
+  const [isMarkingAllRead, setIsMarkingAllRead] = React.useState(false);
+  const [isDeletingAll, setIsDeletingAll] = React.useState(false);
+
+  const handleMarkAllAsRead = async () => {
+    try {
+      setIsMarkingAllRead(true);
+      setShowOptions(false);
+      
+      // Get all conversations for the current user
+      const { data: conversations } = await supabase
+        .from('conversation_participants')
+        .select('conversation_id')
+        .eq('user_id', user?.id);
+      
+      if (conversations && conversations.length > 0) {
+        // Mark all messages as read for each conversation
+        for (const conv of conversations) {
+          await markMessagesRead(conv.conversation_id, user?.id);
+        }
+      }
+      
+      // Refresh the conversations list
+      // This will trigger a re-render in the Chats component
+      Alert.alert('Success', 'All conversations marked as read');
+    } catch (error) {
+      console.error('Error marking all as read:', error);
+      Alert.alert('Error', 'Failed to mark all conversations as read');
+    } finally {
+      setIsMarkingAllRead(false);
+    }
+  };
+
+  const handleDeleteAll = async () => {
+    Alert.alert(
+      'Delete All Conversations',
+      'Are you sure you want to delete all conversations? This action cannot be undone.',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setIsDeletingAll(true);
+              setShowOptions(false);
+              
+              // Get all conversations for the current user
+              const { data: conversations } = await supabase
+                .from('conversation_participants')
+                .select('conversation_id')
+                .eq('user_id', user?.id);
+              
+              if (conversations && conversations.length > 0) {
+                // Delete all conversations
+                for (const conv of conversations) {
+                  // Delete messages first
+                  await supabase
+                    .from('messages')
+                    .delete()
+                    .eq('conversation_id', conv.conversation_id);
+                  
+                  // Delete conversation participants
+                  await supabase
+                    .from('conversation_participants')
+                    .delete()
+                    .eq('conversation_id', conv.conversation_id);
+                  
+                  // Delete the conversation
+                  await supabase
+                    .from('conversations')
+                    .delete()
+                    .eq('id', conv.conversation_id);
+                }
+              }
+              
+              Alert.alert('Success', 'All conversations deleted');
+            } catch (error) {
+              console.error('Error deleting all conversations:', error);
+              Alert.alert('Error', 'Failed to delete all conversations');
+            } finally {
+              setIsDeletingAll(false);
+            }
+          },
+        },
+      ]
+    );
+  };
 
   const renderTabBar = (props) => (
     <TabBar
       {...props}
       indicatorStyle={{
-        backgroundColor: COLORS.primary,
+        backgroundColor: colors.primary,
+        height: 3,
+        borderRadius: 2,
+        marginLeft: 8,
+        marginRight: 8,
       }}
       style={{
-        backgroundColor: colors.background,
+        backgroundColor: 'transparent',
+        elevation: 0,
+        shadowOpacity: 0,
+        borderBottomWidth: 0,
+        borderTopWidth: 0,
+        paddingHorizontal: 8,
+      }}
+      tabStyle={{
+        backgroundColor: 'transparent',
+        borderWidth: 0,
+        shadowOpacity: 0,
+        elevation: 0,
+        paddingHorizontal: 8,
+        marginHorizontal: 4,
       }}
       renderLabel={({ route, focused }) => (
         <Text style={{
-          color: focused ? COLORS.primary : 'gray',
+          color: focused ? colors.primary : colors.text,
           fontSize: 16,
-          fontFamily: "bold"
+          fontFamily: 'bold',
         }}>
           {route.title}
         </Text>
       )}
     />
   );
-  /**
-   * Render header
-   */
+
   const renderHeader = () => {
     return (
-      <View style={styles.headerContainer}>
-        <View style={styles.headerLeft}>
+      <View style={[styles.headerContainer, { backgroundColor: colors.background }]}>
+        <View style={[styles.headerLeft, { backgroundColor: colors.background }]}>
           <Image
             source={images.logo}
             resizeMode='contain'
@@ -71,8 +166,8 @@ const Inbox = () => {
             color: dark ? COLORS.white : COLORS.greyscale900
           }]}>Inbox</Text>
         </View>
-        <View style={styles.headerRight}>
-          <TouchableOpacity>
+        <View style={[styles.headerRight, { backgroundColor: colors.background }]}>
+          <TouchableOpacity onPress={() => setShowSearch((prev) => !prev)}>
             <Image
               source={icons.search}
               resizeMode='contain'
@@ -81,7 +176,7 @@ const Inbox = () => {
               }]}
             />
           </TouchableOpacity>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => setShowOptions(true)}>
             <Image
               source={icons.moreCircle}
               resizeMode='contain'
@@ -94,48 +189,128 @@ const Inbox = () => {
       </View>
     );
   };
-  return (
 
-    <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
+  const renderOptionsModal = () => (
+    <Modal
+      visible={showOptions}
+      transparent
+      animationType="fade"
+      onRequestClose={() => setShowOptions(false)}
+    >
+      <Pressable style={styles.modalOverlay} onPress={() => setShowOptions(false)}>
+        <View style={[styles.optionsMenu, {
+          backgroundColor: colors.background, 
+          top: 60, 
+          right: 16, 
+          position: 'absolute',
+        }]}> 
+          <TouchableOpacity 
+            style={styles.optionItem} 
+            onPress={handleMarkAllAsRead}
+            disabled={isMarkingAllRead}
+          >
+            <Text style={[styles.optionText, {color: dark ? COLORS.white : COLORS.black}]}>
+              {isMarkingAllRead ? 'Marking...' : 'Mark all as read'}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.optionItem} 
+            onPress={handleDeleteAll}
+            disabled={isDeletingAll}
+          >
+            <Text style={[styles.optionText, {color: dark ? COLORS.white : COLORS.black}]}>
+              {isDeletingAll ? 'Deleting...' : 'Delete all'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </Pressable>
+    </Modal>
+  );
+
+  return (
+    <View style={[styles.area, { backgroundColor: colors.background }]}> 
       <View style={[styles.container, { backgroundColor: colors.background, flex: 1 }]}>
         {renderHeader()}
-        <TabView
-          navigationState={{ index, routes }}
-          renderScene={renderScene}
-          onIndexChange={setIndex}
-          initialLayout={{ width: layout.width }}
-          renderTabBar={renderTabBar} 
-        />
-
-        {/* Implementing adding post */}
-        <TouchableOpacity style={[styles.addPostBtn, { bottom: getBottomSpacing() + 20 }]}>
-          <Feather name="plus" size={24} color={COLORS.white} />
-        </TouchableOpacity>
+        {showSearch && (
+          <View style={[styles.searchBarContainer, { backgroundColor: colors.background }]}> 
+            <View style={[styles.searchInputContainer, {
+              backgroundColor: dark ? COLORS.dark2 : COLORS.white,
+              borderWidth: 1,
+              borderColor: dark ? colors.card : '#e0e0e0'
+            }]}>
+              <Feather 
+                name="search" 
+                size={20} 
+                color={dark ? COLORS.secondaryWhite : 'gray'} 
+                style={styles.searchIconInput}
+              />
+              <TextInput
+                style={[styles.searchInput, {color: dark ? COLORS.white : COLORS.black}]}
+                placeholder="Search by name..."
+                placeholderTextColor={dark ? COLORS.secondaryWhite : 'gray'}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                autoFocus
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+              {searchQuery.length > 0 && (
+                <TouchableOpacity 
+                  onPress={() => setSearchQuery('')}
+                  style={styles.clearButton}
+                >
+                  <Feather 
+                    name="x" 
+                    size={18} 
+                    color={dark ? COLORS.secondaryWhite : 'gray'} 
+                  />
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        )}
+        {renderOptionsModal()}
+        <View style={{ backgroundColor: colors.background, flex: 1 }}>
+          <TabView
+            navigationState={{ index, routes }}
+            renderScene={({ route }) => {
+              switch (route.key) {
+                case 'first':
+                  return <Chats searchQuery={searchQuery} />;
+                default:
+                  return null;
+              }
+            }}
+            onIndexChange={setIndex}
+            initialLayout={{ width: layout.width }}
+            renderTabBar={renderTabBar}
+            style={{ backgroundColor: colors.background }}
+            sceneContainerStyle={{ backgroundColor: colors.background }}
+          />
+        </View>
       </View>
-    </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   area: {
     flex: 1,
-    backgroundColor: COLORS.white,
     paddingTop: Platform.OS === 'android' ? 25 : 0,
   },
   container: {
     flex: 1,
-    backgroundColor: COLORS.white,
     paddingHorizontal: 16
   },
   headerContainer: {
     flexDirection: "row",
     alignItems: "center",
     width: SIZES.width - 32,
-    justifyContent: "space-between"
+    justifyContent: "space-between",
   },
   headerLeft: {
     flexDirection: "row",
-    alignItems: "center"
+    alignItems: "center",
   },
   headerLogo: {
     height: 36,
@@ -145,40 +320,67 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontFamily: "bold",
-    color: COLORS.black,
     marginLeft: 12
   },
   headerRight: {
     flexDirection: "row",
-    alignItems: "center"
+    alignItems: "center",
   },
   searchIcon: {
     width: 24,
     height: 24,
-    tintColor: COLORS.black
   },
   moreCircleIcon: {
     width: 24,
     height: 24,
-    tintColor: COLORS.black,
     marginLeft: 12
   },
-  addPostBtn: {
-    width: 58,
-    height: 58,
+  searchBarContainer: {
+    width: '100%',
+    paddingVertical: 8,
+    paddingHorizontal: 0,
+  },
+  searchInputContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 999,
-    backgroundColor: COLORS.primary,
-    position: "absolute",
-    bottom: 72,
-    right: 16,
-    zIndex: 999,
-    shadowRadius: 10,
-    shadowColor: COLORS.primary,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  searchIconInput: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    height: 40,
+    fontSize: 16,
+  },
+  clearButton: {
+    padding: 4,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.2)',
+  },
+  optionsMenu: {
+    borderRadius: 8,
+    paddingVertical: 8,
+    width: 180,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
-    shadowOffset: { width: 0, height: 10 }
-  }
+    shadowRadius: 4,
+    position: 'absolute',
+    // top and right are set inline for dynamic placement
+  },
+  optionItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  optionText: {
+    fontSize: 16,
+  },
 })
 
 export default Inbox

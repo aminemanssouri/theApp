@@ -12,8 +12,6 @@ import SocialButton from '../components/SocialButton';
 import OrSeparator from '../components/OrSeparator';
 import { useTheme } from '../theme/ThemeProvider';
 import { signUp } from '../lib/services/auth';
-import { signInWithGoogle } from '../lib/services/auth';
-import { supabase } from '../lib/supabase';
 
 const isTestMode = true;
 
@@ -94,49 +92,9 @@ const Signup = ({ navigation }) => {
   };
 
   // Implementing google authentication
-// Change this:
-// To this:
-const googleAuthHandler = async () => {
-  setIsLoading(true);
-  try {
-    const { data, error } = await signInWithGoogle();
-    if (error) throw error;
-    
-    console.log('Google Sign Up Data:', data);
-    
-    // Check if we have a valid session
-    const { data: sessionData } = await supabase.auth.getSession();
-    if (sessionData?.session) {
-      console.log('Google authentication successful');
-      
-      // Check if this is a first-time login (new user)
-      const isNewUser = sessionData.session.user?.app_metadata?.provider === 'google' && 
-                       !sessionData.session.user?.user_metadata?.profile_completed;
-      
-      if (isNewUser) {
-        // New user - send to profile completion
-        navigation.navigate("FillYourProfile", { 
-          userId: sessionData.session.user.id,
-          email: sessionData.session.user.email
-        });
-      } else {
-        // Existing user - go to main screen
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'Main' }],
-        });
-      }
-    } else {
-      console.log('Authentication completed but no session found');
-      Alert.alert('Error', 'Failed to create account. Please try again.');
-    }
-  } catch (error) {
-    console.error('Google auth error:', error);
-    Alert.alert('Error', error.message);
-  } finally {
-    setIsLoading(false);
-  }
-};
+  const googleAuthHandler = () => {
+    console.log("Google Authentication")
+  };
 
   // Handle signup with Supabase
   const handleSignUp = async () => {

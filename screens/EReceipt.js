@@ -1,5 +1,5 @@
-import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, Modal, TouchableWithoutFeedback, FlatList, ActivityIndicator } from 'react-native';
-import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, Modal, TouchableWithoutFeedback, FlatList } from 'react-native';
+import React, { useState } from 'react';
 import { COLORS, SIZES, icons } from '../constants';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ScrollView } from 'react-native-virtualized-view';
@@ -7,67 +7,11 @@ import Barcode from '@kichiyaki/react-native-barcode-generator';
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Clipboard from 'expo-clipboard';
 import { useTheme } from '../theme/ThemeProvider';
-import { getBookingDetails } from '../lib/services/booking';
-import { useAuth } from '../context/AuthContext';
 
-const EReceipt = ({ navigation, route }) => {
+const EReceipt = ({ navigation }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
-  const [booking, setBooking] = useState(null);
-  const [loading, setLoading] = useState(true);
   const { colors, dark } = useTheme();
-  const { user } = useAuth();
-  
-  // Get the bookingId from navigation params
-  const bookingId = route.params?.bookingId;
-
-  useEffect(() => {
-    const fetchBookingData = async () => {
-      if (!bookingId) {
-        Alert.alert('Error', 'Booking ID not provided');
-        navigation.goBack();
-        return;
-      }
-
-      try {
-        setLoading(true);
-        const bookingData = await getBookingDetails(bookingId);
-        console.log('📄 Booking details for receipt:', bookingData);
-        setBooking(bookingData);
-      } catch (error) {
-        console.error('❌ Error fetching booking details:', error);
-        Alert.alert('Error', 'Failed to load booking details');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchBookingData();
-  }, [bookingId]);
-
-  if (loading) {
-    return (
-      <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
-        <View style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
-          <ActivityIndicator size="large" color={COLORS.primary} />
-          <Text style={{ marginTop: 10, color: dark ? COLORS.white : COLORS.black }}>Loading receipt...</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  if (!booking) {
-    return (
-      <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
-        <View style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
-          <Text style={{ color: dark ? COLORS.white : COLORS.black }}>Booking not found</Text>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginTop: 20 }}>
-            <Text style={{ color: COLORS.primary }}>Go Back</Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-    );
-  }
 
   const dropdownItems = [
     { label: 'Share E-Receipt', value: 'share', icon: icons.shareOutline },
@@ -136,10 +80,7 @@ const EReceipt = ({ navigation, route }) => {
    * Render content
    */
   const renderContent = () => {
-    const transactionId = booking?.id || 'N/A'; // Use booking ID as transaction ID
-    const bookingDate = booking?.booking_date ? new Date(booking.booking_date).toLocaleDateString() : 'N/A';
-    const bookingTime = booking?.start_time || 'N/A';
-    const endTime = booking?.end_time || 'N/A';
+    const transactionId = 'SKD354822747'; // Replace with your actual transaction ID
 
     const handleCopyToClipboard = async () => {
       await Clipboard.setStringAsync(transactionId);
@@ -150,8 +91,8 @@ const EReceipt = ({ navigation, route }) => {
       <View style={{ marginVertical: 22 }}>
         <Barcode
           format="EAN13"
-          value={booking?.id ? String(booking.id).padStart(12, '0').slice(0, 12) + '0' : "0123456789012"}
-          text={booking?.id ? String(booking.id).padStart(12, '0').slice(0, 12) + '0' : "0123456789012"}
+          value="0123456789012"
+          text="0123456789012"
           width={SIZES.width - 64}
           height={72}
           style={{
@@ -172,35 +113,31 @@ const EReceipt = ({ navigation, route }) => {
             <Text style={styles.viewLeft}>Services</Text>
             <Text style={[styles.viewRight, { 
                color: dark ? COLORS.white : COLORS.black
-            }]}>{booking?.service?.name || 'N/A'}</Text>
+            }]}>House Cleaning</Text>
           </View>
           <View style={styles.viewContainer}>
             <Text style={styles.viewLeft}>Category</Text>
             <Text style={[styles.viewRight, {
                color: dark ? COLORS.white : COLORS.black
-            }]}>{booking?.service?.category || 'Service'}</Text>
+            }]}>Cleaning</Text>
           </View>
           <View style={styles.viewContainer}>
             <Text style={styles.viewLeft}>Workers</Text>
             <Text style={[styles.viewRight, { 
                color: dark ? COLORS.white : COLORS.black
-            }]}>
-              {booking?.worker?.first_name && booking?.worker?.last_name 
-                ? `${booking.worker.first_name} ${booking.worker.last_name}`
-                : 'N/A'}
-            </Text>
+            }]}>Jenny Wilson</Text>
           </View>
           <View style={styles.viewContainer}>
             <Text style={styles.viewLeft}>Date & Time</Text>
             <Text style={[styles.viewRight, { 
                color: dark ? COLORS.white : COLORS.black
-            }]}>{bookingDate} | {bookingTime}</Text>
+            }]}>Dec 23, 2024 | 10:00 AM</Text>
           </View>
           <View style={styles.viewContainer}>
-            <Text style={styles.viewLeft}>Address</Text>
+            <Text style={styles.viewLeft}>Working Hours</Text>
             <Text style={[styles.viewRight, { 
                color: dark ? COLORS.white : COLORS.black
-            }]}>{booking?.address || 'N/A'}, {booking?.city || ''}</Text>
+            }]}>2 hours</Text>
           </View>
         </View>
 
@@ -212,25 +149,25 @@ const EReceipt = ({ navigation, route }) => {
             <Text style={styles.viewLeft}>Name</Text>
             <Text style={[styles.viewRight,{
                color: dark ? COLORS.white : COLORS.black
-            }]}>{user?.user_metadata?.full_name || user?.email || 'N/A'}</Text>
+            }]}>Andrew Ainsley</Text>
           </View>
           <View style={styles.viewContainer}>
             <Text style={styles.viewLeft}>Phone</Text>
             <Text style={[styles.viewRight, { 
                color: dark ? COLORS.white : COLORS.black
-            }]}>{user?.user_metadata?.phone || 'N/A'}</Text>
+            }]}>+1 111 3452 2837 3747</Text>
           </View>
           <View style={styles.viewContainer}>
             <Text style={styles.viewLeft}>Email</Text>
             <Text style={[styles.viewRight, { 
                color: dark ? COLORS.white : COLORS.black
-            }]}>{user?.email || 'N/A'}</Text>
+            }]}>andrew_ainsley@domain.com</Text>
           </View>
           <View style={styles.viewContainer}>
-            <Text style={styles.viewLeft}>Status</Text>
+            <Text style={styles.viewLeft}>Country</Text>
             <Text style={[styles.viewRight, { 
                color: dark ? COLORS.white : COLORS.black
-            }]}>{booking?.status || 'N/A'}</Text>
+            }]}>United States</Text>
           </View>
         </View>
         <View style={[styles.summaryContainer, {
@@ -241,23 +178,19 @@ const EReceipt = ({ navigation, route }) => {
             <Text style={styles.viewLeft}>Price</Text>
             <Text style={[styles.viewRight, { 
                color: dark ? COLORS.white : COLORS.black
-            }]}>€{booking?.total_amount || '0'}</Text>
+            }]}>$40</Text>
           </View>
           <View style={styles.viewContainer}>
             <Text style={styles.viewLeft}>Payment Methods</Text>
             <Text style={[styles.viewRight, { 
                color: dark ? COLORS.white : COLORS.black
-            }]}>{booking?.payment_method || 'Card'}</Text>
+            }]}>Credit Card</Text>
           </View>
           <View style={styles.viewContainer}>
-            <Text style={styles.viewLeft}>Created Date</Text>
+            <Text style={styles.viewLeft}>Date</Text>
             <Text style={[styles.viewRight, { 
                color: dark ? COLORS.white : COLORS.black
-            }]}>
-              {booking?.created_at 
-                ? new Date(booking.created_at).toLocaleString()
-                : 'N/A'}
-            </Text>
+            }]}>Dec 16, 2026 | 12:23:45 PM</Text>
           </View>
           <View style={styles.viewContainer}>
             <Text style={styles.viewLeft}>Transaction ID</Text>
@@ -270,15 +203,8 @@ const EReceipt = ({ navigation, route }) => {
           </View>
           <View style={styles.viewContainer}>
             <Text style={styles.viewLeft}>Status</Text>
-            <TouchableOpacity style={[styles.statusBtn, {
-              backgroundColor: booking?.status === 'completed' ? COLORS.green :
-                              booking?.status === 'confirmed' ? COLORS.primary :
-                              booking?.status === 'pending' ? COLORS.orange :
-                              booking?.status === 'cancelled' ? COLORS.red : COLORS.gray
-            }]}>
-              <Text style={styles.statusBtnText}>
-                {booking?.status?.charAt(0).toUpperCase() + booking?.status?.slice(1) || 'Unknown'}
-              </Text>
+            <TouchableOpacity style={styles.statusBtn}>
+              <Text style={styles.statusBtnText}>Paid</Text>
             </TouchableOpacity>
           </View>
         </View>
