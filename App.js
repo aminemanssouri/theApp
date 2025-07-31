@@ -8,6 +8,7 @@ import { LogBox } from 'react-native'
 import { ThemeProvider } from './theme/ThemeProvider'
 import { AuthProvider } from './context/AuthContext'
 
+
 //Ignore all log notifications
 LogBox.ignoreAllLogs();
 
@@ -27,6 +28,7 @@ export default function App() {
   }
 
   return (
+
     <AuthProvider>
       <ThemeProvider>
         <SafeAreaProvider onLayout={onLayoutRootView}>
@@ -34,5 +36,6 @@ export default function App() {
         </SafeAreaProvider>
       </ThemeProvider>
     </AuthProvider>
+
   );
 }

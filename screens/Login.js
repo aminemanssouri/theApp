@@ -11,6 +11,7 @@ import Button from '../components/Button';
 import SocialButton from '../components/SocialButton';
 import OrSeparator from '../components/OrSeparator';
 import { useTheme } from '../theme/ThemeProvider';
+
 import { signIn,signInWithGoogle } from '../lib/services/auth';
 import { supabase } from '../lib/supabase';
 const isTestMode = false;
@@ -34,6 +35,7 @@ const Login = ({ navigation }) => {
   const [isChecked, setChecked] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { colors, dark } = useTheme();
+  const [isLoading, setIsLoading] = useState(false);
 
   const inputChangedHandler = useCallback(
     (inputId, inputValue) => {
@@ -48,6 +50,7 @@ const Login = ({ navigation }) => {
       Alert.alert('An error occured', error)
     }
   }, [error]);
+
 
   // Handle login with Supabase
   const handleLogin = async () => {
@@ -172,10 +175,11 @@ const googleAuthHandler = async () => {
             </View>
           </View>
           <Button
-            title="Login"
+            title={isLoading ? 'Logging in...' : 'Login'}
             filled
             onPress={handleLogin}
             style={styles.button}
+
             isLoading={isLoading}
           />
           <TouchableOpacity
