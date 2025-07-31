@@ -11,9 +11,10 @@ import Button from '../components/Button';
 import SocialButton from '../components/SocialButton';
 import OrSeparator from '../components/OrSeparator';
 import { useTheme } from '../theme/ThemeProvider';
-import { supabase } from '../lib/supabase';
 
-const isTestMode = true;
+import { signIn,signInWithGoogle } from '../lib/services/auth';
+import { supabase } from '../lib/supabase';
+const isTestMode = false;
 
 const initialState = {
   inputValues: {
@@ -32,6 +33,7 @@ const Login = ({ navigation }) => {
   const [formState, dispatchFormState] = useReducer(reducer, initialState);
   const [error, setError] = useState(null);
   const [isChecked, setChecked] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { colors, dark } = useTheme();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -49,26 +51,39 @@ const Login = ({ navigation }) => {
     }
   }, [error]);
 
+
+  // Handle login with Supabase
   const handleLogin = async () => {
-    const email = formState.inputValues.email;
-    const password = formState.inputValues.password;
+    const { email, password } = formState.inputValues;
+    const { email: emailError, password: passwordError } = formState.inputValidities;
+    
+    if (!email || !password) {
+      Alert.alert('Error', 'Please fill in all fields');
+      return;
+    }
+    
+    if (emailError || passwordError) {
+      Alert.alert('Error', 'Please correct the errors in the form');
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
+
     try {
-      let { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const { data, error } = await signIn(email, password);
+
       if (error) {
         setError(error.message);
-        console.log("error", error.message);
-        return;
+        Alert.alert('Login Failed', error.message);
+      } else {
+        // Login successful - Supabase automatically handles the session
+        // console.log('Login successful:', data.user);
+        navigation.navigate("Main");
       }
-      // If login is successful, navigate to Main
-      navigation.navigate('Main');
     } catch (err) {
-      console.log(err);
-      setError('An unexpected error occurred. Please try again.');
+      setError(err.message);
+      Alert.alert('Error', err.message);
     } finally {
       setIsLoading(false);
     }
@@ -85,10 +100,28 @@ const Login = ({ navigation }) => {
   };
 
   // Implementing google authentication
-  const googleAuthHandler = () => {
-    console.log("Google Authentication")
-  };
-
+const googleAuthHandler = async () => {
+  setIsLoading(true)
+  try {
+    const { data, error } = await signInWithGoogle()
+    if (error) throw error
+    
+    console.log('Google Sign In Data:', data);
+    
+    // Check if we have a valid session
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (sessionData?.session) {
+      console.log('Google authentication successful');
+      navigation.navigate("Main");
+    } else {
+      console.log('Authentication completed but no session found');
+    }
+  } catch (error) {
+    Alert.alert('Error', error.message)
+  } finally {
+    setIsLoading(false)
+  }
+};
   return (
     <SafeAreaView style={[styles.area, {
       backgroundColor: colors.background }]}>
@@ -146,7 +179,8 @@ const Login = ({ navigation }) => {
             filled
             onPress={handleLogin}
             style={styles.button}
-            disabled={isLoading}
+
+            isLoading={isLoading}
           />
           <TouchableOpacity
             onPress={() => navigation.navigate("ForgotPasswordMethods")}>

@@ -12,6 +12,7 @@ import Button from '../components/Button';
 import SocialButton from '../components/SocialButton';
 import OrSeparator from '../components/OrSeparator';
 import { useTheme } from '../theme/ThemeProvider';
+
 import { supabase } from '../lib/supabase';
 
 const isTestMode = false; // Set to false for production
@@ -41,8 +42,38 @@ const Signup = ({ navigation }) => {
     (inputId, inputValue) => {
       const result = validateInput(inputId, inputValue)
       dispatchFormState({ inputId, validationResult: result, inputValue })
+      
+      // Additional validation for password confirmation
+      if (inputId === 'confirmPassword') {
+        const passwordValue = formState.inputValues.password
+        if (inputValue !== passwordValue) {
+          dispatchFormState({ 
+            inputId: 'confirmPassword', 
+            validationResult: 'Passwords do not match', 
+            inputValue 
+          })
+        }
+      }
+      
+      // Re-validate confirm password when password changes
+      if (inputId === 'password') {
+        const confirmPasswordValue = formState.inputValues.confirmPassword
+        if (confirmPasswordValue && inputValue !== confirmPasswordValue) {
+          dispatchFormState({ 
+            inputId: 'confirmPassword', 
+            validationResult: 'Passwords do not match', 
+            inputValue: confirmPasswordValue 
+          })
+        } else if (confirmPasswordValue && inputValue === confirmPasswordValue) {
+          dispatchFormState({ 
+            inputId: 'confirmPassword', 
+            validationResult: undefined, 
+            inputValue: confirmPasswordValue 
+          })
+        }
+      }
     },
-    [dispatchFormState]
+    [dispatchFormState, formState.inputValues.password, formState.inputValues.confirmPassword]
   )
 
   useEffect(() => {
@@ -145,9 +176,103 @@ const Signup = ({ navigation }) => {
     Alert.alert('Coming Soon', 'Facebook authentication will be available soon.');
   };
 
-  const googleAuthHandler = () => {
-    console.log("Google Authentication - Not implemented yet")
-    Alert.alert('Coming Soon', 'Google authentication will be available soon.');
+
+  // Implementing google authentication
+// Change this:
+// To this:
+const googleAuthHandler = async () => {
+  setIsLoading(true);
+  try {
+    const { data, error } = await signInWithGoogle();
+    if (error) throw error;
+    
+    console.log('Google Sign Up Data:', data);
+    
+    // Check if we have a valid session
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (sessionData?.session) {
+      console.log('Google authentication successful');
+      
+      // Check if this is a first-time login (new user)
+      const isNewUser = sessionData.session.user?.app_metadata?.provider === 'google' && 
+                       !sessionData.session.user?.user_metadata?.profile_completed;
+      
+      if (isNewUser) {
+        // New user - send to profile completion
+        navigation.navigate("FillYourProfile", { 
+          userId: sessionData.session.user.id,
+          email: sessionData.session.user.email
+        });
+      } else {
+        // Existing user - go to main screen
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Main' }],
+        });
+      }
+    } else {
+      console.log('Authentication completed but no session found');
+      Alert.alert('Error', 'Failed to create account. Please try again.');
+    }
+  } catch (error) {
+    console.error('Google auth error:', error);
+    Alert.alert('Error', error.message);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+  // Handle signup with Supabase
+  const handleSignUp = async () => {
+    // Check if all fields are filled and valid
+    const { email, password, confirmPassword } = formState.inputValues
+    const { email: emailError, password: passwordError, confirmPassword: confirmPasswordError } = formState.inputValidities
+    
+    if (!email || !password || !confirmPassword) {
+      Alert.alert('Error', 'Please fill in all fields')
+      return
+    }
+    
+    if (emailError || passwordError || confirmPasswordError) {
+      Alert.alert('Error', 'Please correct the errors in the form')
+      return
+    }
+
+    if (!isChecked) {
+      Alert.alert('Error', 'Please accept the Privacy Policy')
+      return
+    }
+
+    if (password !== confirmPassword) {
+      Alert.alert('Error', 'Passwords do not match')
+      return
+    }
+
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const { data, error } = await signUp(
+        email,
+        password,
+        '', // firstName - will be filled in next screen
+        '', // lastName - will be filled in next screen
+        'client' // userType
+      )
+
+      if (error) {
+        setError(error.message)
+        Alert.alert('Sign Up Failed', error.message)
+      } else {
+        Alert.alert('Success', 'Account created successfully!')
+        navigation.navigate("FillYourProfile")
+      }
+    } catch (err) {
+      setError(err.message)
+      Alert.alert('Error', err.message)
+    } finally {
+      setIsLoading(false)
+    }
   };
 
   return (
@@ -221,7 +346,8 @@ const Signup = ({ navigation }) => {
             filled
             onPress={handleSignUp}
             style={styles.button}
-            disabled={isLoading || !formState.formIsValid || !isChecked}
+
+            isLoading={isLoading}
           />
           
           <View>

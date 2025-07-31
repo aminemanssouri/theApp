@@ -8,9 +8,6 @@ import { LogBox } from 'react-native'
 import { ThemeProvider } from './theme/ThemeProvider'
 import { AuthProvider } from './context/AuthContext'
 
-if (typeof global.structuredClone !== 'function') {
-  global.structuredClone = (obj) => JSON.parse(JSON.stringify(obj));
-}
 
 //Ignore all log notifications
 LogBox.ignoreAllLogs();
@@ -31,12 +28,14 @@ export default function App() {
   }
 
   return (
-    <ThemeProvider>
-      <AuthProvider>
+
+    <AuthProvider>
+      <ThemeProvider>
         <SafeAreaProvider onLayout={onLayoutRootView}>
           <AppNavigation />
         </SafeAreaProvider>
-      </AuthProvider>
-    </ThemeProvider>
+      </ThemeProvider>
+    </AuthProvider>
+
   );
 }
