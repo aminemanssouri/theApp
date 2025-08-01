@@ -1,1 +1,1 @@
-test
+test dma amdka a
