@@ -19,11 +19,15 @@ import Category from '../components/Category';
 import ServiceCard from '../components/ServiceCard';
 // import ServiceDebugger from '../components/ServiceDebugger'; // Import the service debugger
 import { useTheme } from '../theme/ThemeProvider';
+import { useNotifications } from '../context/NotificationContext';
+import { useAuth } from '../context/AuthContext';
 
 const Home = ({ navigation }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const { dark, colors } = useTheme();
   const insets = useSafeAreaInsets();
+  const { notifications, unreadCount, userNotificationStats, isUserAuthenticated } = useNotifications();
+  const { user, userProfile } = useAuth();
   
   // Supabase data states
   const [categories, setCategories] = useState([]);
@@ -35,6 +39,60 @@ const Home = ({ navigation }) => {
   // Move useState hooks to component level
   const [search, setSearch] = useState("");
   const [selectedCategories, setSelectedCategories] = useState(["all"]); // Start with "all" instead of hardcoded "1"
+
+  // Handle notification icon press with detailed logging
+  const handleNotificationPress = () => {
+    console.log('🔔 NOTIFICATION ICON CLICKED 🔔');
+    console.log('📱 Navigation: Navigating to Notifications screen');
+    
+    // Log user authentication status
+    console.log('👤 User Authentication Status:', {
+      isAuthenticated: isUserAuthenticated(),
+      userId: user?.id,
+      userEmail: user?.email,
+      userName: userProfile?.first_name || user?.email?.split('@')[0] || 'Unknown'
+    });
+    
+    // Log notification data
+    console.log('📊 Notification Statistics:', {
+      totalNotifications: notifications.length,
+      unreadCount: unreadCount,
+      userStats: userNotificationStats
+    });
+    
+    // Log recent notifications (first 5)
+    console.log('📋 Recent Notifications (first 5):', notifications.slice(0, 5).map(notification => ({
+      id: notification.id,
+      type: notification.type,
+      title: notification.title,
+      message: notification.message,
+      isRead: notification.is_read,
+      createdAt: notification.created_at,
+      relatedId: notification.related_id,
+      relatedType: notification.related_type,
+      channel: notification.channel
+    })));
+    
+    // Log notification types breakdown
+    const typeBreakdown = notifications.reduce((acc, notification) => {
+      acc[notification.type] = (acc[notification.type] || 0) + 1;
+      return acc;
+    }, {});
+    console.log('📈 Notification Types Breakdown:', typeBreakdown);
+    
+    // Log unread notifications details
+    const unreadNotifications = notifications.filter(n => !n.is_read);
+    console.log('🔴 Unread Notifications Details:', unreadNotifications.map(notification => ({
+      id: notification.id,
+      type: notification.type,
+      title: notification.title,
+      message: notification.message,
+      createdAt: notification.created_at
+    })));
+    
+    // Navigate to notifications screen
+    navigation.navigate("Notifications");
+  };
 
   // Toggle category selection function
   const toggleCategory = (categoryId) => {
@@ -238,7 +296,8 @@ const Home = ({ navigation }) => {
           }]}>Hi, Joanna!</Text>
         </View>
         <TouchableOpacity
-          onPress={() => navigation.navigate("Notifications")}>
+          onPress={handleNotificationPress}
+          style={styles.notificationContainer}>
           <Image
             source={icons.bell}
             resizeMode='contain'
@@ -246,9 +305,13 @@ const Home = ({ navigation }) => {
               tintColor: dark? COLORS.white : COLORS.greyscale900
             }]}
           />
-          <View
-            style={styles.noti}
-          />
+          {unreadCount > 0 && (
+            <View style={styles.notificationBadge}>
+              <Text style={styles.notificationBadgeText}>
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </Text>
+            </View>
+          )}
         </TouchableOpacity>
       </View>
     )
@@ -688,7 +751,27 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
     fontFamily: 'medium',
     fontSize: 14
-  }
+  },
+  notificationContainer: {
+    position: 'relative',
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: -3,
+    right: -3,
+    backgroundColor: COLORS.red,
+    borderRadius: 8,
+    minWidth: 16,
+    height: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1,
+  },
+  notificationBadgeText: {
+    color: COLORS.white,
+    fontSize: 10,
+    fontFamily: 'semiBold',
+  },
 })
 
 export default Home
