@@ -9,11 +9,8 @@ import SettingsItem from '../components/SettingsItem';
 import { useTheme } from '../theme/ThemeProvider';
 import RBSheet from "react-native-raw-bottom-sheet";
 import Button from '../components/Button';
-import { supabase } from '../lib/supabase';
-import { Alert } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
 
 const Profile = ({ navigation }) => {
   const refRBSheet = useRef();
@@ -33,33 +30,6 @@ const Profile = ({ navigation }) => {
       return baseTabHeight + Math.max(safeAreaBottom, 10) + 20;
     }
   };
-
-  const handleLogout = async () => {
-  try {
-    // Show loading state
-    
-    // Call Supabase to sign out
-    const { error } = await supabase.auth.signOut();
-    
-    if (error) throw error;
-    
-    // Close the bottom sheet
-    refRBSheet.current.close();
-    
-    // Navigate to Login screen (reset navigation stack)
-    navigation.reset({
-      index: 0,
-      routes: [{ name: 'Login' }]
-    });
-  } catch (error) {
-    Alert.alert('Logout Error', error.message);
-  } finally {
-    // Hide loading state
-    
-  }
-};
-
-
   /**
    * Render Header
    */
@@ -325,12 +295,13 @@ const Profile = ({ navigation }) => {
             textColor={dark ? COLORS.white : COLORS.primary}
             onPress={() => refRBSheet.current.close()}
           />
-          <Button
-            title="Yes, Logout"
-            filled
-            style={styles.logoutButton}
-            onPress={() => refRBSheet.current.close()}
-          />
+        <Button
+  title="Yes, Logout"
+  filled
+  style={styles.logoutButton}
+  
+  
+/>
         </View>
       </RBSheet>
     </View>
