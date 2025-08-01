@@ -145,23 +145,6 @@ const UpcomingBooking = forwardRef((props, ref) => {
           textAlign: 'center',
           marginBottom: 20
         }]}>You don't have any upcoming bookings at the moment.</Text>
-        
-        <TouchableOpacity 
-          style={{
-            backgroundColor: COLORS.primary,
-            paddingHorizontal: 20,
-            paddingVertical: 12,
-            borderRadius: 8,
-            marginTop: 10
-          }}
-          onPress={createTestBookings}
-        >
-          <Text style={{
-            color: COLORS.white,
-            fontSize: 16,
-            fontWeight: 'bold'
-          }}>Create Test Booking</Text>
-        </TouchableOpacity>
       </View>
     );
   }

@@ -9,6 +9,8 @@ import SettingsItem from '../components/SettingsItem';
 import { useTheme } from '../theme/ThemeProvider';
 import RBSheet from "react-native-raw-bottom-sheet";
 import Button from '../components/Button';
+import { useAuth } from '../context/AuthContext';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const Profile = ({ navigation }) => {
   const refRBSheet = useRef();
@@ -297,7 +299,7 @@ const Profile = ({ navigation }) => {
   title="Yes, Logout"
   filled
   style={styles.logoutButton}
-  onPress={handleLogout}
+  
   
 />
         </View>
