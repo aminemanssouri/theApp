@@ -64,11 +64,7 @@ const NotificationCard = ({
       style={[
         styles.container,
         {
-          backgroundColor: !is_read 
-            ? (dark ? COLORS.primary + '10' : COLORS.primary + '05') 
-            : (dark ? COLORS.dark2 : COLORS.white),
-          borderColor: isSelected ? COLORS.primary : (!is_read ? COLORS.primary + '20' : 'transparent'),
-          borderWidth: isSelected ? 2 : (!is_read ? 1 : 0),
+          backgroundColor: dark ? COLORS.dark2 : COLORS.white,
           opacity: is_read ? 0.8 : 1
         }
       ]}
@@ -118,9 +114,6 @@ const NotificationCard = ({
             ]}>
               {title}
             </Text>
-            {!is_read && (
-              <View style={styles.unreadIndicator} />
-            )}
           </View>
           
           {getSenderName() && (
@@ -157,10 +150,6 @@ const NotificationCard = ({
         ]}>
           {getTimeAgo(created_at)}
         </Text>
-        
-        {type === 'message' && !is_read && (
-          <View style={styles.messageIndicator} />
-        )}
       </View>
     </TouchableOpacity>
   );
@@ -175,12 +164,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 12,
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    minHeight: 80
+    minHeight: 80,
+    backgroundColor: 'transparent'
   },
   selectionIndicator: {
     width: 20,
@@ -223,11 +208,8 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     backgroundColor: COLORS.primary,
     borderWidth: 2,
-    elevation: 3,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.4,
-    shadowRadius: 2
+    borderColor: COLORS.white,
+    zIndex: 1
   },
   contentContainer: {
     flex: 1
@@ -242,18 +224,6 @@ const styles = StyleSheet.create({
     fontFamily: "medium",
     color: COLORS.black,
     flex: 1
-  },
-  unreadIndicator: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: COLORS.primary,
-    marginLeft: 8,
-    elevation: 2,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.3,
-    shadowRadius: 2
   },
   senderName: {
     fontSize: 12,
@@ -273,21 +243,13 @@ const styles = StyleSheet.create({
   },
   rightContainer: {
     alignItems: 'flex-end',
-    justifyContent: 'space-between',
-    height: '100%',
+    justifyContent: 'center',
     paddingLeft: 8
   },
   date: {
     fontSize: 11,
     fontFamily: "regular",
-    color: "gray",
-    marginBottom: 4
-  },
-  messageIndicator: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: COLORS.primary
+    color: "gray"
   }
 });
 

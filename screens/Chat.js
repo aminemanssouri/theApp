@@ -58,6 +58,7 @@ const Chat = () => {
   const navigation = useNavigation();
   const conversationId = route.params?.conversationId;
   const workerInfo = route.params?.workerInfo; // Worker info from WorkerDetails
+  const notificationData = route.params?.notificationData;
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -65,6 +66,13 @@ const Chat = () => {
   const [isOtherTyping, setIsOtherTyping] = useState(false);
   const [inputText, setInputText] = useState('');
   const [chatPartner, setChatPartner] = useState(workerInfo); // Store worker info
+  
+  // Log notification data if coming from notification
+  useEffect(() => {
+    if (notificationData) {
+      console.log('💬 Chat opened from notification:', notificationData);
+    }
+  }, [notificationData]);
   
   const handleInputTextChange = (text) => {
     setInputText(text);
@@ -234,6 +242,11 @@ const Chat = () => {
             source={chatPartner?.avatar_url ? { uri: chatPartner.avatar_url } : defaultAvatar} 
             style={styles.headerAvatar} 
           />
+          {notificationData && (
+            <View style={styles.notificationIndicator}>
+              <Ionicons name="notifications" size={12} color={COLORS.white} />
+            </View>
+          )}
         </View>
         <View style={styles.headerText}>
           <Text style={[styles.headerName, { color: dark ? COLORS.white : COLORS.black }]}>
@@ -242,6 +255,11 @@ const Chat = () => {
           {chatPartner && (
             <Text style={[styles.headerStatus, { color: dark ? COLORS.grayscale400 : COLORS.grayscale600 }]}>
               Professional
+            </Text>
+          )}
+          {notificationData && (
+            <Text style={[styles.notificationSubtitle, { color: dark ? COLORS.gray3 : COLORS.gray3 }]}>
+              New message
             </Text>
           )}
         </View>
@@ -505,6 +523,24 @@ const styles = StyleSheet.create({
   dateSeparatorText: {
     fontSize: 12,
     fontFamily: 'medium',
+  },
+  notificationIndicator: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    backgroundColor: COLORS.primary,
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: COLORS.white,
+  },
+  notificationSubtitle: {
+    fontSize: 12,
+    fontFamily: 'regular',
+    marginTop: 2,
   },
 });
 
