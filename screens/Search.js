@@ -1,10 +1,11 @@
-import { View, Text, StyleSheet, TouchableOpacity, Image, TextInput, FlatList } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, TextInput, FlatList, ActivityIndicator } from 'react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import { COLORS, SIZES, icons } from '../constants';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ScrollView } from 'react-native-virtualized-view';
-import { allServices, categories, ratings } from '../data';
+import { categories, ratings } from '../data'; // Remove allServices as we'll get real data from API
 import NotFoundCard from '../components/NotFoundCard';
+import { searchServices } from '../lib/services/home';
 import RBSheet from "react-native-raw-bottom-sheet";
 import Button from '../components/Button';
 import MultiSlider from '@ptomasroos/react-native-multi-slider';
@@ -31,12 +32,23 @@ const CustomSliderHandle = ({ enabled, markerStyle }) => {
   );
 };
 
-const Search = ({ navigation }) => {
+const Search = ({ navigation, route }) => {
   const refRBSheet = useRef();
   const [selectedCategories, setSelectedCategories] = useState(["1"]);
   const [selectedRating, setSelectedRating] = useState(["1"]);
   const [priceRange, setPriceRange] = useState([0, 100]); // Initial price range
   const { dark, colors } = useTheme();
+  
+  // Get initial query from navigation params if available
+  const initialQuery = route.params?.initialQuery || '';
+  const showFilters = route.params?.showFilters || false;
+  
+  // Open filters if requested
+  useEffect(() => {
+    if (showFilters && refRBSheet.current) {
+      setTimeout(() => refRBSheet.current.open(), 500);
+    }
+  }, []);
 
   const handleSliderChange = (values) => {
     setPriceRange(values);
@@ -81,21 +93,49 @@ const Search = ({ navigation }) => {
    * Render content
    */
   const renderContent = () => {
-    const [searchQuery, setSearchQuery] = useState('');
-    const [filteredServices, setFilteredServices] = useState(allServices);
+    const [searchQuery, setSearchQuery] = useState(initialQuery);
+    const [filteredServices, setFilteredServices] = useState([]);
     const [resultsCount, setResultsCount] = useState(0);
+    const [loading, setLoading] = useState(false);
 
+    // Use effect to search when query changes with a small delay
     useEffect(() => {
-      handleSearch();
+      const delaySearch = setTimeout(() => {
+        handleSearch();
+      }, 500); // Debounce for better performance
+      
+      return () => clearTimeout(delaySearch);
     }, [searchQuery]);
 
-
-    const handleSearch = () => {
-        const services = allServices.filter((service) =>
-          service.name.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-        setFilteredServices(services);
-        setResultsCount(services.length);
+    // Search for services using our API
+    const handleSearch = async () => {
+      if (!searchQuery || searchQuery.trim() === '') {
+        setFilteredServices([]);
+        setResultsCount(0);
+        return;
+      }
+      
+      setLoading(true);
+      
+      try {
+        // Import at the top of the file: import { searchServices } from '../lib/services/home';
+        const { data: services, error } = await searchServices(searchQuery);
+        
+        if (error) {
+          console.error('Search error:', error);
+          setFilteredServices([]);
+          setResultsCount(0);
+        } else {
+          setFilteredServices(services || []);
+          setResultsCount(services?.length || 0);
+        }
+      } catch (err) {
+        console.error('Search error:', err);
+        setFilteredServices([]);
+        setResultsCount(0);
+      } finally {
+        setLoading(false);
+      }
     };
 
     return (
@@ -149,12 +189,17 @@ const Search = ({ navigation }) => {
             )
           }
 
-          {/* Courses result list */}
+          {/* Services result list */}
           <View style={{ marginVertical: 16 }}>
-            {resultsCount && resultsCount > 0 ? (
+            {loading ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color={COLORS.primary} />
+                <Text style={styles.loadingText}>Searching...</Text>
+              </View>
+            ) : searchQuery && resultsCount > 0 ? (
               <FlatList
                 data={filteredServices}
-                keyExtractor={(item) => item.id}
+                keyExtractor={(item, index) => `service-${item.id}-${index}`}
                 renderItem={({ item }) => {
                   return (
                     <ServiceCard
@@ -166,15 +211,29 @@ const Search = ({ navigation }) => {
                       oldPrice={item.oldPrice}
                       rating={item.rating}
                       numReviews={item.numReviews}
-                      onPress={() => navigation.navigate("ServiceDetails")}
+                      worker={item.worker}
+                      hasWorker={item.hasWorker}
+                      onPress={() => {
+                        if (item.hasWorker && item.workerId) {
+                          navigation.navigate("WorkerDetails", { 
+                            workerId: item.workerId,
+                            serviceId: item.serviceId
+                          });
+                        } else {
+                          navigation.navigate("ServiceDetails", { 
+                            serviceId: item.serviceId, 
+                            workerId: item.workerId
+                          });
+                        }
+                      }}
                       categoryId={item.categoryId}
                     />
                   )
                 }}
               />
-            ) : (
+            ) : searchQuery ? (
               <NotFoundCard />
-            )}
+            ) : null}
           </View>
         </View>
       </View>
@@ -477,6 +536,17 @@ const styles = StyleSheet.create({
   },
   resultLeftView: {
     flexDirection: "row"
+  },
+  loadingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40
+  },
+  loadingText: {
+    fontSize: 16,
+    fontFamily: "medium",
+    marginTop: 10,
+    color: COLORS.gray
   },
   bottomContainer: {
     flexDirection: "row",

@@ -3,15 +3,17 @@ import React from 'react';
 import { COLORS, SIZES } from '../constants';
 import { useTheme } from '../theme/ThemeProvider';
 
-const Category = ({   name, icon, iconColor, backgroundColor }) => {
+const Category = ({ name, icon, iconColor, backgroundColor, selected = false }) => {
     const { dark } = useTheme();
 
   return (
     <View style={styles.container}>
-        <TouchableOpacity 
-           style={[styles.iconContainer, {
-            backgroundColor: backgroundColor
-           }]}>
+        <View 
+           style={[
+             styles.iconContainer, 
+             { backgroundColor: backgroundColor },
+             selected && styles.selectedIconContainer
+           ]}>
             <Image
                 source={icon}
                 resizeMode='contain'
@@ -19,10 +21,14 @@ const Category = ({   name, icon, iconColor, backgroundColor }) => {
                     tintColor: iconColor
                 }]}
             />
-        </TouchableOpacity>
-        <Text style={[styles.name, { 
-            color: dark? COLORS.white : COLORS.greyscale900
-        }]}>{name}</Text>
+        </View>
+        <Text style={[
+          styles.name, 
+          { color: dark ? COLORS.white : COLORS.greyscale900 },
+          selected && styles.selectedName
+        ]}>
+          {name}
+        </Text>
     </View>
   )
 };
@@ -31,8 +37,8 @@ const styles = StyleSheet.create({
     container: {
         flexDirection: "column",
         alignItems: "center",
-        marginBottom: 12,
-        width: (SIZES.width - 32)/4
+        marginBottom: 5,
+        width: 75, // Smaller width for horizontal scrolling
     },
     iconContainer: {
         width: 54,
@@ -42,6 +48,10 @@ const styles = StyleSheet.create({
         alignItems: "center",
         marginBottom: 8
     },
+    selectedIconContainer: {
+        borderWidth: 2,
+        borderColor: COLORS.primary
+    },
     icon: {
         height: 24,
         width: 24
@@ -50,6 +60,10 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontFamily: "medium",
         color: COLORS.black
+    },
+    selectedName: {
+        color: COLORS.primary,
+        fontFamily: "bold"
     }
 })
 

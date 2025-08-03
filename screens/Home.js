@@ -258,31 +258,35 @@ const Home = ({ navigation }) => {
   * render search bar
   */
   const renderSearchBar = () => {
-    const handleInputFocus = () => {
-      // Redirect to another screen
-      navigation.navigate('Search');
+    // Navigate to search screen
+    const navigateToSearch = () => {
+      navigation.navigate('Search', { initialQuery: search });
     };
 
     return (
       <View style={[styles.searchContainer, {  
         borderColor: dark ? COLORS.grayscale700 : "#E5E7EB"
-        }]}>
-        <TouchableOpacity>
+      }]}>
+        <TouchableOpacity onPress={navigateToSearch} style={styles.searchIconContainer}>
           <Image
             source={icons.search2}
             resizeMode='contain'
             style={styles.searchIcon}
           />
         </TouchableOpacity>
-        <TextInput
+        
+        <TouchableOpacity 
           style={styles.searchInput}
-          value={search}
-          onChangeText={(value) => setSearch(value)}
-          placeholder='Search services...'
-          placeholderTextColor="#BABABA"
-          onFocus={handleInputFocus}
-        />
-        <TouchableOpacity>
+          activeOpacity={0.8}
+          onPress={navigateToSearch}
+        >
+          <Text style={{
+            color: "#BABABA",
+            fontSize: 14,
+          }}>Search services...</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity onPress={() => navigation.navigate('Search', { showFilters: true })}>
           <Image
             source={icons.filter}
             resizeMode='contain'
@@ -325,44 +329,67 @@ const Home = ({ navigation }) => {
   }
 
   /**
-   * Render categories
+   * Render categories - Horizontally scrollable and acts as filters
    */
   const renderCategories = () => {
-    // Display either all categories or just the first 8
-    const displayCategories = showAllCategories ? allCategories : categories;
-    const hasMoreCategories = allCategories.length > categories.length;
+    // Check if we have categories from database
+    if (!categories || categories.length === 0) {
+      return null; // Don't render if no categories
+    }
+
+    // Check if we already have an "All" category in the data
+    const hasAllCategory = categories.some(cat => cat.id === "all" || cat.name.toLowerCase() === "all");
+    
+    // Create a complete list of categories with "All" at the beginning if not already present
+    const allCategoriesList = hasAllCategory ? categories : [
+      { id: "all", name: "All", icon: icons.categoryAll || icons.categoryDefault }
+    ].concat(categories);
+
+    // Function to handle category selection
+    const handleCategoryPress = (categoryId) => {
+      if (categoryId === "all") {
+        // If "All" is selected, clear other selections
+        setSelectedCategories(["all"]);
+      } else {
+        // If a specific category is selected, only select that one
+        setSelectedCategories([categoryId]);
+      }
+    };
 
     return (
-      <View>
+      <View style={styles.categoriesContainer}>
         <SubHeaderItem
           title="Categories"
-          navTitle=""
-          onPress={null}
+          navTitle={allCategories.length > categories.length ? "See all" : ""}
+          onPress={allCategories.length > categories.length ? 
+            () => navigation.navigate("AllCategories") : null}
         />
+        
+        {/* Horizontal ScrollView for categories */}
         <FlatList
-          data={displayCategories}
+          data={allCategoriesList}
           keyExtractor={(item) => item.id.toString()}
-          horizontal={false}
-          numColumns={4} // Render four items per row
+          horizontal={true}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.categoriesScrollContainer}
           renderItem={({ item }) => (
-            <Category
-              name={item.name}
-              icon={item.icon}
-              iconColor={item.iconColor}
-              backgroundColor={item.backgroundColor}
-            />
+            <TouchableOpacity
+              onPress={() => handleCategoryPress(item.id)}
+              style={[
+                styles.categoryItemContainer,
+                selectedCategories.includes(item.id) && styles.selectedCategoryItemContainer
+              ]}
+            >
+              <Category
+                name={item.name}
+                icon={item.icon || icons.categoryDefault}
+                iconColor={selectedCategories.includes(item.id) ? COLORS.primary : COLORS.gray}
+                backgroundColor={selectedCategories.includes(item.id) ? `${COLORS.primary}15` : COLORS.lightGray}
+                selected={selectedCategories.includes(item.id)}
+              />
+            </TouchableOpacity>
           )}
         />
-        {hasMoreCategories && (
-          <TouchableOpacity 
-            style={styles.seeAllButton}
-            onPress={() => setShowAllCategories(!showAllCategories)}
-          >
-            <Text style={styles.seeAllButtonText}>
-              {showAllCategories ? "Show fewer categories" : "See all categories"}
-            </Text>
-          </TouchableOpacity>
-        )}
       </View>
     )
   }
@@ -373,18 +400,15 @@ const Home = ({ navigation }) => {
   const renderTopServices = () => {
     console.log(`🔍 RENDERING SERVICES. Total services: ${services.length}, Selected categories: ${selectedCategories.join(', ')}`);
     
-    // Debug log service data
-    if (services && services.length > 0) {
-      console.log('💡 SAMPLE SERVICE DATA:', {
-        id: services[0].id,
-        name: services[0].name,
-        providerName: services[0].providerName,
-        hasWorker: services[0].hasWorker,
-        categoryId: services[0].categoryId,
-        workerId: services[0].workerId
-      });
-    } else {
+    if (!services || services.length === 0) {
       console.warn('⚠️ NO SERVICES AVAILABLE TO RENDER');
+      return (
+        <View style={styles.noServicesContainer}>
+          <Text style={[styles.noServicesText, { color: colors.text }]}>
+            No services found. Please try again later.
+          </Text>
+        </View>
+      );
     }
     
     // Filter services based on selected categories
@@ -394,29 +418,6 @@ const Home = ({ navigation }) => {
       
     console.log(`✅ Filtered to ${filteredServices.length} services based on selected categories`);
 
-    // Use the categories directly from state (which already include the "All" option)
-    const filterCategories = categories;
-    console.log('Filter categories:', categories.map(c => `${c.id}:${c.name}`).join(', '));
-
-    // Category item for filtering
-    const renderCategoryItem = ({ item }) => (
-      <TouchableOpacity
-        style={{
-          backgroundColor: selectedCategories.includes(item.id) ? COLORS.primary : "transparent",
-          padding: 10,
-          marginVertical: 5,
-          borderColor: COLORS.primary,
-          borderWidth: 1.3,
-          borderRadius: 24,
-          marginRight: 12,
-        }}
-        onPress={() => toggleCategory(item.id)}>
-        <Text style={{
-          color: selectedCategories.includes(item.id) ? COLORS.white : COLORS.primary
-        }}>{item.name}</Text>
-      </TouchableOpacity>
-    );
-
     return (
       <View>
         <SubHeaderItem
@@ -424,14 +425,7 @@ const Home = ({ navigation }) => {
           navTitle="See all"
           onPress={() => navigation.navigate("AllServices", { showPopular: true })}
         />
-        <FlatList
-          data={filterCategories}
-          keyExtractor={(item, index) => `category-${item.id}-${index}`}
-          showsHorizontalScrollIndicator={false}
-          horizontal
-          renderItem={renderCategoryItem}
-          style={{ marginBottom: 16 }}
-        />
+        
         {filteredServices.length > 0 ? (
           <FlatList
             data={filteredServices}
@@ -573,6 +567,9 @@ const styles = StyleSheet.create({
     width: 20,
     tintColor: "#BABABA"
   },
+  searchIconContainer: {
+    paddingRight: 8
+  },
   searchInput: {
     flex: 1,
     fontSize: 14,
@@ -688,6 +685,27 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
     fontFamily: 'medium',
     fontSize: 14
+  },
+  // Styles for horizontal scrolling categories
+  categoriesContainer: {
+    marginVertical: 8
+  },
+  categoriesScrollContainer: {
+    paddingVertical: 12,
+    paddingHorizontal: 5,
+  },
+  categoryItemContainer: {
+    alignItems: 'center',
+    marginRight: 15,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 16,
+    width: 85, // Fixed width for each category item
+  },
+  selectedCategoryItemContainer: {
+    backgroundColor: `${COLORS.primary}10`,
+    borderWidth: 1,
+    borderColor: `${COLORS.primary}30`,
   }
 })
 

@@ -59,21 +59,31 @@ const Login = ({ navigation }) => {
     const { email: emailError, password: passwordError } = formState.inputValidities;
     console.log('🟡 handleLogin called');
     console.log('📝 Credentials:', { email, password: password ? '***' : '' });
+    
     if (!email || !password) {
       console.log('❌ Missing email or password');
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
+    
     if (emailError || passwordError) {
       console.log('❌ Validation error:', { emailError, passwordError });
       Alert.alert('Error', 'Please correct the errors in the form');
       return;
     }
+    
+    // Set loading state and ensure UI updates
     setIsLoading(true);
     setError(null);
+    
     try {
       console.log('🔗 Attempting signIn...');
+      
+      // Add a small delay to ensure the loading state is visible
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
       const { data, error } = await signIn(email, password);
+      
       if (error) {
         console.log('❌ signIn error:', error);
         setError(error.message);
@@ -87,8 +97,11 @@ const Login = ({ navigation }) => {
       setError(err.message);
       Alert.alert('Error', err.message);
     } finally {
-      setIsLoading(false);
-      console.log('🔄 handleLogin finished, loading set to false');
+      // Add a small delay before turning off loading state
+      setTimeout(() => {
+        setIsLoading(false);
+        console.log('🔄 handleLogin finished, loading set to false');
+      }, 300);
     }
   };
 
@@ -104,25 +117,36 @@ const Login = ({ navigation }) => {
 
   // Implementing google authentication
 const googleAuthHandler = async () => {
-  setIsLoading(true)
+  console.log('🟡 Google authentication started');
+  setIsLoading(true);
+  
   try {
-    const { data, error } = await signInWithGoogle()
-    if (error) throw error
+    // Add a small delay to ensure the loading state is visible
+    await new Promise(resolve => setTimeout(resolve, 800));
     
-    console.log('Google Sign In Data:', data);
+    const { data, error } = await signInWithGoogle();
+    if (error) throw error;
+    
+    console.log('✅ Google Sign In Data:', data);
     
     // Check if we have a valid session
     const { data: sessionData } = await supabase.auth.getSession();
     if (sessionData?.session) {
-      console.log('Google authentication successful');
+      console.log('✅ Google authentication successful');
       navigation.navigate("Main");
     } else {
-      console.log('Authentication completed but no session found');
+      console.log('❌ Authentication completed but no session found');
+      Alert.alert('Login Error', 'Authentication completed but no valid session was created. Please try again.');
     }
   } catch (error) {
-    Alert.alert('Error', error.message)
+    console.log('❌ Google authentication error:', error);
+    Alert.alert('Error', error.message);
   } finally {
-    setIsLoading(false)
+    // Add a small delay before turning off loading state
+    setTimeout(() => {
+      setIsLoading(false);
+      console.log('🔄 Google authentication finished, loading set to false');
+    }, 300);
   }
 };
   return (

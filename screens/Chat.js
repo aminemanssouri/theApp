@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
 import { getConversationMessages, sendMessage, subscribeToNewMessages } from '../lib/services/chat';
+import { getWorkerByConversation } from '../lib/services/workers';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../theme/ThemeProvider';
 import { COLORS, SIZES, icons } from '../constants';
@@ -56,12 +57,14 @@ const Chat = () => {
   const route = useRoute();
   const navigation = useNavigation();
   const conversationId = route.params?.conversationId;
+  const workerInfo = route.params?.workerInfo; // Worker info from WorkerDetails
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isTyping, setIsTyping] = useState(false);
   const [isOtherTyping, setIsOtherTyping] = useState(false);
   const [inputText, setInputText] = useState('');
+  const [chatPartner, setChatPartner] = useState(workerInfo); // Store worker info
   
   const handleInputTextChange = (text) => {
     setInputText(text);
@@ -92,6 +95,8 @@ const Chat = () => {
   useEffect(() => {
     if (!conversationId) return;
     setLoading(true);
+    
+    // Load messages
     getConversationMessages(conversationId)
       .then(setMessages)
       .catch(setError)
@@ -99,7 +104,23 @@ const Chat = () => {
         setLoading(false);
         animateIn();
       });
-  }, [conversationId]);
+      
+    // If we don't have worker info already, try to fetch it from conversation
+    if (!chatPartner && user) {
+      getWorkerByConversation(conversationId, user.id)
+        .then(({ data }) => {
+          if (data) {
+            setChatPartner({
+              id: data.id,
+              name: data.full_name || 'Professional', 
+              avatar_url: data.Image
+            });
+            console.log('Set chat partner:', data.full_name);
+          }
+        })
+        .catch(err => console.error('Error loading worker info:', err));
+    }
+  }, [conversationId, user, chatPartner]);
 
   // Real-time subscription
   useEffect(() => {
@@ -210,14 +231,19 @@ const Chat = () => {
       <View style={styles.headerInfo}>
         <View style={styles.avatarContainer}>
           <Image 
-            source={defaultAvatar} 
+            source={chatPartner?.avatar_url ? { uri: chatPartner.avatar_url } : defaultAvatar} 
             style={styles.headerAvatar} 
           />
         </View>
         <View style={styles.headerText}>
           <Text style={[styles.headerName, { color: dark ? COLORS.white : COLORS.black }]}>
-            Service Provider
+            {chatPartner?.name || 'Service Provider'}
           </Text>
+          {chatPartner && (
+            <Text style={[styles.headerStatus, { color: dark ? COLORS.grayscale400 : COLORS.grayscale600 }]}>
+              Professional
+            </Text>
+          )}
         </View>
       </View>
     </Animated.View>

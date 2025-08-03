@@ -70,8 +70,8 @@ const Button = (props) => {
                 activeOpacity={0.8}
                 disabled={isLoading}
             >
-                {isLoading && isLoading == true ? (
-                    <ActivityIndicator size="small" color={COLORS.white} />
+                {isLoading ? (
+                    <ActivityIndicator size="small" color={props.filled ? COLORS.white : COLORS.primary} />
                 ) : (
                     <Text style={{ fontSize: 18, fontFamily: "semiBold", ...{ color: textColor } }}>
                         {props.title}

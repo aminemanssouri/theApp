@@ -514,5 +514,7 @@ export default {
     applianceOutline,
     checked,
     routing,
-    routingOutline
+    routingOutline,
+    categoryAll: menu, // Using menu icon for the "All" category
+    categoryDefault: category // Default fallback icon for categories
 }

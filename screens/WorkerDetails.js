@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, useWindowDimensions, ActivityIndicator, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, useWindowDimensions, ActivityIndicator, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SIZES, icons, images } from '../constants';
 import ReviewStars from '../components/ReviewStars';
 import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
 import { ProfileReviews, ProfileServices } from '../tabs';
 import { useTheme } from '../theme/ThemeProvider';
+import { useAuth } from '../context/AuthContext';
 import { getWorkerDetails, getWorkerServices } from '../lib/services/workers';
+import { createConversation, getUserConversations } from '../lib/services/chat';
+import { findOrCreateConversation } from '../lib/services/chat-helper';
 
 // We'll create a custom scene renderer instead of using SceneMap
 // This allows us to pass props to our tab components
@@ -29,6 +32,7 @@ const WorkerDetails = ({ route, navigation }) => {
   const { workerId, serviceId } = route.params || {};
   const layout = useWindowDimensions();
   const { dark, colors } = useTheme();
+  const { user } = useAuth();
 
   const [index, setIndex] = useState(0);
   const [routes] = useState([
@@ -63,6 +67,36 @@ const WorkerDetails = ({ route, navigation }) => {
       setLoading(false);
     } catch (err) {
       console.error('Error in loadWorkerDetails:', err);
+      setLoading(false);
+    }
+  };
+  
+  // Import at the top of the file: import { createConversation } from '../lib/services/chat';
+  const handleMessageWorker = async (worker) => {
+    if (!worker?.id || !user?.id) {
+      console.error('Missing worker or user ID');
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      // Check if a conversation already exists between these users
+      // You would need to add this function to your chat service
+      const conversationId = await findOrCreateConversation([user.id, worker.id]);
+      
+      // Navigate to chat with the conversation ID and worker info
+      navigation.navigate("Chat", { 
+        conversationId,
+        workerInfo: {
+          id: worker.id,
+          name: worker.full_name || 'Professional',
+          avatar_url: worker.avatar_url
+        }
+      });
+    } catch (err) {
+      console.error('Error starting conversation:', err);
+      Alert.alert('Error', 'Could not start conversation. Please try again.');
+    } finally {
       setLoading(false);
     }
   };
@@ -181,7 +215,7 @@ const WorkerDetails = ({ route, navigation }) => {
 
           <View style={styles.buttonActionContainer}>
             <TouchableOpacity
-              onPress={() => navigation.navigate("Chat")}
+              onPress={() => handleMessageWorker(worker)}
               style={styles.buttonAction}>
               <Image
                 source={icons.chat}

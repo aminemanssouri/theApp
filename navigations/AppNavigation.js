@@ -261,11 +261,6 @@ const AppNavigation = () => {
           options={getTransitionConfig('ServiceDetailsReviews')}
         />
         <Stack.Screen 
-          name="WorkerDetails" 
-          component={WorkerDetails}
-          options={getTransitionConfig('WorkerDetails')}
-        />
-        <Stack.Screen 
           name="BookingStep1" 
           component={BookingStep1}
           options={getTransitionConfig('BookingStep1')}
