@@ -103,7 +103,7 @@ const WorkerDetails = ({ route, navigation }) => {
         backgroundColor: COLORS.primary,
       }}
       style={{
-        backgroundColor: dark ? COLORS.dark : colors.background
+        backgroundColor: colors.background
       }}
       renderLabel={({ route, focused }) => (
         <Text style={[{
@@ -131,7 +131,7 @@ const WorkerDetails = ({ route, navigation }) => {
     }
 
     return (
-      <View style={styles.contentContainer}>
+      <View>
         <View style={styles.profileImageContainer}>
           <Image
             source={worker?.avatar_url ? { uri: worker.avatar_url } : images.user5}
@@ -205,178 +205,181 @@ const WorkerDetails = ({ route, navigation }) => {
               <Text style={styles.buttonActionTextRight}>Book Now</Text>
             </TouchableOpacity>
           </View>
-        </View>
 
-        <TabView
-          navigationState={{ index, routes }}
-          renderScene={createScene(worker)}
-          renderTabBar={renderTabBar}
-          onIndexChange={setIndex}
-          initialLayout={{ width: layout.width }}
-          style={styles.tabViewStyle}
-          lazy={true}
-          lazyPreloadDistance={0}
-          renderLazyPlaceholder={() => <View style={{ padding: 20 }}><Text>Loading...</Text></View>}
-        />
+          <View style={styles.separateLine} />
+        </View>
       </View>
     )
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      {renderHeader()}
-      <ScrollView 
-        style={styles.scrollViewStyle}
-        contentContainerStyle={styles.scrollViewContentStyle}
-        showsVerticalScrollIndicator={false}
-      >
-        {renderContent()}
-      </ScrollView>
+    <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        {renderHeader()}
+        <View style={{ flex: 1 }}>
+          {renderContent()}
+          <View style={{ flex: 1 }}>
+            <TabView
+              navigationState={{ index, routes }}
+              renderScene={createScene(worker)}
+              onIndexChange={setIndex}
+              initialLayout={{ width: layout.width }}
+              renderTabBar={renderTabBar}
+            />
+          </View>
+        </View>
+      </View>
     </SafeAreaView>
   )
 }
 
 const styles = StyleSheet.create({
+  area: {
+    flex: 1,
+    backgroundColor: COLORS.white
+  },
   container: {
     flex: 1,
-  },
-  contentContainer: {
-    flex: 1, 
-    minHeight: 500, // Give the content container enough height for the TabView
-  },
-  scrollViewStyle: {
-    flex: 1,
-  },
-  scrollViewContentStyle: {
-    flexGrow: 1,
-    paddingBottom: 80, // Add more padding at the bottom
+    backgroundColor: COLORS.white,
+    padding: 16
   },
   headerContainer: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginHorizontal: 24,
-    marginTop: 24,
+    justifyContent: "space-between"
   },
   arrowBackIcon: {
     width: 24,
     height: 24,
+    tintColor: COLORS.black
   },
   bellIcon: {
     width: 24,
     height: 24,
+    tintColor: COLORS.black
   },
   profileImageContainer: {
     alignItems: "center",
-    marginHorizontal: 24,
-    marginTop: 24,
   },
   profileImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    height: 120,
+    width: 120,
+    borderRadius: 9999,
+    borderColor: COLORS.gray,
+    borderWidth: 2
   },
   fullName: {
     fontSize: 20,
     fontFamily: "bold",
-    marginTop: 12,
+    color: COLORS.black,
+    marginVertical: 8
   },
   yearExperience: {
-    fontSize: 16,
-    fontFamily: "medium",
-    marginTop: 8,
+    fontSize: 14,
+    color: COLORS.greyscale900
   },
   reviewContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 8,
+    marginTop: 6
   },
   ratingNum: {
-    marginLeft: 4,
-    fontFamily: "regular",
-    fontSize: 14,
+    color: "gray",
+    fontSize: 14
   },
   price: {
     fontSize: 20,
     fontFamily: "bold",
     color: COLORS.primary,
-    marginTop: 16,
+    marginVertical: 8
+  },
+  summaryContainer: {
+    width: SIZES.width - 64,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginVertical: 22
   },
   viewContainer: {
     flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
-    justifyContent: "center",
-    marginTop: 24,
+    marginVertical: 12
   },
   view: {
+    width: (SIZES.width - 32) / 3,
     alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 16,
-    borderRightWidth: 1,
-    borderColor: COLORS.grayscale400
-  },
-  viewLeft: {
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 16,
+    borderRightColor: COLORS.black,
+    borderRightWidth: .3
   },
   viewNum: {
-    fontSize: 16,
+    fontSize: 20,
     fontFamily: "bold",
+    color: COLORS.black
   },
   viewText: {
     fontSize: 14,
     fontFamily: "regular",
-    marginTop: 4,
+    color: COLORS.black,
+    marginVertical: 4
+  },
+  viewLeft: {
+    width: (SIZES.width - 32) / 3,
+    alignItems: "center"
   },
   buttonActionContainer: {
     flexDirection: "row",
-    alignItems: "center",
     justifyContent: "space-between",
-    marginTop: 24,
+    alignItems: "center",
+    marginVertical: 6,
+    width: SIZES.width - 32
   },
   buttonAction: {
-    height: 56,
-    width: 157,
-    borderWidth: 1,
+    width: (SIZES.width - 32) / 2 - 8,
+    backgroundColor: COLORS.primary,
+    borderRadius: 32,
+    borderWidth: 1.4,
     borderColor: COLORS.primary,
-    borderRadius: 56,
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    flexDirection: "row",
-    marginRight: 8,
+    height: 42
   },
   buttonActionIcon: {
-    width: 24,
-    height: 24,
-    tintColor: COLORS.primary,
+    width: 16,
+    height: 16,
+    tintColor: COLORS.white,
+    marginRight: 8
   },
   buttonActionText: {
-    fontSize: 16,
+    fontSize: 18,
     fontFamily: "semiBold",
-    color: COLORS.primary,
-    marginLeft: 8,
+    color: COLORS.white
   },
   buttonActionRight: {
-    height: 56,
-    width: 157,
-    backgroundColor: COLORS.primary,
-    borderRadius: 56,
+    width: (SIZES.width - 32) / 2 - 8,
+    borderRadius: 32,
+    borderWidth: 1.4,
+    borderColor: COLORS.primary,
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    flexDirection: "row",
-    marginLeft: 8,
+    height: 42
   },
   buttonActionIconRight: {
-    width: 24,
-    height: 24,
-    tintColor: COLORS.white,
+    width: 16,
+    height: 16,
+    tintColor: COLORS.primary,
+    marginRight: 8
   },
   buttonActionTextRight: {
-    fontSize: 16,
+    fontSize: 18,
     fontFamily: "semiBold",
-    color: COLORS.white,
-    marginLeft: 8,
+    color: COLORS.primary
+  },
+  separateLine: {
+    width: SIZES.width - 32,
+    height: .1,
+    backgroundColor: COLORS.gray,
   },
   loadingContainer: {
     flex: 1,
@@ -389,12 +392,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: COLORS.gray,
   },
-  tabViewStyle: {
-    marginTop: 20,
-    height: 500, // Increase height to show more content
-    borderTopWidth: 1,
-    borderTopColor: COLORS.lightGray,
-  }
 });
 
 export default WorkerDetails;
