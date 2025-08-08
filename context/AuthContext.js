@@ -39,11 +39,22 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  useEffect(() => {
-    // Get initial session
-    const getInitialSession = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
+ useEffect(() => {
+  let isMounted = true;
+  
+  // Get initial session with timeout protection
+  const getInitialSession = async () => {
+    try {
+      const sessionPromise = Promise.race([
+        supabase.auth.getSession(),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Session check timed out')), 8000)
+        )
+      ]);
+      
+      const { data: { session } } = await sessionPromise;
+      
+      if (isMounted) {
         setSession(session);
         setUser(session?.user || null);
         
@@ -51,18 +62,34 @@ export const AuthProvider = ({ children }) => {
         if (session?.user?.id) {
           await fetchUserProfile(session.user.id);
         }
-      } catch (error) {
-        console.error('Error getting initial session:', error);
-      } finally {
-        setLoading(false);
       }
-    };
+    } catch (error) {
+      console.error('Error getting initial session:', error);
+      if (isMounted) {
+        // Even if there's an error, we still need to stop loading
+        setSession(null);
+        setUser(null);
+        setUserProfile(null);
+      }
+    } finally {
+      if (isMounted) {
+        setLoading(false); // Always set loading to false
+      }
+    }
+  };
 
-    getInitialSession();
+  getInitialSession();
+  
+  // Use a timeout as a fallback to ensure loading never stays true indefinitely
+  const timeoutId = setTimeout(() => {
+    if (isMounted && loading) {
+      setLoading(false);
+    }
+  }, 10000); // 10 second maximum loading time
 
-    // Listen for auth state changes
-    const { data: { subscription } } = onAuthStateChange(async (event, session) => {
-      
+  // Listen for auth state changes
+  const { data: { subscription } } = onAuthStateChange(async (event, session) => {
+    if (isMounted) {
       setSession(session);
       setUser(session?.user || null);
       
@@ -73,17 +100,18 @@ export const AuthProvider = ({ children }) => {
         setUserProfile(null);
       }
       
-      // if (event === 'SIGNED_IN') {
-      //   console.log('User signed in:', session?.user?.email);
-      // } else if (event === 'SIGNED_OUT') {
-      //   console.log('User signed out');
-      // }
-    });
+      // Ensure loading state is updated
+      setLoading(false);
+    }
+  });
 
-    return () => {
-      subscription?.unsubscribe();
-    };
-  }, []);
+  // Cleanup function
+  return () => {
+    isMounted = false;
+    clearTimeout(timeoutId);
+    subscription?.unsubscribe();
+  };
+}, []);
 
   const value = {
     user,

@@ -19,7 +19,12 @@ const YourAddress = ({ navigation }) => {
     const { colors, dark } = useTheme();
 
     useEffect(() => {
-        bottomSheetRef.current.open();
+        // Delay opening the bottom sheet to show the map first
+        const timer = setTimeout(() => {
+            bottomSheetRef.current?.open();
+        }, 1000);
+        
+        return () => clearTimeout(timer);
     }, []);
 
     /**
@@ -116,6 +121,15 @@ const YourAddress = ({ navigation }) => {
                         </Marker>
                     ))}
                 </MapView>
+                
+                {/* Floating button to open location search */}
+                <TouchableOpacity 
+                    style={styles.searchButton}
+                    onPress={() => bottomSheetRef.current?.open()}
+                >
+                    <Feather name="search" size={24} color={COLORS.white} />
+                    <Text style={styles.searchButtonText}>Search Location</Text>
+                </TouchableOpacity>
             </View>
             <RBSheet
                 ref={bottomSheetRef}
@@ -269,8 +283,7 @@ const YourAddress = ({ navigation }) => {
 const styles = StyleSheet.create({
     area: {
         flex: 1,
-        backgroundColor: COLORS.white,
-        paddingBottom: 40
+        backgroundColor: COLORS.white
     },
     container: {
         flex: 1,
@@ -302,8 +315,8 @@ const styles = StyleSheet.create({
         color: COLORS.black
     },
     map: {
-        height: '100%',
-        zIndex: -9999
+        flex: 1,
+        width: '100%'
     },
     // Callout bubble
     bubble: {
@@ -417,6 +430,33 @@ const styles = StyleSheet.create({
         fontFamily: "medium",
         color: "gray",
         textAlign: "center"
+    },
+    searchButton: {
+        position: 'absolute',
+        bottom: 20,
+        left: 20,
+        right: 20,
+        backgroundColor: COLORS.primary,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        borderRadius: 25,
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+    },
+    searchButtonText: {
+        color: COLORS.white,
+        fontSize: 16,
+        fontFamily: "semiBold",
+        marginLeft: 8
     }
 })
 
