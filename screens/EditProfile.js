@@ -66,7 +66,7 @@ const EditProfile = ({ navigation }) => {
   };
 
   const today = new Date();
-  const startDate = new Date(today.setDate(today.getDate() - 36500)).toISOString().split('T')[0]; // Allow dates up to 100 years ago in YYYY-MM-DD format
+  const startDate = new Date(today.setDate(today.getDate() - 36500)).toISOString().split('T')[0];
 
   const [startedDate, setStartedDate] = useState(
     userProfile?.date_of_birth 
@@ -272,8 +272,12 @@ const EditProfile = ({ navigation }) => {
     <SafeAreaView style={[styles.area, { backgroundColor: dark ? COLORS.dark1 : COLORS.white }]}>
       <View style={[styles.container, { backgroundColor: dark ? COLORS.dark1 : COLORS.white }]}>
         <Header title="Edit Profile" />
-        <ScrollView showsVerticalScrollIndicator={false}>
-          <View style={{ alignItems: "center", marginVertical: 12 }}>
+        <ScrollView 
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}>
+          
+          {/* Avatar Section */}
+          <View style={styles.avatarSection}>
             <View style={styles.avatarContainer}>
               <Image
                 source={image === null ? images.user1 : image}
@@ -289,7 +293,9 @@ const EditProfile = ({ navigation }) => {
               </TouchableOpacity>
             </View>
           </View>
-          <View>
+          
+          {/* Form Fields */}
+          <View style={styles.formContainer}>
             <Input
               id="firstName"
               onInputChanged={inputChangedHandler}
@@ -297,7 +303,9 @@ const EditProfile = ({ navigation }) => {
               placeholder="First Name"
               placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
               initialValue={formState.inputValues.firstName}
+              containerStyle={styles.inputWrapper}
             />
+            
             <Input
               id="lastName"
               onInputChanged={inputChangedHandler}
@@ -305,7 +313,9 @@ const EditProfile = ({ navigation }) => {
               placeholder="Last Name"
               placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
               initialValue={formState.inputValues.lastName}
+              containerStyle={styles.inputWrapper}
             />
+            
             <Input
               id="email"
               onInputChanged={inputChangedHandler}
@@ -314,67 +324,41 @@ const EditProfile = ({ navigation }) => {
               placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
               keyboardType="email-address"
               initialValue={formState.inputValues.email}
-              editable={false} // Email should not be editable from profile
+              editable={false}
+              containerStyle={styles.inputWrapper}
             />
             
             {/* Date of Birth Section */}
-            <View style={{
-              width: SIZES.width - 32,
-              marginTop: 8
-            }}>
-              <TouchableOpacity
-                style={[styles.inputBtn, {
-                  backgroundColor: dark ? COLORS.dark2 : COLORS.greyscale500,
-                  borderColor: dark ? COLORS.dark2 : COLORS.greyscale500,
-                }]}
-                onPress={handleOnPressStartDate}
-              >
-                <Text style={{ ...FONTS.body4, color: dark ? COLORS.white : COLORS.grayscale400 }}>
-                  {startedDate === "Select Date of Birth" ? "Date of Birth (Optional)" : startedDate}
-                </Text>
-                <Feather name="calendar" size={24} color={dark ? COLORS.white : COLORS.grayscale400} />
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity
+              style={[styles.datePickerBtn, {
+                backgroundColor: dark ? COLORS.dark2 : COLORS.greyscale500,
+                borderColor: dark ? COLORS.dark2 : COLORS.greyscale500,
+              }]}
+              onPress={handleOnPressStartDate}
+            >
+              <Text style={[styles.datePickerText, { 
+                color: startedDate === "Select Date of Birth" 
+                  ? (dark ? COLORS.grayTie : COLORS.black)
+                  : (dark ? COLORS.white : COLORS.black)
+              }]}>
+                {startedDate === "Select Date of Birth" ? "Date of Birth (Optional)" : startedDate}
+              </Text>
+              <Feather name="calendar" size={20} color={dark ? COLORS.white : COLORS.grayscale400} />
+            </TouchableOpacity>
             
-            {/* Phone Number Section */}
-            <View style={[styles.inputContainer, {
-              backgroundColor: dark ? COLORS.dark2 : COLORS.greyscale500,
-              borderColor: dark ? COLORS.dark2 : COLORS.greyscale500,
-            }]}>
-              <TouchableOpacity
-                style={styles.selectFlagContainer}
-                onPress={() => setModalVisible(true)}>
-                <View style={{ justifyContent: "center" }}>
-                  <Image
-                    source={icons.down}
-                    resizeMode='contain'
-                    style={[styles.downIcon, { tintColor: dark ? COLORS.white : "#111" }]}
-                  />
-                </View>
-                <View style={{ justifyContent: "center", marginLeft: 5 }}>
-                  <Image
-                    source={{ uri: selectedArea?.flag }}
-                    contentFit="contain"
-                    style={styles.flagIcon}
-                  />
-                </View>
-                <View style={{ justifyContent: "center", marginLeft: 5 }}>
-                  <Text style={{ color: dark ? COLORS.white : "#111", fontSize: 12 }}>{selectedArea?.callingCode}</Text>
-                </View>
-              </TouchableOpacity>
-              {/* Phone Number Text Input */}
-              <TextInput
-                style={[styles.input, { color: dark ? COLORS.white : "#111" }]}
-                placeholder="Enter your phone number"
-                placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
-                selectionColor="#111"
-                keyboardType="numeric"
-                value={formState.inputValues.phoneNumber}
-                onChangeText={(text) => inputChangedHandler('phoneNumber', text)}
-              />
-            </View>
+            {/* Simple Phone Number Input - No Modal */}
+            <Input
+              id="phoneNumber"
+              onInputChanged={inputChangedHandler}
+              errorText={formState.inputValidities['phoneNumber']}
+              placeholder="Phone Number (Optional)"
+              placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
+              keyboardType="phone-pad"
+              initialValue={formState.inputValues.phoneNumber}
+              containerStyle={styles.inputWrapper}
+            />
             
-            {/* Address Section */}
+            {/* Address Fields */}
             <Input
               id="address"
               onInputChanged={inputChangedHandler}
@@ -382,7 +366,9 @@ const EditProfile = ({ navigation }) => {
               placeholder="Address (Optional)"
               placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
               initialValue={formState.inputValues.address}
+              containerStyle={styles.inputWrapper}
             />
+            
             <Input
               id="city"
               onInputChanged={inputChangedHandler}
@@ -390,7 +376,9 @@ const EditProfile = ({ navigation }) => {
               placeholder="City (Optional)"
               placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
               initialValue={formState.inputValues.city}
+              containerStyle={styles.inputWrapper}
             />
+            
             <Input
               id="zipCode"
               onInputChanged={inputChangedHandler}
@@ -398,7 +386,9 @@ const EditProfile = ({ navigation }) => {
               placeholder="ZIP Code (Optional)"
               placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
               initialValue={formState.inputValues.zipCode}
+              containerStyle={styles.inputWrapper}
             />
+            
             <Input
               id="occupation"
               onInputChanged={inputChangedHandler}
@@ -406,10 +396,15 @@ const EditProfile = ({ navigation }) => {
               placeholder="Occupation (Optional)"
               placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
               initialValue={formState.inputValues.occupation}
+              containerStyle={styles.inputWrapper}
             />
           </View>
+          
+          {/* Add padding at bottom to prevent button overlap */}
+          <View style={{ height: 50 }} />
         </ScrollView>
       </View>
+      
       <DatePickerModal
         open={openStartDatePicker}
         startDate={startDate}
@@ -417,7 +412,9 @@ const EditProfile = ({ navigation }) => {
         onClose={() => setOpenStartDatePicker(false)}
         onChangeStartDate={handleDateChange}
       />
+      
       {RenderAreasCodesModal()}
+      
       <View style={styles.bottomContainer}>
         <Button
           title="Update"
@@ -438,12 +435,17 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    padding: 16,
     backgroundColor: COLORS.white
   },
-  avatarContainer: {
-    marginVertical: 12,
+  scrollContent: {
+    paddingHorizontal: 16,
+    paddingBottom: 20,
+  },
+  avatarSection: {
     alignItems: "center",
+    marginVertical: 20,
+  },
+  avatarContainer: {
     width: 130,
     height: 130,
     borderRadius: 65,
@@ -464,57 +466,63 @@ const styles = StyleSheet.create({
     bottom: 0,
     right: 0,
   },
-  inputContainer: {
+  formContainer: {
+    marginTop: 10,
+  },
+  inputWrapper: {
+    marginBottom: 12, // Consistent spacing between inputs
+  },
+  datePickerBtn: {
     flexDirection: "row",
-    borderColor: COLORS.greyscale500,
-    borderWidth: .4,
-    borderRadius: 6,
-    height: 52,
-    width: SIZES.width - 32,
-    alignItems: 'center',
-    marginVertical: 8, // Increased from 2 to 8 for better spacing
-    backgroundColor: COLORS.greyscale500,
-  },
-  downIcon: {
-    width: 10,
-    height: 10,
-    tintColor: "#111"
-  },
-  selectFlagContainer: {
-    width: 90,
-    height: 50,
-    marginHorizontal: 5,
-    flexDirection: "row",
-  },
-  flagIcon: {
-    width: 30,
-    height: 30
-  },
-  input: {
-    flex: 1,
-    marginVertical: 10,
-    height: 40,
-    fontSize: 14,
-    color: "#111"
-  },
-  inputBtn: {
-    borderWidth: 1,
-    borderRadius: 12,
-    borderColor: COLORS.greyscale500,
-    height: 50,
-    paddingLeft: 8,
-    fontSize: 18,
     justifyContent: "space-between",
-    marginTop: 8, // Increased from 2 to 8
-    marginBottom: 8, // Increased from 2 to 8
-    backgroundColor: COLORS.greyscale500,
+    alignItems: "center",
+    height: 52,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+  },
+  datePickerText: {
+    fontSize: 14,
+    fontFamily: "regular",
+  },
+  phoneContainer: {
+    flexDirection: "row",
+    marginBottom: 12,
+    gap: 10, // Add gap between country code and phone input
+  },
+  countryCodeBtn: {
     flexDirection: "row",
     alignItems: "center",
-    paddingRight: 8
+    height: 52,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    minWidth: 100,
   },
-  rowContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between"
+  countryCodeText: {
+    fontSize: 14,
+    fontFamily: "medium",
+    marginHorizontal: 6,
+  },
+  flagIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+  },
+  downIcon: {
+    width: 12,
+    height: 12,
+    marginLeft: 4,
+  },
+  phoneInput: {
+    flex: 1,
+    height: 52,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    fontSize: 14,
+    fontFamily: "regular",
+    borderWidth: 1,
   },
   bottomContainer: {
     position: "absolute",
@@ -522,27 +530,15 @@ const styles = StyleSheet.create({
     right: 16,
     left: 16,
     flexDirection: "row",
-    justifyContent: "space-between", // Back to original
-    width: SIZES.width - 32,
+    justifyContent: "center",
     alignItems: "center"
   },
   continueButton: {
-    width: SIZES.width - 32, // Back to full width
-    borderRadius: 32, // Back to original
+    width: SIZES.width - 32,
+    borderRadius: 32,
     backgroundColor: COLORS.primary,
     borderColor: COLORS.primary
   },
-  genderContainer: {
-    flexDirection: "row",
-    borderColor: COLORS.greyscale500,
-    borderWidth: .4,
-    borderRadius: 6,
-    height: 58,
-    width: SIZES.width - 32,
-    alignItems: 'center',
-    marginVertical: 16,
-    backgroundColor: COLORS.greyscale500,
-  }
 });
 
 const pickerSelectStyles = StyleSheet.create({

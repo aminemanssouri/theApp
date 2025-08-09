@@ -1,53 +1,94 @@
-import { View, Text, StyleSheet, TouchableOpacity, Image, TextInput, FlatList } from 'react-native';
-import React, { useRef, useEffect, useState } from 'react';
-import { COLORS, FONTS, SIZES, icons } from '../constants';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Image, Alert } from 'react-native';
+import React, { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
-import MapView, { Marker, Callout, PROVIDER_GOOGLE } from 'react-native-maps';
-import RBSheet from "react-native-raw-bottom-sheet";
-import LocationItem from '../components/LocationItem';
+import { COLORS, SIZES, icons, FONTS } from '../constants';
+import { Feather } from "@expo/vector-icons";
 import Button from '../components/Button';
-import { locations, positionList } from '../data';
 import { useTheme } from '../theme/ThemeProvider';
-import { mapDarkStyle, mapStandardStyle } from '../data/mapData';
+import { createBooking } from '../lib/services/booking';
+import { useAuth } from '../context/AuthContext';
 
-const YourAddress = ({ navigation }) => {
-    const bottomSheetRef = useRef(null);
-    const detailsSheetRef = useRef(null);
-    const [searchInput, setSearchInput] = useState('');
-    const [filteredLocations, setFilteredLocations] = useState(locations);
+const YourAddress = ({ navigation, route }) => {
     const { colors, dark } = useTheme();
-
-    useEffect(() => {
-        // Delay opening the bottom sheet to show the map first
-        const timer = setTimeout(() => {
-            bottomSheetRef.current?.open();
-        }, 1000);
-        
-        return () => clearTimeout(timer);
-    }, []);
-
-    /**
-     * Handle search input change
-     * @param {string} text - The input text
-     */
-    const handleSearchInput = (text) => {
-        setSearchInput(text);
-
-        // Filter locations based on the search input
-        const filtered = locations.filter(
-            (location) =>
-                location.location.toLowerCase().includes(text.toLowerCase()) ||
-                location.address.toLowerCase().includes(text.toLowerCase())
-        );
-        setFilteredLocations(filtered);
+    const { user } = useAuth();
+    
+    // Get booking details from previous screens
+    const { 
+        workerId, 
+        workerName, 
+        serviceId,
+        serviceName,
+        bookingDate,
+        startTime,
+        endTime,
+        workingHours,
+        price,
+        addons 
+    } = route.params || {};
+    
+    // Form state
+    const [address, setAddress] = useState('');
+    const [city, setCity] = useState('');
+    const [postalCode, setPostalCode] = useState('');
+    const [apartmentNumber, setApartmentNumber] = useState('');
+    const [notes, setNotes] = useState('');
+    const [loading, setLoading] = useState(false);
+    
+    // Validation
+    const validateForm = () => {
+        if (!address.trim()) {
+            Alert.alert('Error', 'Please enter your address');
+            return false;
+        }
+        if (!city.trim()) {
+            Alert.alert('Error', 'Please enter your city');
+            return false;
+        }
+        if (!postalCode.trim()) {
+            Alert.alert('Error', 'Please enter your postal code');
+            return false;
+        }
+        return true;
     };
-
-
-    /**
-     * 
-     * @returns Render header
-     */
+    
+    // Handle booking submission
+    const handleContinue = async () => {
+        if (!validateForm()) return;
+        
+        setLoading(true);
+        try {
+            // Prepare booking data
+            const bookingData = {
+                clientId: user?.id,
+                workerId: workerId,
+                serviceId: serviceId,
+                bookingDate: bookingDate || new Date().toISOString().split('T')[0],
+                startTime: startTime || '09:00',
+                endTime: endTime || '11:00',
+                address: `${address}${apartmentNumber ? ', Apt ' + apartmentNumber : ''}`,
+                city: city,
+                postalCode: postalCode,
+                notes: notes,
+                addons: addons || []
+            };
+            
+            // Navigate to payment with all booking data
+            navigation.navigate('PaymentMethods', {
+                bookingData: bookingData,
+                workerName: workerName,
+                serviceName: serviceName,
+                price: price || 125,
+                workingHours: workingHours || 2
+            });
+            
+        } catch (error) {
+            console.error('Error preparing booking:', error);
+            Alert.alert('Error', 'Failed to process booking. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
+    
     const renderHeader = () => {
         return (
             <View style={styles.headerContainer}>
@@ -73,391 +114,275 @@ const YourAddress = ({ navigation }) => {
             </View>
         );
     };
+    
+    const renderInput = (label, value, setValue, placeholder, keyboardType = 'default', multiline = false) => {
+        return (
+            <View style={styles.inputContainer}>
+                <Text style={[styles.inputLabel, { 
+                    color: dark ? COLORS.white : COLORS.greyscale900 
+                }]}>
+                    {label}
+                </Text>
+                <TextInput
+                    style={[
+                        styles.input,
+                        multiline && styles.textArea,
+                        { 
+                            backgroundColor: dark ? COLORS.dark2 : COLORS.tertiaryWhite,
+                            color: dark ? COLORS.white : COLORS.greyscale900,
+                            borderColor: dark ? COLORS.grayscale700 : COLORS.grayscale200,
+                        }
+                    ]}
+                    value={value}
+                    onChangeText={setValue}
+                    placeholder={placeholder}
+                    placeholderTextColor={dark ? COLORS.grayTie : COLORS.grayscale700}
+                    keyboardType={keyboardType}
+                    multiline={multiline}
+                    numberOfLines={multiline ? 4 : 1}
+                />
+            </View>
+        );
+    };
 
     return (
         <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
             <View style={[styles.container, { backgroundColor: colors.background }]}>
                 {renderHeader()}
-                <MapView
-                    style={styles.map}
-                    customMapStyle={dark ? mapDarkStyle : mapStandardStyle}
-                    provider={PROVIDER_GOOGLE}
-                    initialRegion={{
-                        latitude: 48.8566,
-                        longitude: 2.3522,
-                        latitudeDelta: 0.0922,
-                        longitudeDelta: 0.0421,
-                    }}
-                >
-                    {positionList.map((item, index) => (
-                        <Marker
-                            key={index}
-                            coordinate={{
-                                latitude: item.latitude,
-                                longitude: item.longitude,
-                            }}
-                            image={icons.mapMarkerIcon}
-                            title={item.name}
-                            description={item.description}
-                            onPress={() => console.log("Move to another screen")}
-                        >
-                            <Callout tooltip>
-                                <View>
-                                    <View style={styles.bubble}>
-                                        <Text
-                                            style={{
-                                                ...FONTS.body4,
-                                                fontWeight: 'bold',
-                                                color: COLORS.black,
-                                            }}
-                                        >
-                                            {item.name}
-                                        </Text>
-                                    </View>
-                                    <View style={styles.arrowBorder} />
-                                    <View style={styles.arrow} />
-                                </View>
-                            </Callout>
-                        </Marker>
-                    ))}
-                </MapView>
                 
-                {/* Floating button to open location search */}
-                <TouchableOpacity 
-                    style={styles.searchButton}
-                    onPress={() => bottomSheetRef.current?.open()}
+                <ScrollView 
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={styles.scrollContent}
                 >
-                    <Feather name="search" size={24} color={COLORS.white} />
-                    <Text style={styles.searchButtonText}>Search Location</Text>
-                </TouchableOpacity>
-            </View>
-            <RBSheet
-                ref={bottomSheetRef}
-                height={300}
-                openDuration={250}
-                closeOnDragDown={true}
-                closeOnPressMask={false}
-                customStyles={{
-                    wrapper: {
-                        backgroundColor: "transparent",
-                    },
-                    draggableIcon: {
-                        backgroundColor: dark ? COLORS.grayscale700 : COLORS.grayscale400,
-                        width: 100
-                    },
-                    container: {
-                        backgroundColor: dark ? COLORS.dark1 : COLORS.white
-                    }
-                }}>
-                <View style={{
-                    width: SIZES.width - 32,
-                    marginHorizontal: 16,
-                    flexDirection: 'column',
-                    marginVertical: 22
-                }}>
-                    <View style={[styles.searchBarContainer, { 
-                        backgroundColor: dark ? COLORS.dark2 : "#F9F9F9",
+                    <Text style={[styles.title, { 
+                        color: dark ? COLORS.white : COLORS.greyscale900 
                     }]}>
-                        <TouchableOpacity>
-                            <Feather name="search" size={24} color={dark ? COLORS.grayscale400 : COLORS.greyscale900 } />
-                        </TouchableOpacity>
-                        <TextInput
-                            placeholder='Search Location'
-                            placeholderTextColor={dark ? COLORS.grayscale200 : COLORS.greyscale900}
-                            style={styles.searchInput}
-                            value={searchInput}
-                            onChangeText={handleSearchInput}
-                        />
-                    </View>
-                    <FlatList
-                        data={filteredLocations}
-                        keyExtractor={(item) => item.id}
-                        showsVerticalScrollIndicator={false}
-                        renderItem={({ item }) => (
-                            <LocationItem
-                                location={item.location}
-                                address={item.address}
-                                distance={item.distance}
-                                onPress={() => {
-                                    try {
-                                        if (bottomSheetRef.current && detailsSheetRef.current) {
-                                            // Close the bottom sheet after 0 milliseconds
-                                            bottomSheetRef.current.close();
-
-                                            // Wait for 3 seconds before opening the details sheet
-                                            setTimeout(() => {
-                                                detailsSheetRef.current.open();
-                                            }, 2000);
-                                        } else {
-                                            console.error("bottomSheetRef or detailsSheetRef is not properly defined.");
-                                        }
-                                    } catch (error) {
-                                        console.error("Error:", error);
-                                    }
-                                }}
-                            />
-                        )}
-                    />
-                </View>
-            </RBSheet>
-            <RBSheet
-                ref={detailsSheetRef}
-                height={370}
-                openDuration={250}
-                closeOnDragDown={true}
-                closeOnPressMask={false}
-                customStyles={{
-                    wrapper: {
-                        backgroundColor: "transparent",
-                    },
-                    draggableIcon: {
-                        backgroundColor: dark ? COLORS.greyscale900 : COLORS.secondaryWhite,
-                        width: 100
-                    },
-                    container: {
-                        backgroundColor: colors.background
-                    }
-                }}>
-                <View style={{
-                    width: SIZES.width - 32,
-                    marginHorizontal: 16,
-                    flexDirection: 'column',
-                    marginVertical: 22,
-                    alignItems: "center"
-                }}>
-                    <View style={[styles.boxContainer, { 
-                        backgroundColor: dark ? COLORS.dark1 : "#F2F4F9",
+                        Enter Your Service Address
+                    </Text>
+                    
+                    <Text style={[styles.subtitle, { 
+                        color: dark ? COLORS.grayscale200 : COLORS.grayscale700 
                     }]}>
-                        <Image
-                            source={icons.pin}
-                            resizeMode='contain'
-                            style={styles.pinIcon}
-                        />
-                    </View>
-                    <Text style={[styles.locationName, { 
-                        color: dark ? COLORS.white : COLORS.greyscale900
-                    }]}>New Montgomery</Text>
-                    <Text style={styles.locationAddress}>4517 Washington Ave. Manchester, Kentucky 39495</Text>
-                    <View style={styles.viewLine}>
-                        <View style={[styles.viewTime, { marginRight: 36 }]}>
-                            <MaterialCommunityIcons name="clock" size={20} color={COLORS.primary} />
-                            <Text style={[styles.timeline, { 
-                                color: dark? COLORS.white : COLORS.greyscale900
-                            }]}>09:00 AM - 05:00PM</Text>
+                        Please provide the address where the service will be performed
+                    </Text>
+                    
+                    {renderInput(
+                        'Street Address*',
+                        address,
+                        setAddress,
+                        'Enter your street address',
+                        'default'
+                    )}
+                    
+                    <View style={styles.row}>
+                        <View style={[styles.halfInput, { marginRight: 8 }]}>
+                            {renderInput(
+                                'Apartment/Suite',
+                                apartmentNumber,
+                                setApartmentNumber,
+                                'Apt/Suite #',
+                                'default'
+                            )}
                         </View>
-                        <View style={styles.viewTime}>
-                            <Image
-                                source={icons.routing}
-                                resizeMode='contain'
-                                style={styles.routingIcon}
-                            />
-                            <Text style={[styles.timeline, { 
-                                 color: dark? COLORS.white : COLORS.greyscale900
-                            }]}>4.5 KM from you</Text>
+                        <View style={[styles.halfInput, { marginLeft: 8 }]}>
+                            {renderInput(
+                                'Postal Code*',
+                                postalCode,
+                                setPostalCode,
+                                'Postal code',
+                                'numeric'
+                            )}
                         </View>
                     </View>
-                    <View style={styles.separateLine} />
-                    <Text style={styles.trackNumber}>0812274616352</Text>
-                    <View style={styles.separateLine} />
+                    
+                    {renderInput(
+                        'City*',
+                        city,
+                        setCity,
+                        'Enter your city',
+                        'default'
+                    )}
+                    
+                    {renderInput(
+                        'Special Instructions (Optional)',
+                        notes,
+                        setNotes,
+                        'Any special instructions for the service provider...',
+                        'default',
+                        true
+                    )}
+                    
+                    {/* Booking Summary Card */}
+                    <View style={[styles.summaryCard, {
+                        backgroundColor: dark ? COLORS.dark2 : COLORS.tertiaryWhite,
+                        borderColor: dark ? COLORS.grayscale700 : COLORS.grayscale200,
+                    }]}>
+                        <Text style={[styles.summaryTitle, {
+                            color: dark ? COLORS.white : COLORS.greyscale900
+                        }]}>
+                            Booking Summary
+                        </Text>
+                        
+                        <View style={styles.summaryRow}>
+                            <Text style={[styles.summaryLabel, {
+                                color: dark ? COLORS.grayscale200 : COLORS.grayscale700
+                            }]}>Service:</Text>
+                            <Text style={[styles.summaryValue, {
+                                color: dark ? COLORS.white : COLORS.greyscale900
+                            }]}>{serviceName || 'House Cleaning'}</Text>
+                        </View>
+                        
+                        <View style={styles.summaryRow}>
+                            <Text style={[styles.summaryLabel, {
+                                color: dark ? COLORS.grayscale200 : COLORS.grayscale700
+                            }]}>Provider:</Text>
+                            <Text style={[styles.summaryValue, {
+                                color: dark ? COLORS.white : COLORS.greyscale900
+                            }]}>{workerName || 'Professional'}</Text>
+                        </View>
+                        
+                        <View style={styles.summaryRow}>
+                            <Text style={[styles.summaryLabel, {
+                                color: dark ? COLORS.grayscale200 : COLORS.grayscale700
+                            }]}>Date:</Text>
+                            <Text style={[styles.summaryValue, {
+                                color: dark ? COLORS.white : COLORS.greyscale900
+                            }]}>{bookingDate || 'Today'}</Text>
+                        </View>
+                        
+                        <View style={styles.summaryRow}>
+                            <Text style={[styles.summaryLabel, {
+                                color: dark ? COLORS.grayscale200 : COLORS.grayscale700
+                            }]}>Time:</Text>
+                            <Text style={[styles.summaryValue, {
+                                color: dark ? COLORS.white : COLORS.greyscale900
+                            }]}>{startTime || '09:00'} - {endTime || '11:00'}</Text>
+                        </View>
+                    </View>
+                </ScrollView>
+                
+                <View style={[styles.bottomContainer, { 
+                    backgroundColor: dark ? COLORS.dark1 : COLORS.white,
+                    borderTopColor: dark ? COLORS.grayscale700 : COLORS.grayscale200,
+                }]}>
                     <Button
-                        title="Continue"
+                        title={`Continue - $${price || 125}`}
                         filled
-                        style={{
-                            height: 56,
-                            borderRadius: 30,
-                            width: SIZES.width - 32,
-                            marginBottom: 12
-                        }}
-                        onPress={() => {
-                            bottomSheetRef.current.close();
-                            detailsSheetRef.current.close();
-                            navigation.navigate("PaymentMethods")
-                        }}
+                        style={styles.continueButton}
+                        onPress={handleContinue}
+                        disabled={loading}
                     />
                 </View>
-            </RBSheet>
+            </View>
         </SafeAreaView>
-    )
+    );
 };
 
 const styles = StyleSheet.create({
     area: {
         flex: 1,
-        backgroundColor: COLORS.white
     },
     container: {
         flex: 1,
-        backgroundColor: COLORS.white,
     },
     headerContainer: {
-        flexDirection: "row",
-        justifyContent: "space-between",
+        flexDirection: 'row',
         alignItems: 'center',
-        padding: 16
+        justifyContent: 'space-between',
+        paddingHorizontal: 16,
+        paddingVertical: 16,
     },
     headerIconContainer: {
         height: 46,
         width: 46,
+        borderRadius: 999,
+        alignItems: 'center',
+        justifyContent: 'center',
         borderWidth: 1,
-        borderColor: COLORS.grayscale200,
-        alignItems: "center",
-        justifyContent: "center",
-        borderRadius: 999
     },
     arrowBackIcon: {
         width: 24,
         height: 24,
-        tintColor: COLORS.black
     },
     headerTitle: {
-        fontSize: 16,
-        fontFamily: "bold",
-        color: COLORS.black
-    },
-    map: {
+        ...FONTS.h4,
         flex: 1,
-        width: '100%'
+        textAlign: 'center',
+        marginHorizontal: 16,
     },
-    // Callout bubble
-    bubble: {
-        flexDirection: 'column',
-        alignSelf: 'flex-start',
-        backgroundColor: '#fff',
-        borderRadius: 6,
-        borderColor: '#ccc',
-        borderWidth: 0.5,
-        padding: 15,
-        width: 'auto',
+    scrollContent: {
+        paddingHorizontal: 16,
+        paddingBottom: 100,
     },
-    // Arrow below the bubble
-    arrow: {
-        backgroundColor: 'transparent',
-        borderColor: 'transparent',
-        borderTopColor: '#fff',
-        borderWidth: 16,
-        alignSelf: 'center',
-        marginTop: -32,
+    title: {
+        ...FONTS.h3,
+        marginTop: 16,
+        marginBottom: 8,
     },
-    arrowBorder: {
-        backgroundColor: 'transparent',
-        borderColor: 'transparent',
-        borderTopColor: '#007a87',
-        borderWidth: 16,
-        alignSelf: 'center',
-        marginTop: -0.5,
-        // marginBottom: -15
+    subtitle: {
+        ...FONTS.body3,
+        marginBottom: 24,
     },
-    body3: {
-        fontSize: 12,
-        color: COLORS.gray5,
-        marginVertical: 3,
+    inputContainer: {
+        marginBottom: 16,
     },
-    h3: {
-        fontSize: 12,
-        color: COLORS.gray5,
-        marginVertical: 3,
-        fontFamily: "bold",
-        marginRight: 6
+    inputLabel: {
+        ...FONTS.body3,
+        marginBottom: 8,
     },
-    searchBarContainer: {
-        width: SIZES.width - 32,
-        backgroundColor: "#F9F9F9",
-        height: 52,
+    input: {
+        borderWidth: 1,
         borderRadius: 12,
-        flexDirection: "row",
-        alignItems: "center",
-        paddingHorizontal: 8
-    },
-    searchInput: {
-        paddingHorizontal: 6,
+        padding: 14,
         fontSize: 14,
-        fontFamily: "regular",
-        color: COLORS.black
+        fontFamily: 'regular',
     },
-    boxContainer: {
-        width: 80,
-        height: 80,
-        borderRadius: 18,
-        backgroundColor: "#F2F4F9",
-        alignItems: "center",
-        justifyContent: "center"
+    textArea: {
+        height: 100,
+        textAlignVertical: 'top',
     },
-    pinIcon: {
-        width: 32,
-        height: 32,
-        tintColor: COLORS.primary
-    },
-    locationName: {
-        fontSize: 18,
-        fontFamily: "bold",
-        color: COLORS.black,
-        marginVertical: 8
-    },
-    locationAddress: {
-        fontSize: 14,
-        fontFamily: "medium",
-        color: "gray"
-    },
-    viewTime: {
-        flexDirection: "row",
-        alignItems: "center"
-    },
-    timeline: {
-        fontSize: 12,
-        fontFamily: "regular",
-        color: COLORS.black,
-        marginLeft: 12
-    },
-    routingIcon: {
-        width: 20,
-        height: 20,
-        tintColor: COLORS.primary
-    },
-    viewLine: {
-        flexDirection: "row",
-        alignItems: "center",
-        marginVertical: 12
-    },
-    separateLine: {
-        height: .6,
-        borderWidth: .2,
-        borderColor: COLORS.gray,
-        marginVertical: 12,
-        width: SIZES.width - 32
-    },
-    trackNumber: {
-        fontSize: 14,
-        fontFamily: "medium",
-        color: "gray",
-        textAlign: "center"
-    },
-    searchButton: {
-        position: 'absolute',
-        bottom: 20,
-        left: 20,
-        right: 20,
-        backgroundColor: COLORS.primary,
+    row: {
         flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: 12,
-        paddingHorizontal: 20,
-        borderRadius: 25,
-        elevation: 5,
-        shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
+        marginHorizontal: -8,
     },
-    searchButtonText: {
-        color: COLORS.white,
-        fontSize: 16,
-        fontFamily: "semiBold",
-        marginLeft: 8
-    }
-})
+    halfInput: {
+        flex: 1,
+    },
+    summaryCard: {
+        marginTop: 24,
+        padding: 16,
+        borderRadius: 12,
+        borderWidth: 1,
+    },
+    summaryTitle: {
+        ...FONTS.h5,
+        marginBottom: 12,
+    },
+    summaryRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 8,
+    },
+    summaryLabel: {
+        ...FONTS.body3,
+    },
+    summaryValue: {
+        ...FONTS.body3,
+        fontFamily: 'semiBold',
+    },
+    bottomContainer: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        paddingHorizontal: 16,
+        paddingVertical: 16,
+        borderTopWidth: 1,
+    },
+    continueButton: {
+        borderRadius: 30,
+        height: 56,
+    },
+});
 
-export default YourAddress
+export default YourAddress;
