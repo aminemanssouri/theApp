@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, TouchableWithoutFeedback, Image, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TouchableWithoutFeedback, Image, Modal, Alert } from 'react-native';
 import React, { useState } from 'react';
 import { COLORS, SIZES, icons } from '../constants';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -6,10 +6,16 @@ import { Ionicons, AntDesign } from "@expo/vector-icons";
 import { ScrollView } from 'react-native-virtualized-view';
 import PaymentMethodItem from '../components/PaymentMethodItem';
 import { useTheme } from '../theme/ThemeProvider';
+import { createBooking } from '../lib/services/booking';
 
-const PaymentMethods = ({ navigation }) => {
+const PaymentMethods = ({ navigation, route }) => {
   const [modalVisible, setModalVisible] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [loading, setLoading] = useState(false);
   const { dark, colors } = useTheme();
+  
+  // Get booking data from previous screen
+  const { bookingData, workerName, serviceName, price, workingHours } = route.params || {};
 
   /**
    * Render Header
@@ -35,23 +41,46 @@ const PaymentMethods = ({ navigation }) => {
     )
   }
 
-  const renderContent = () => {
-    const [selectedItem, setSelectedItem] = useState(null);
+  const handleCheckboxPress = (itemTitle) => {
+    if (selectedItem === itemTitle) {
+      setSelectedItem(null);
+    } else {
+      setSelectedItem(itemTitle);
+    }
+  };
 
-    const handleCheckboxPress = (itemTitle) => {
-      if (selectedItem === itemTitle) {
-        // If the clicked item is already selected, deselect it
-        setSelectedItem(null);
-      } else {
-        // Otherwise, select the clicked item
-        setSelectedItem(itemTitle);
+  // Process payment and create booking
+  const handleProcessPayment = async () => {
+    if (!selectedItem) {
+      Alert.alert('Error', 'Please select a payment method');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // For testing, we'll create the booking directly
+      console.log('Creating booking with data:', bookingData);
+      
+      const result = await createBooking(bookingData);
+      
+      if (result) {
+        console.log('Booking created successfully:', result);
+        setModalVisible(true);
       }
-    };
+    } catch (error) {
+      console.error('Booking creation failed:', error);
+      Alert.alert('Error', 'Failed to create booking. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const renderContent = () => {
     return (
       <View style={{ marginVertical: 12 }}>
         <PaymentMethodItem
-          checked={selectedItem === 'Visa Card'} // Check if it's the selected item
-          onPress={() => handleCheckboxPress('Visa Card')} // Pass the item title
+          checked={selectedItem === 'Visa Card'}
+          onPress={() => handleCheckboxPress('Visa Card')}
           title="Visa Card"
           icon={icons.creditCard}
         />
@@ -80,6 +109,7 @@ const PaymentMethods = ({ navigation }) => {
       </View>
     )
   }
+
   /**
    * Render Bottom Content
    */
@@ -92,12 +122,15 @@ const PaymentMethods = ({ navigation }) => {
           }]}>Total:</Text>
           <Text style={[styles.totalPrice, { 
             color: dark? COLORS.white : COLORS.greyscale900,
-          }]}>{" "}$300</Text>
+          }]}> ${price || 125}</Text>
         </View>
         <TouchableOpacity
-          onPress={() => setModalVisible(true)}
-          style={styles.bottomBtn}>
-          <Text style={styles.bottomBtnText}>Process Payment</Text>
+          onPress={handleProcessPayment}
+          style={[styles.bottomBtn, loading && styles.bottomBtnDisabled]}
+          disabled={loading}>
+          <Text style={styles.bottomBtnText}>
+            {loading ? 'Processing...' : 'Process Payment'}
+          </Text>
         </TouchableOpacity>
       </View>
     )
@@ -123,17 +156,18 @@ const PaymentMethods = ({ navigation }) => {
               />
               <Text style={[styles.modalTitle, { 
                 color: dark? COLORS.white : COLORS.greyscale900,
-              }]}>Booking Successfully</Text>
+              }]}>Booking Successfully!</Text>
               <Text style={[styles.modalSubtitle, { 
                 color: dark ? COLORS.grayscale200 : "#6C6C6C",
-              }]}>Get everything ready until it’s time to go on a trip</Text>
+              }]}>Your booking has been confirmed. The service provider will be notified.</Text>
               <TouchableOpacity
                 onPress={() => {
-                  setModalVisible(false)
-                  navigation.navigate("ReviewSummary")
+                  setModalVisible(false);
+                  // Navigate to home or bookings list
+                  navigation.navigate("Main");
                 }}
                 style={styles.modalBtn}>
-                <Text style={styles.modalBtnText}>Continue</Text>
+                <Text style={styles.modalBtnText}>Go to Bookings</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -142,13 +176,49 @@ const PaymentMethods = ({ navigation }) => {
     )
   }
 
-
   return (
     <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         {renderHeader()}
         <ScrollView>
           {renderContent()}
+          
+          {/* Show booking summary for testing */}
+          <View style={[styles.summaryCard, {
+            backgroundColor: dark ? COLORS.dark2 : COLORS.tertiaryWhite,
+            borderColor: dark ? COLORS.grayscale700 : COLORS.grayscale200,
+          }]}>
+            <Text style={[styles.summaryTitle, {
+              color: dark ? COLORS.white : COLORS.greyscale900
+            }]}>Booking Summary</Text>
+            
+            <View style={styles.summaryRow}>
+              <Text style={[styles.summaryLabel, {
+                color: dark ? COLORS.grayscale200 : COLORS.grayscale700
+              }]}>Service:</Text>
+              <Text style={[styles.summaryValue, {
+                color: dark ? COLORS.white : COLORS.greyscale900
+              }]}>{serviceName || 'Service'}</Text>
+            </View>
+            
+            <View style={styles.summaryRow}>
+              <Text style={[styles.summaryLabel, {
+                color: dark ? COLORS.grayscale200 : COLORS.grayscale700
+              }]}>Provider:</Text>
+              <Text style={[styles.summaryValue, {
+                color: dark ? COLORS.white : COLORS.greyscale900
+              }]}>{workerName || 'Professional'}</Text>
+            </View>
+            
+            <View style={styles.summaryRow}>
+              <Text style={[styles.summaryLabel, {
+                color: dark ? COLORS.grayscale200 : COLORS.grayscale700
+              }]}>Duration:</Text>
+              <Text style={[styles.summaryValue, {
+                color: dark ? COLORS.white : COLORS.greyscale900
+              }]}>{workingHours || 2} hours</Text>
+            </View>
+          </View>
         </ScrollView>
         {renderBottomContent()}
       </View>
@@ -237,6 +307,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: COLORS.primary
   },
+  bottomBtnDisabled: {
+    opacity: 0.6
+  },
   bottomBtnText: {
     fontSize: 16,
     fontFamily: "semiBold",
@@ -288,6 +361,31 @@ const styles = StyleSheet.create({
     width: 125,
     height: 125,
     tintColor: COLORS.primary
-  }
+  },
+  summaryCard: {
+    marginTop: 24,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  summaryTitle: {
+    fontSize: 16,
+    fontFamily: "semiBold",
+    marginBottom: 12,
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  summaryLabel: {
+    fontSize: 14,
+    fontFamily: "regular",
+  },
+  summaryValue: {
+    fontSize: 14,
+    fontFamily: "semiBold",
+  },
 })
+
 export default PaymentMethods
