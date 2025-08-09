@@ -1,113 +1,136 @@
-import { View, Text, StyleSheet, ActivityIndicator, FlatList } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { fetchActiveServices, transformServices } from '../lib/services/home';
 import { COLORS, SIZES } from "../constants";
-import { fetchAllServices, fetchServicesByCategory, transformServices } from '../lib/services/home';
-import Header from '../components/Header';
 import ServiceCard from '../components/ServiceCard';
 import { useTheme } from '../theme/ThemeProvider';
 
-const AllServices = ({ navigation, route }) => {
+const AllServices = ({ navigation }) => {
+  const { dark, colors } = useTheme();
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { colors } = useTheme();
-  const showPopular = route.params?.showPopular || false;
-  const categoryId = route.params?.categoryId;
-  const categoryName = route.params?.categoryName;
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (categoryId) {
-      loadServicesByCategory(categoryId);
-    } else {
-      loadAllServices();
-    }
-  }, [categoryId]);
+    loadAllServices();
+  }, []);
 
   const loadAllServices = async () => {
     try {
       setLoading(true);
-      const { data: rawServices, error } = await fetchAllServices();
+      
+      // Fetch all active services with no limit
+      const { data: rawServices, error } = await fetchActiveServices(100);
       
       if (error) {
-        console.error('Error loading all services:', error);
+        console.error('Error loading services:', error);
+        setError('Failed to load services. Please try again.');
         return;
       }
 
-      // Transform data to match existing component format
+      if (!rawServices || rawServices.length === 0) {
+        setServices([]);
+        setError('No services available');
+        return;
+      }
+
       const transformedServices = transformServices(rawServices);
       setServices(transformedServices);
       
     } catch (error) {
       console.error('Error in loadAllServices:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  const loadServicesByCategory = async (categoryId) => {
-    try {
-      setLoading(true);
-      const { data: rawServices, error } = await fetchServicesByCategory(categoryId);
-      
-      if (error) {
-        console.error('Error loading services by category:', error);
-        return;
-      }
-
-      // Transform data to match existing component format
-      const transformedServices = transformServices(rawServices);
-      setServices(transformedServices);
-      
-    } catch (error) {
-      console.error('Error in loadServicesByCategory:', error);
+      setError('An unexpected error occurred');
     } finally {
       setLoading(false);
     }
   };
 
-  const renderItem = ({ item }) => (
-    <ServiceCard
-      name={item.name}
-      image={item.image}
-      providerName={item.providerName}
-      price={item.price}
-      isOnDiscount={item.isOnDiscount}
-      oldPrice={item.oldPrice}
-      rating={item.rating}
-      numReviews={item.numReviews}
-      onPress={() => navigation.navigate("ServiceDetails", { serviceId: item.id })}
-      categoryId={item.categoryId}
-    />
-  );
+  const renderHeader = () => {
+    return (
+      <View style={styles.header}>
+        <TouchableOpacity 
+          onPress={() => navigation.goBack()}
+          style={styles.backButton}
+        >
+          <Image 
+            source={require('../assets/icons/arrow-back.png')}
+            style={[styles.backIcon, { tintColor: dark ? COLORS.white : COLORS.black }]}
+          />
+        </TouchableOpacity>
+        <Text style={[styles.headerTitle, { color: dark ? COLORS.white : COLORS.black }]}>
+          All Services
+        </Text>
+        <View style={{ width: 24 }} /> {/* Empty view for layout balance */}
+      </View>
+    );
+  };
+
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" color={COLORS.primary} />
+          <Text style={[styles.messageText, { color: colors.text }]}>
+            Loading services...
+          </Text>
+        </View>
+      );
+    }
+
+    if (error) {
+      return (
+        <View style={styles.centerContainer}>
+          <Text style={[styles.messageText, { color: colors.text }]}>
+            {error}
+          </Text>
+          <TouchableOpacity 
+            style={styles.retryButton}
+            onPress={loadAllServices}
+          >
+            <Text style={styles.retryText}>Try Again</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
+    if (services.length === 0) {
+      return (
+        <View style={styles.centerContainer}>
+          <Text style={[styles.messageText, { color: colors.text }]}>
+            No services available
+          </Text>
+        </View>
+      );
+    }
+
+    return (
+      <FlatList
+        data={services}
+        keyExtractor={item => item.id}
+        renderItem={({ item }) => (
+          <ServiceCard
+            name={item.name}
+            image={item.image}
+            providerName={item.providerName}
+            price={item.price}
+            isOnDiscount={item.isOnDiscount}
+            oldPrice={item.oldPrice}
+            rating={item.rating}
+            numReviews={item.numReviews}
+            onPress={() => navigation.navigate("WorkerDetails", { workerId: item.workerId,serviceId: item.serviceId})}
+            categoryId={item.categoryId}
+          />
+        )}
+        contentContainerStyle={styles.listContainer}
+      />
+    );
+  };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <Header 
-        title={categoryName ? `${categoryName} Services` : (showPopular ? "Popular Services" : "All Services")} 
-        goBack={() => navigation.goBack()} 
-      />
-      
-      {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={COLORS.primary} />
-        </View>
-      ) : (
-        services.length > 0 ? (
-          <FlatList
-            data={services}
-            keyExtractor={item => item.id}
-            renderItem={renderItem}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.listContainer}
-          />
-        ) : (
-          <View style={styles.emptyContainer}>
-            <Text style={[styles.emptyText, { color: colors.text }]}>
-              No services available at the moment
-            </Text>
-          </View>
-        )
-      )}
+      {renderHeader()}
+      {renderContent()}
     </SafeAreaView>
   );
 };
@@ -117,25 +140,55 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.white,
   },
-  loadingContainer: {
-    flex: 1,
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    height: 60,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  backIcon: {
+    width: 24,
+    height: 24,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontFamily: 'semiBold',
   },
   listContainer: {
     padding: 16,
+    paddingBottom: 80,
   },
-  emptyContainer: {
+  centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 24,
+    padding: 20,
   },
-  emptyText: {
-    fontFamily: 'medium',
+  messageText: {
     fontSize: 16,
+    fontFamily: 'medium',
     textAlign: 'center',
-  }
+    marginTop: 16,
+  },
+  retryButton: {
+    marginTop: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    backgroundColor: COLORS.primary,
+    borderRadius: 8,
+  },
+  retryText: {
+    color: COLORS.white,
+    fontSize: 16,
+    fontFamily: 'medium',
+  },
 });
 
 export default AllServices;
