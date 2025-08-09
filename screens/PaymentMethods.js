@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, TouchableOpacity, TouchableWithoutFeedback, Ima
 import React, { useState } from 'react';
 import { COLORS, SIZES, icons } from '../constants';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons, AntDesign } from "@expo/vector-icons";
+import { Ionicons, AntDesign, MaterialCommunityIcons } from "@expo/vector-icons";
 import { ScrollView } from 'react-native-virtualized-view';
 import PaymentMethodItem from '../components/PaymentMethodItem';
 import { useTheme } from '../theme/ThemeProvider';
@@ -17,14 +17,10 @@ const PaymentMethods = ({ navigation, route }) => {
   // Get booking data from previous screen
   const { bookingData, workerName, serviceName, price, workingHours } = route.params || {};
 
-  /**
-   * Render Header
-   */
   const renderHeader = () => {
     return (
       <View style={styles.headerContainer}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons
             name="arrow-back-outline"
             size={24}
@@ -34,22 +30,15 @@ const PaymentMethods = ({ navigation, route }) => {
         <Text style={[styles.headerTitle, { 
           color: dark? COLORS.white : COLORS.greyscale900
         }]}>Payment Methods</Text>
-        <TouchableOpacity>
-          <Text style={styles.createTitle}>{"   "}</Text>
-        </TouchableOpacity>
+        <View style={{ width: 24 }} />
       </View>
     )
   }
 
   const handleCheckboxPress = (itemTitle) => {
-    if (selectedItem === itemTitle) {
-      setSelectedItem(null);
-    } else {
-      setSelectedItem(itemTitle);
-    }
+    setSelectedItem(selectedItem === itemTitle ? null : itemTitle);
   };
 
-  // Process payment and create booking
   const handleProcessPayment = async () => {
     if (!selectedItem) {
       Alert.alert('Error', 'Please select a payment method');
@@ -57,19 +46,32 @@ const PaymentMethods = ({ navigation, route }) => {
     }
 
     setLoading(true);
+    
     try {
-      // For testing, we'll create the booking directly
-      console.log('Creating booking with data:', bookingData);
-      
-      const result = await createBooking(bookingData);
-      
-      if (result) {
-        console.log('Booking created successfully:', result);
-        setModalVisible(true);
+      if (selectedItem === 'Credit/Debit Card') {
+        navigation.navigate('CreditCardPayment', {
+          bookingData,
+          price,
+          workerName,
+          serviceName,
+          workingHours
+        });
+      } else if (selectedItem === 'Cryptocurrency') {
+        navigation.navigate('CryptoPayment', {
+          bookingData,
+          price,
+          workerName,
+          serviceName,
+          workingHours
+        });
+      } else if (selectedItem === 'PayPal') {
+        Alert.alert('Coming Soon', 'PayPal integration coming soon!');
+      } else if (selectedItem === 'Apple Pay') {
+        Alert.alert('Coming Soon', 'Apple Pay integration coming soon!');
       }
     } catch (error) {
-      console.error('Booking creation failed:', error);
-      Alert.alert('Error', 'Failed to create booking. Please try again.');
+      console.error('Payment processing failed:', error);
+      Alert.alert('Error', 'Failed to process payment. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -79,40 +81,37 @@ const PaymentMethods = ({ navigation, route }) => {
     return (
       <View style={{ marginVertical: 12 }}>
         <PaymentMethodItem
-          checked={selectedItem === 'Visa Card'}
-          onPress={() => handleCheckboxPress('Visa Card')}
-          title="Visa Card"
+          checked={selectedItem === 'Credit/Debit Card'}
+          onPress={() => handleCheckboxPress('Credit/Debit Card')}
+          title="Credit/Debit Card"
+          subtitle="Visa, Mastercard, Amex"
           icon={icons.creditCard}
         />
         <PaymentMethodItem
-          checked={selectedItem === 'Paypal'}
-          onPress={() => handleCheckboxPress('Paypal')}
-          title="Paypal"
+          checked={selectedItem === 'Cryptocurrency'}
+          onPress={() => handleCheckboxPress('Cryptocurrency')}
+          title="Cryptocurrency"
+          subtitle="Bitcoin, Ethereum & more"
+          icon={icons.wallet || icons.creditCard}
+        />
+        <PaymentMethodItem
+          checked={selectedItem === 'PayPal'}
+          onPress={() => handleCheckboxPress('PayPal')}
+          title="PayPal"
+          subtitle="Pay with PayPal balance"
           icon={icons.paypal}
         />
         <PaymentMethodItem
           checked={selectedItem === 'Apple Pay'}
           onPress={() => handleCheckboxPress('Apple Pay')}
           title="Apple Pay"
+          subtitle="Quick and secure"
           icon={icons.appleLogo}
         />
-        <TouchableOpacity
-          onPress={() => navigation.navigate("AddNewPaymentMethod")}
-          style={[styles.addBtn, { 
-            borderColor: dark ? COLORS.secondaryWhite : COLORS.gray,
-          }]}>
-          <AntDesign name="pluscircleo" size={24} color="#BABABA" />
-          <Text style={[styles.addBtnText, { 
-            color: dark? COLORS.white : COLORS.grayscale700,
-          }]}>Add more</Text>
-        </TouchableOpacity>
       </View>
     )
   }
 
-  /**
-   * Render Bottom Content
-   */
   const renderBottomContent = () => {
     return (
       <View style={styles.bottomContainer}>
@@ -122,57 +121,17 @@ const PaymentMethods = ({ navigation, route }) => {
           }]}>Total:</Text>
           <Text style={[styles.totalPrice, { 
             color: dark? COLORS.white : COLORS.greyscale900,
-          }]}> ${price || 125}</Text>
+          }]}> ${price || 0}</Text>
         </View>
         <TouchableOpacity
           onPress={handleProcessPayment}
           style={[styles.bottomBtn, loading && styles.bottomBtnDisabled]}
           disabled={loading}>
           <Text style={styles.bottomBtnText}>
-            {loading ? 'Processing...' : 'Process Payment'}
+            {loading ? 'Processing...' : 'Continue'}
           </Text>
         </TouchableOpacity>
       </View>
-    )
-  }
-
-  // Render Success Modal
-  const renderSuccessModal = () => {
-    return (
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}>
-        <TouchableWithoutFeedback
-          onPress={() => setModalVisible(false)}>
-          <View style={styles.modalContainer}>
-            <View style={[styles.modalSubContainer, { 
-               backgroundColor: dark ? COLORS.dark2 : COLORS.white,
-            }]}>
-              <Image
-                source={icons.checked}
-                resizeMode='contain'
-                style={styles.successIcon}
-              />
-              <Text style={[styles.modalTitle, { 
-                color: dark? COLORS.white : COLORS.greyscale900,
-              }]}>Booking Successfully!</Text>
-              <Text style={[styles.modalSubtitle, { 
-                color: dark ? COLORS.grayscale200 : "#6C6C6C",
-              }]}>Your booking has been confirmed. The service provider will be notified.</Text>
-              <TouchableOpacity
-                onPress={() => {
-                  setModalVisible(false);
-                  // Navigate to home or bookings list
-                  navigation.navigate("Main");
-                }}
-                style={styles.modalBtn}>
-                <Text style={styles.modalBtnText}>Go to Bookings</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
     )
   }
 
@@ -180,10 +139,13 @@ const PaymentMethods = ({ navigation, route }) => {
     <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         {renderHeader()}
-        <ScrollView>
+        <ScrollView showsVerticalScrollIndicator={false}>
+          <Text style={[styles.sectionTitle, {
+            color: dark ? COLORS.white : COLORS.greyscale900
+          }]}>Select Payment Method</Text>
+          
           {renderContent()}
           
-          {/* Show booking summary for testing */}
           <View style={[styles.summaryCard, {
             backgroundColor: dark ? COLORS.dark2 : COLORS.tertiaryWhite,
             borderColor: dark ? COLORS.grayscale700 : COLORS.grayscale200,
@@ -198,7 +160,7 @@ const PaymentMethods = ({ navigation, route }) => {
               }]}>Service:</Text>
               <Text style={[styles.summaryValue, {
                 color: dark ? COLORS.white : COLORS.greyscale900
-              }]}>{serviceName || 'Service'}</Text>
+              }]} numberOfLines={1}>{serviceName || 'Service'}</Text>
             </View>
             
             <View style={styles.summaryRow}>
@@ -207,7 +169,7 @@ const PaymentMethods = ({ navigation, route }) => {
               }]}>Provider:</Text>
               <Text style={[styles.summaryValue, {
                 color: dark ? COLORS.white : COLORS.greyscale900
-              }]}>{workerName || 'Professional'}</Text>
+              }]} numberOfLines={1}>{workerName || 'Professional'}</Text>
             </View>
             
             <View style={styles.summaryRow}>
@@ -218,11 +180,36 @@ const PaymentMethods = ({ navigation, route }) => {
                 color: dark ? COLORS.white : COLORS.greyscale900
               }]}>{workingHours || 2} hours</Text>
             </View>
+
+            <View style={[styles.divider, {
+              backgroundColor: dark ? COLORS.grayscale700 : COLORS.grayscale200,
+            }]} />
+
+            <View style={styles.summaryRow}>
+              <Text style={[styles.summaryLabel, {
+                color: dark ? COLORS.white : COLORS.greyscale900,
+                fontFamily: "semiBold"
+              }]}>Total Amount:</Text>
+              <Text style={[styles.summaryValue, {
+                color: COLORS.primary,
+                fontSize: 18
+              }]}>${price || 0}</Text>
+            </View>
+          </View>
+
+          <View style={[styles.securityNote, {
+            backgroundColor: dark ? COLORS.dark3 : COLORS.transparentTertiary,
+          }]}>
+            <Ionicons name="shield-checkmark" size={20} color={COLORS.primary} />
+            <Text style={[styles.securityText, {
+              color: dark ? COLORS.grayscale200 : COLORS.grayscale700
+            }]}>
+              Your payment information is encrypted and secure
+            </Text>
           </View>
         </ScrollView>
         {renderBottomContent()}
       </View>
-      {renderSuccessModal()}
     </SafeAreaView>
   )
 }
@@ -230,79 +217,52 @@ const PaymentMethods = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   area: {
     flex: 1,
-    backgroundColor: COLORS.white
   },
   container: {
     flex: 1,
-    backgroundColor: COLORS.white,
     padding: 16
   },
   headerContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 12
+    alignItems: "center",
+    marginBottom: 20
   },
   headerTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontFamily: "bold",
-    color: COLORS.black,
   },
-  createTitle: {
-    fontFamily: "bold",
-    color: COLORS.primary,
+  sectionTitle: {
     fontSize: 16,
-  },
-  headerIconContainer: {
-    width: 42,
-    height: 42,
-    alignItems: "center",
-    justifyContent: "center",
-    borderColor: "#E5E9EF",
-    borderRadius: 7.7,
-    borderWidth: 1
-  },
-  addBtn: {
-    height: 64,
-    width: SIZES.width - 32,
-    alignItems: "center",
-    justifyContent: "center",
-    flexDirection: "row",
-    borderColor: COLORS.gray,
-    borderWidth: .4,
-    borderRadius: 30
-  },
-  addBtnText: {
-    fontSize: 14,
-    fontFamily: "medium",
-    marginLeft: 12
+    fontFamily: "semiBold",
+    marginBottom: 16,
   },
   bottomContainer: {
     position: "absolute",
-    bottom: 12,
+    bottom: 20,
     width: SIZES.width - 32,
     right: 16,
     left: 16,
     flexDirection: "row",
-    justifyContent: "space-between"
+    justifyContent: "space-between",
+    alignItems: "center"
   },
   bottomLeft: {
     flexDirection: "row",
     alignItems: "center"
   },
   total: {
-    fontSize: 12,
-    color: "#767676",
+    fontSize: 14,
     fontFamily: "regular"
   },
   totalPrice: {
-    fontSize: 22,
+    fontSize: 24,
     fontFamily: "bold",
-    color: COLORS.black
   },
   bottomBtn: {
-    width: 175,
-    height: 50,
-    borderRadius: 30,
+    width: 150,
+    height: 48,
+    borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: COLORS.primary
@@ -315,76 +275,50 @@ const styles = StyleSheet.create({
     fontFamily: "semiBold",
     color: COLORS.white
   },
-  modalContainer: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(0,0,0,0.3)"
-  },
-  modalSubContainer: {
-    height: 400,
-    width: SIZES.width * 0.86,
-    backgroundColor: COLORS.white,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 16
-  },
-  modalTitle: {
-    fontSize: 24,
-    fontFamily: "bold",
-    color: COLORS.black,
-    textAlign: "center",
-    marginVertical: 16
-  },
-  modalSubtitle: {
-    fontSize: 14,
-    fontFamily: "regular",
-    color: "#6C6C6C",
-    textAlign: "center",
-    marginVertical: 16
-  },
-  modalBtn: {
-    width: SIZES.width * 0.72,
-    height: 50,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: COLORS.primary,
-    borderRadius: 30
-  },
-  modalBtnText: {
-    fontSize: 16,
-    fontFamily: "semiBold",
-    color: COLORS.white
-  },
-  successIcon: {
-    width: 125,
-    height: 125,
-    tintColor: COLORS.primary
-  },
   summaryCard: {
-    marginTop: 24,
+    marginTop: 20,
     padding: 16,
     borderRadius: 12,
     borderWidth: 1,
+    marginBottom: 16
   },
   summaryTitle: {
     fontSize: 16,
     fontFamily: "semiBold",
-    marginBottom: 12,
+    marginBottom: 16,
   },
   summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   summaryLabel: {
     fontSize: 14,
     fontFamily: "regular",
+    flex: 1,
   },
   summaryValue: {
     fontSize: 14,
-    fontFamily: "semiBold",
+    fontFamily: "medium",
+    flex: 2,
+    textAlign: 'right',
+  },
+  divider: {
+    height: 1,
+    marginVertical: 12,
+  },
+  securityNote: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 100,
+  },
+  securityText: {
+    fontSize: 12,
+    fontFamily: "regular",
+    marginLeft: 8,
+    flex: 1,
   },
 })
 
