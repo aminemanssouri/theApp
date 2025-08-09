@@ -72,10 +72,16 @@ const ServiceCard = ({
                     resizeMode='cover'
                     style={styles.courseImage}
                 />
-                <View style={{ flex: 1 }}>
+                <View style={styles.contentContainer}>
                     <View style={styles.topContainer}>
                         <View style={styles.categoryContainer}>
-                            <Text style={styles.categoryName}>{providerName}</Text>
+                            <Text 
+                                style={styles.categoryName} 
+                                numberOfLines={1} 
+                                ellipsizeMode="tail"
+                            >
+                                {providerName}
+                            </Text>
                         </View>
                         <TouchableOpacity
                             onPress={() => setIsBookmarked(!isBookmarked)}
@@ -89,9 +95,15 @@ const ServiceCard = ({
                             />
                         </TouchableOpacity>
                     </View>
-                    <Text style={[styles.name, { 
-                         color: dark ? COLORS.secondaryWhite : COLORS.greyscale900,
-                    }]}>{name}</Text>
+                    <Text 
+                        style={[styles.name, { 
+                            color: dark ? COLORS.secondaryWhite : COLORS.greyscale900,
+                        }]} 
+                        numberOfLines={2} 
+                        ellipsizeMode="tail"
+                    >
+                        {name}
+                    </Text>
                     <View style={styles.priceContainer}>
                         <Text style={styles.price}>${price}</Text>
                         {
@@ -137,23 +149,34 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         marginRight: 16,
     },
+    contentContainer: {
+        flex: 1,
+        justifyContent: 'space-between',
+    },
     topContainer: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
+        marginBottom: 4,
     },
     categoryContainer: {
+        flex: 1,
+        marginRight: 8,
         paddingHorizontal: 10,
         paddingVertical: 6,
         backgroundColor: COLORS.transparentTertiary,
         borderRadius: 4,
-        alignItems: 'center',
+        alignItems: 'flex-start',
         justifyContent: 'center',
+        maxWidth: '80%', // Limit width to prevent overflow
     },
     categoryName: {
-        fontSize: 14,
+        fontSize: 12, // Slightly smaller for longer text
         fontFamily: 'semiBold',
         color: COLORS.primary
+    },
+    bookmarkButton: {
+        padding: 4, // Add padding for better touch target
     },
     bookmarkIcon: {
         width: 24,
@@ -161,15 +184,16 @@ const styles = StyleSheet.create({
         tintColor: COLORS.primary
     },
     name: {
-        fontSize: 16,
+        fontSize: 15, // Slightly smaller to fit better
         fontFamily: 'bold',
         color: COLORS.black,
-        marginVertical: 10,
+        marginVertical: 6,
+        lineHeight: 20,
     },
     priceContainer: {
         flexDirection: "row",
         alignItems: "center",
-        marginBottom: 6
+        marginBottom: 4
     },
     price: {
         fontSize: 18,
@@ -192,7 +216,7 @@ const styles = StyleSheet.create({
         color: "gray",
     },
     numReviews: {
-        fontSize: 14,
+        fontSize: 12, // Slightly smaller
         fontFamily: 'medium',
         color: "gray",
         marginLeft: 8,

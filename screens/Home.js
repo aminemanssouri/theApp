@@ -322,39 +322,34 @@ const Home = ({ navigation }) => {
   */
   const renderSearchBar = () => {
     const handleInputFocus = () => {
-      // Redirect to another screen
+      // Navigate to Search screen
       navigation.navigate('Search');
     };
 
     return (
-      <View style={[styles.searchContainer, {  
-        borderColor: dark ? COLORS.grayscale700 : "#E5E7EB"
-        }]}>
-        <TouchableOpacity>
-          <Image
-            source={icons.search2}
-            resizeMode='contain'
-            style={styles.searchIcon}
-          />
-        </TouchableOpacity>
-        <TextInput
-          style={styles.searchInput}
-          value={search}
-          onChangeText={(value) => setSearch(value)}
-          placeholder='Search services...'
-          placeholderTextColor="#BABABA"
-          onFocus={handleInputFocus}
+      <TouchableOpacity 
+        style={[styles.searchContainer, {  
+          borderColor: dark ? COLORS.grayscale700 : "#E5E7EB"
+        }]}
+        onPress={handleInputFocus}
+        activeOpacity={0.8}
+      >
+        <Image
+          source={icons.search2}
+          resizeMode='contain'
+          style={styles.searchIcon}
         />
-        <TouchableOpacity>
-          <Image
-            source={icons.filter}
-            resizeMode='contain'
-            style={[styles.filterIcon, { 
-              tintColor: dark? COLORS.white : COLORS.greyscale900
-            }]}
-          />
-        </TouchableOpacity>
-      </View>
+        <Text style={styles.searchPlaceholder}>
+          Search services...
+        </Text>
+        <Image
+          source={icons.filter}
+          resizeMode='contain'
+          style={[styles.filterIcon, { 
+            tintColor: dark? COLORS.white : COLORS.greyscale900
+          }]}
+        />
+      </TouchableOpacity>
     )
   }
 
@@ -455,11 +450,9 @@ const Home = ({ navigation }) => {
       ? services // Show all services if "all" is selected
       : services.filter(service => selectedCategories.includes(service.categoryId));
       
-    console.log(`✅ Filtered to ${filteredServices.length} services based on selected categories`);
 
     // Use the categories directly from state (which already include the "All" option)
     const filterCategories = categories;
-    console.log('Filter categories:', categories.map(c => `${c.id}:${c.name}`).join(', '));
 
     // Category item for filtering
     const renderCategoryItem = ({ item }) => (
@@ -771,6 +764,15 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontSize: 10,
     fontFamily: 'semiBold',
+  },
+  searchPlaceholder: {
+    flex: 1,
+    fontSize: 14,
+    marginHorizontal: 8,
+    color: "#BABABA",
+    borderRightColor: "#BABABA",
+    borderRightWidth: .4,
+    paddingRight: 8,
   },
 })
 
