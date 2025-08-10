@@ -230,10 +230,35 @@ const Notifications = ({ navigation }) => {
             }]}
           />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, {
-          color: dark ? COLORS.white : COLORS.greyscale900
-        }]}>Notifications</Text>
+        <View style={styles.headerTitleContainer}>
+          <Text style={[styles.headerTitle, {
+            color: dark ? COLORS.white : COLORS.greyscale900
+          }]}>Notifications</Text>
+          {unreadCount > 0 && (
+            <View style={styles.unreadBadge}>
+              <Text style={styles.unreadBadgeText}>{unreadCount}</Text>
+            </View>
+          )}
+        </View>
         <View style={styles.headerActions}>
+          {notifications.length > 0 && (
+            <>
+              <TouchableOpacity
+                onPress={handleMarkAllAsRead}
+                style={styles.headerActionButton}>
+                <Text style={[styles.markAllRead, {
+                  color: COLORS.primary
+                }]}>Mark All Read</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleClearAll}
+                style={styles.headerActionButton}>
+                <Text style={[styles.clearAll, {
+                  color: COLORS.error
+                }]}>Clear All</Text>
+              </TouchableOpacity>
+            </>
+          )}
         </View>
       </View>
     )
@@ -292,31 +317,6 @@ const Notifications = ({ navigation }) => {
     <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         {renderHeader()}
-        
-        <View style={styles.headerNoti}>
-          <View style={styles.headerNotiLeft}>
-            <Text style={[styles.notiTitle, {
-              color: dark ? COLORS.white : COLORS.greyscale900
-            }]}>Recent</Text>
-            {unreadCount > 0 && (
-              <View style={styles.headerNotiView}>
-                <Text style={styles.headerNotiTitle}>{unreadCount}</Text>
-              </View>
-            )}
-          </View>
-          <View style={styles.headerActions}>
-            {unreadCount > 0 && isUserAuthenticated() && (
-              <TouchableOpacity onPress={handleMarkAllAsRead} style={styles.headerActionButton}>
-                <Text style={styles.markAllRead}>Mark All Read</Text>
-              </TouchableOpacity>
-            )}
-            {isUserAuthenticated() && (
-              <TouchableOpacity onPress={handleClearAll} style={styles.headerActionButton}>
-                <Text style={styles.clearAll}>Clear All</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        </View>
 
         <FlatList
           data={notifications}
@@ -368,10 +368,30 @@ const styles = StyleSheet.create({
     height: 24,
     tintColor: COLORS.black
   },
+  headerTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
   headerTitle: {
     fontSize: 16,
     fontFamily: "bold",
     color: COLORS.black
+  },
+  unreadBadge: {
+    backgroundColor: COLORS.primary,
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 8
+  },
+  unreadBadgeText: {
+    color: COLORS.white,
+    fontSize: 12,
+    fontFamily: 'bold',
+    paddingHorizontal: 4
   },
   headerAction: {
     fontSize: 14,
