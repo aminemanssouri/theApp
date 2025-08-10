@@ -317,6 +317,12 @@ const Notifications = ({ navigation }) => {
     <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         {renderHeader()}
+<<<<<<< HEAD
+=======
+
+        {renderSelectionActions()}
+
+>>>>>>> 0ed03d64d1873e00963fa7cedb6c57a830852df6
 
         <FlatList
           data={notifications}
