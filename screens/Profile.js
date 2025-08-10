@@ -9,11 +9,15 @@ import SettingsItem from '../components/SettingsItem';
 import { useTheme } from '../theme/ThemeProvider';
 import RBSheet from "react-native-raw-bottom-sheet";
 import Button from '../components/Button';
+import { useAuth } from '../context/AuthContext';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const Profile = ({ navigation }) => {
   const refRBSheet = useRef();
   const { dark, colors, setScheme } = useTheme();
-  const insets = getSafeAreaInsets();
+  const { user, userProfile, loading: authLoading } = useAuth();
+  const insets = useSafeAreaInsets();
+
   
   // Calculate bottom spacing to avoid tab bar overlap
   const getBottomSpacing = () => {
@@ -70,6 +74,25 @@ const Profile = ({ navigation }) => {
         setImage({ uri: tempUri })
       } catch (error) { }
     };
+
+    // Get user display name
+    const getDisplayName = () => {
+      if (userProfile?.first_name && userProfile?.last_name) {
+        return `${userProfile.first_name} ${userProfile.last_name}`;
+      } else if (userProfile?.first_name) {
+        return userProfile.first_name;
+      } else if (user?.email) {
+        // Fallback to email if no name is set
+        return user.email.split('@')[0];
+      }
+      return 'User';
+    };
+
+    // Get user email
+    const getUserEmail = () => {
+      return user?.email || userProfile?.email || 'No email available';
+    };
+
     return (
       <View style={styles.profileContainer}>
         <View>
@@ -84,8 +107,12 @@ const Profile = ({ navigation }) => {
             <MaterialIcons name="edit" size={16} color={COLORS.white} />
           </TouchableOpacity>
         </View>
-        <Text style={[styles.title, { color: dark ? COLORS.secondaryWhite : COLORS.greyscale900 }]}>Nathalie Erneson</Text>
-        <Text style={[styles.subtitle, { color: dark ? COLORS.secondaryWhite : COLORS.greyscale900 }]}>nathalie_erneson@gmail.com</Text>
+        <Text style={[styles.title, { color: dark ? COLORS.secondaryWhite : COLORS.greyscale900 }]}>
+          {authLoading ? 'Loading...' : getDisplayName()}
+        </Text>
+        <Text style={[styles.subtitle, { color: dark ? COLORS.secondaryWhite : COLORS.greyscale900 }]}>
+          {authLoading ? 'Loading...' : getUserEmail()}
+        </Text>
       </View>
     )
   }
@@ -268,12 +295,13 @@ const Profile = ({ navigation }) => {
             textColor={dark ? COLORS.white : COLORS.primary}
             onPress={() => refRBSheet.current.close()}
           />
-          <Button
-            title="Yes, Logout"
-            filled
-            style={styles.logoutButton}
-            onPress={() => refRBSheet.current.close()}
-          />
+        <Button
+  title="Yes, Logout"
+  filled
+  style={styles.logoutButton}
+  
+  
+/>
         </View>
       </RBSheet>
     </View>

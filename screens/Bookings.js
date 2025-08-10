@@ -83,7 +83,7 @@ const MyBooking = ({ navigation }) => {
       }}
       renderLabel={({ route, focused }) => (
         <Text style={[{
-          color: focused ? COLORS.primary : "gray",
+          color: focused ? COLORS.primary : (dark ? COLORS.white : COLORS.greyscale900),
           fontSize: 16,
           fontFamily: "semiBold"
         }]}>

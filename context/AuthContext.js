@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { getCurrentUser, onAuthStateChange } from '../lib/services/auth';
+import { getCurrentUser, onAuthStateChange, getUserProfile } from '../lib/services/auth';
 
 const AuthContext = createContext({});
 
@@ -14,45 +14,108 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState(null);
 
-  useEffect(() => {
-    // Get initial session
-    const getInitialSession = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
+  // Fetch user profile data
+  const fetchUserProfile = async (userId) => {
+    if (!userId) {
+      setUserProfile(null);
+      return;
+    }
+
+    try {
+      const { data, error } = await getUserProfile(userId);
+      if (error) {
+        console.error('Error fetching user profile:', error);
+        setUserProfile(null);
+      } else {
+        setUserProfile(data);
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      setUserProfile(null);
+    }
+  };
+
+ useEffect(() => {
+  let isMounted = true;
+  
+  // Get initial session with timeout protection
+  const getInitialSession = async () => {
+    try {
+      const sessionPromise = Promise.race([
+        supabase.auth.getSession(),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Session check timed out')), 8000)
+        )
+      ]);
+      
+      const { data: { session } } = await sessionPromise;
+      
+      if (isMounted) {
         setSession(session);
         setUser(session?.user || null);
-      } catch (error) {
-        console.error('Error getting initial session:', error);
-      } finally {
-        setLoading(false);
+        
+        // Fetch user profile if user exists
+        if (session?.user?.id) {
+          await fetchUserProfile(session.user.id);
+        }
       }
-    };
+    } catch (error) {
+      console.error('Error getting initial session:', error);
+      if (isMounted) {
+        // Even if there's an error, we still need to stop loading
+        setSession(null);
+        setUser(null);
+        setUserProfile(null);
+      }
+    } finally {
+      if (isMounted) {
+        setLoading(false); // Always set loading to false
+      }
+    }
+  };
 
-    getInitialSession();
+  getInitialSession();
+  
+  // Use a timeout as a fallback to ensure loading never stays true indefinitely
+  const timeoutId = setTimeout(() => {
+    if (isMounted && loading) {
+      setLoading(false);
+    }
+  }, 10000); // 10 second maximum loading time
 
-    // Listen for auth state changes
-    const { data: { subscription } } = onAuthStateChange(async (event, session) => {
-      
+  // Listen for auth state changes
+  const { data: { subscription } } = onAuthStateChange(async (event, session) => {
+    if (isMounted) {
       setSession(session);
       setUser(session?.user || null);
       
-      // if (event === 'SIGNED_IN') {
-      //   console.log('User signed in:', session?.user?.email);
-      // } else if (event === 'SIGNED_OUT') {
-      //   console.log('User signed out');
-      // }
-    });
+      // Fetch user profile when auth state changes
+      if (session?.user?.id) {
+        await fetchUserProfile(session.user.id);
+      } else {
+        setUserProfile(null);
+      }
+      
+      // Ensure loading state is updated
+      setLoading(false);
+    }
+  });
 
-    return () => {
-      subscription?.unsubscribe();
-    };
-  }, []);
+  // Cleanup function
+  return () => {
+    isMounted = false;
+    clearTimeout(timeoutId);
+    subscription?.unsubscribe();
+  };
+}, []);
 
   const value = {
     user,
+    userProfile,
     session,
     loading,
     signOut: async () => {
@@ -61,7 +124,8 @@ export const AuthProvider = ({ children }) => {
       } catch (error) {
         console.error('Error signing out:', error);
       }
-    }
+    },
+    refreshUserProfile: () => fetchUserProfile(user?.id)
   };
 
   // Debug log the auth state
@@ -69,6 +133,7 @@ export const AuthProvider = ({ children }) => {
   //   hasUser: !!user,
   //   userId: user?.id,
   //   userEmail: user?.email,
+  //   hasProfile: !!userProfile,
   //   hasSession: !!session,
   //   loading
   // });

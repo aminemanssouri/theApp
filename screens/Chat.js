@@ -56,12 +56,20 @@ const Chat = () => {
   const route = useRoute();
   const navigation = useNavigation();
   const conversationId = route.params?.conversationId;
+  const notificationData = route.params?.notificationData;
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isTyping, setIsTyping] = useState(false);
   const [isOtherTyping, setIsOtherTyping] = useState(false);
   const [inputText, setInputText] = useState('');
+  
+  // Log notification data if coming from notification
+  useEffect(() => {
+    if (notificationData) {
+      console.log('💬 Chat opened from notification:', notificationData);
+    }
+  }, [notificationData]);
   
   const handleInputTextChange = (text) => {
     setInputText(text);
@@ -213,11 +221,21 @@ const Chat = () => {
             source={defaultAvatar} 
             style={styles.headerAvatar} 
           />
+          {notificationData && (
+            <View style={styles.notificationIndicator}>
+              <Ionicons name="notifications" size={12} color={COLORS.white} />
+            </View>
+          )}
         </View>
         <View style={styles.headerText}>
           <Text style={[styles.headerName, { color: dark ? COLORS.white : COLORS.black }]}>
             Service Provider
           </Text>
+          {notificationData && (
+            <Text style={[styles.notificationSubtitle, { color: dark ? COLORS.gray3 : COLORS.gray3 }]}>
+              New message
+            </Text>
+          )}
         </View>
       </View>
     </Animated.View>
@@ -479,6 +497,24 @@ const styles = StyleSheet.create({
   dateSeparatorText: {
     fontSize: 12,
     fontFamily: 'medium',
+  },
+  notificationIndicator: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    backgroundColor: COLORS.primary,
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: COLORS.white,
+  },
+  notificationSubtitle: {
+    fontSize: 12,
+    fontFamily: 'regular',
+    marginTop: 2,
   },
 });
 

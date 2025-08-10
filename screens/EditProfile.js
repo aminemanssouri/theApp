@@ -13,36 +13,47 @@ import DatePickerModal from '../components/DatePickerModal';
 import Button from '../components/Button';
 import RNPickerSelect from 'react-native-picker-select';
 import { useTheme } from '../theme/ThemeProvider';
-
-const isTestMode = true;
-
-const initialState = {
-  inputValues: {
-    fullName: isTestMode ? 'John Doe' : '',
-    email: isTestMode ? 'example@gmail.com' : '',
-    nickname: isTestMode ? "" : "",
-    phoneNumber: ''
-  },
-  inputValidities: {
-    fullName: false,
-    email: false,
-    nickname: false,
-    phoneNumber: false,
-  },
-  formIsValid: false,
-}
-
+import { useAuth } from '../context/AuthContext';
+import { updateUserProfile } from '../lib/services/auth';
 
 const EditProfile = ({ navigation }) => {
+  const { user, userProfile, refreshUserProfile } = useAuth();
   const [image, setImage] = useState(null);
   const [error, setError] = useState();
-  const [formState, dispatchFormState] = useReducer(reducer, initialState);
+  const [loading, setLoading] = useState(false);
   const [areas, setAreas] = useState([]);
   const [selectedArea, setSelectedArea] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [openStartDatePicker, setOpenStartDatePicker] = useState(false);
   const [selectedGender, setSelectedGender] = useState('');
   const { colors, dark } = useTheme();
+
+  // Initialize form state with user data
+  const getInitialState = () => ({
+    inputValues: {
+      firstName: userProfile?.first_name || '',
+      lastName: userProfile?.last_name || '',
+      email: user?.email || '',
+      phoneNumber: userProfile?.phone || '',
+      occupation: userProfile?.occupation || '',
+      address: userProfile?.address || '',
+      city: userProfile?.city || '',
+      zipCode: userProfile?.zip_code || ''
+    },
+    inputValidities: {
+      firstName: true,
+      lastName: true,
+      email: true,
+      phoneNumber: true,
+      occupation: true,
+      address: true,
+      city: true,
+      zipCode: true
+    },
+    formIsValid: true,
+  });
+
+  const [formState, dispatchFormState] = useReducer(reducer, getInitialState());
 
   const genderOptions = [
     { label: 'Male', value: 'male' },
@@ -55,14 +66,21 @@ const EditProfile = ({ navigation }) => {
   };
 
   const today = new Date();
-  const startDate = getFormatedDate(
-    new Date(today.setDate(today.getDate() + 1)),
-    "YYYY/MM/DD"
+  const startDate = new Date(today.setDate(today.getDate() - 36500)).toISOString().split('T')[0];
+
+  const [startedDate, setStartedDate] = useState(
+    userProfile?.date_of_birth 
+      ? getFormatedDate(new Date(userProfile.date_of_birth), "DD/MM/YYYY")
+      : "Select Date of Birth"
   );
 
-  const [startedDate, setStartedDate] = useState("12/12/2023");
   const handleOnPressStartDate = () => {
     setOpenStartDatePicker(!openStartDatePicker);
+  };
+
+  const handleDateChange = (date) => {
+    setStartedDate(date);
+    setOpenStartDatePicker(false);
   };
 
   const inputChangedHandler = useCallback(
@@ -75,7 +93,7 @@ const EditProfile = ({ navigation }) => {
 
   useEffect(() => {
     if (error) {
-      Alert.alert('An error occured', error)
+      Alert.alert('An error occurred', error)
     }
   }, [error])
 
@@ -88,6 +106,62 @@ const EditProfile = ({ navigation }) => {
       // set the image
       setImage({ uri: tempUri })
     } catch (error) { }
+  };
+
+  // Handle profile update
+  const handleUpdateProfile = async () => {
+    if (!formState.formIsValid) {
+      Alert.alert('Validation Error', 'Please check your input fields');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Parse date of birth
+      const dateOfBirth = startedDate !== "Select Date of Birth" 
+        ? new Date(startedDate.split('/').reverse().join('-')).toISOString()
+        : null;
+
+      // Prepare update data
+      const updateData = {
+        first_name: formState.inputValues.firstName,
+        last_name: formState.inputValues.lastName,
+        email: formState.inputValues.email,
+        phone: formState.inputValues.phoneNumber,
+        date_of_birth: dateOfBirth,
+        address: formState.inputValues.address,
+        city: formState.inputValues.city,
+        zip_code: formState.inputValues.zipCode,
+        updated_at: new Date().toISOString()
+      };
+
+      // Update user profile in database
+      const { data, error } = await updateUserProfile(user.id, updateData);
+
+      if (error) {
+        throw error;
+      }
+
+      // Refresh user profile data
+      await refreshUserProfile();
+
+      Alert.alert(
+        'Success', 
+        'Profile updated successfully!',
+        [
+          {
+            text: 'OK',
+            onPress: () => navigation.goBack()
+          }
+        ]
+      );
+
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      Alert.alert('Update Failed', error.message || 'Failed to update profile');
+    } finally {
+      setLoading(false);
+    }
   };
 
   // fectch codes from rescountries api
@@ -114,6 +188,24 @@ const EditProfile = ({ navigation }) => {
         }
       })
   }, [])
+
+  // Update form state when userProfile changes
+  useEffect(() => {
+    if (userProfile) {
+      const newFormState = getInitialState();
+      dispatchFormState({ 
+        type: 'UPDATE_FORM', 
+        inputValues: newFormState.inputValues,
+        inputValidities: newFormState.inputValidities,
+        formIsValid: newFormState.formIsValid
+      });
+      
+      // Update date of birth
+      if (userProfile.date_of_birth) {
+        setStartedDate(getFormatedDate(new Date(userProfile.date_of_birth), "DD/MM/YYYY"));
+      }
+    }
+  }, [userProfile]);
 
   // render countries codes modal
   function RenderAreasCodesModal() {
@@ -180,8 +272,12 @@ const EditProfile = ({ navigation }) => {
     <SafeAreaView style={[styles.area, { backgroundColor: dark ? COLORS.dark1 : COLORS.white }]}>
       <View style={[styles.container, { backgroundColor: dark ? COLORS.dark1 : COLORS.white }]}>
         <Header title="Edit Profile" />
-        <ScrollView showsVerticalScrollIndicator={false}>
-          <View style={{ alignItems: "center", marginVertical: 12 }}>
+        <ScrollView 
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}>
+          
+          {/* Avatar Section */}
+          <View style={styles.avatarSection}>
             <View style={styles.avatarContainer}>
               <Image
                 source={image === null ? images.user1 : image}
@@ -197,134 +293,135 @@ const EditProfile = ({ navigation }) => {
               </TouchableOpacity>
             </View>
           </View>
-          <View>
+          
+          {/* Form Fields */}
+          <View style={styles.formContainer}>
             <Input
-              id="fullName"
+              id="firstName"
               onInputChanged={inputChangedHandler}
-              errorText={formState.inputValidities['fullName']}
-              placeholder="Full Name"
+              errorText={formState.inputValidities['firstName']}
+              placeholder="First Name"
               placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
+              initialValue={formState.inputValues.firstName}
+              containerStyle={styles.inputWrapper}
             />
+            
             <Input
-              id="nickname"
+              id="lastName"
               onInputChanged={inputChangedHandler}
-              errorText={formState.inputValidities['nickname']}
-              placeholder="Nickname"
+              errorText={formState.inputValidities['lastName']}
+              placeholder="Last Name"
               placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
+              initialValue={formState.inputValues.lastName}
+              containerStyle={styles.inputWrapper}
             />
+            
             <Input
               id="email"
               onInputChanged={inputChangedHandler}
               errorText={formState.inputValidities['email']}
               placeholder="Email"
               placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
-              keyboardType="email-address" />
-            <View style={{
-              width: SIZES.width - 32
-            }}>
-              <TouchableOpacity
-                style={[styles.inputBtn, {
-                  backgroundColor: dark ? COLORS.dark2 : COLORS.greyscale500,
-                  borderColor: dark ? COLORS.dark2 : COLORS.greyscale500,
-                }]}
-                onPress={handleOnPressStartDate}
-              >
-                <Text style={{ ...FONTS.body4, color: COLORS.grayscale400 }}>{startedDate}</Text>
-                <Feather name="calendar" size={24} color={COLORS.grayscale400} />
-              </TouchableOpacity>
-            </View>
-            <View style={[styles.inputContainer, {
-              backgroundColor: dark ? COLORS.dark2 : COLORS.greyscale500,
-              borderColor: dark ? COLORS.dark2 : COLORS.greyscale500,
-            }]}>
-              <TouchableOpacity
-                style={styles.selectFlagContainer}
-                onPress={() => setModalVisible(true)}>
-                <View style={{ justifyContent: "center" }}>
-                  <Image
-                    source={icons.down}
-                    resizeMode='contain'
-                    style={styles.downIcon}
-                  />
-                </View>
-                <View style={{ justifyContent: "center", marginLeft: 5 }}>
-                  <Image
-                    source={{ uri: selectedArea?.flag }}
-                    contentFit="contain"
-                    style={styles.flagIcon}
-                  />
-                </View>
-                <View style={{ justifyContent: "center", marginLeft: 5 }}>
-                  <Text style={{ color: dark ? COLORS.white : "#111", fontSize: 12 }}>{selectedArea?.callingCode}</Text>
-                </View>
-              </TouchableOpacity>
-              {/* Phone Number Text Input */}
-              <TextInput
-                style={styles.input}
-                placeholder="Enter your phone number"
-                placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
-                selectionColor="#111"
-                keyboardType="numeric"
-              />
-            </View>
-            <View>
-              <RNPickerSelect
-                placeholder={{ label: 'Select', value: '' }}
-                items={genderOptions}
-                onValueChange={(value) => handleGenderChange(value)}
-                value={selectedGender}
-                style={{
-                  inputIOS: {
-                    fontSize: 16,
-                    paddingHorizontal: 10,
-                    borderRadius: 4,
-                    color: COLORS.greyscale600,
-                    paddingRight: 30,
-                    height: 52,
-                    width: SIZES.width - 32,
-                    alignItems: 'center',
-                    backgroundColor: dark ? COLORS.dark2 : COLORS.greyscale500,
-                    borderRadius: 16
-                  },
-                  inputAndroid: {
-                    fontSize: 16,
-                    paddingHorizontal: 10,
-                    borderRadius: 8,
-                    color: COLORS.greyscale600,
-                    paddingRight: 30,
-                    height: 52,
-                    width: SIZES.width - 32,
-                    alignItems: 'center',
-                    backgroundColor: dark ? COLORS.dark2 : COLORS.greyscale500,
-                    borderRadius: 16
-                  },
-                }}
-              />
-            </View>
+              keyboardType="email-address"
+              initialValue={formState.inputValues.email}
+              editable={false}
+              containerStyle={styles.inputWrapper}
+            />
+            
+            {/* Date of Birth Section */}
+            <TouchableOpacity
+              style={[styles.datePickerBtn, {
+                backgroundColor: dark ? COLORS.dark2 : COLORS.greyscale500,
+                borderColor: dark ? COLORS.dark2 : COLORS.greyscale500,
+              }]}
+              onPress={handleOnPressStartDate}
+            >
+              <Text style={[styles.datePickerText, { 
+                color: startedDate === "Select Date of Birth" 
+                  ? (dark ? COLORS.grayTie : COLORS.black)
+                  : (dark ? COLORS.white : COLORS.black)
+              }]}>
+                {startedDate === "Select Date of Birth" ? "Date of Birth (Optional)" : startedDate}
+              </Text>
+              <Feather name="calendar" size={20} color={dark ? COLORS.white : COLORS.grayscale400} />
+            </TouchableOpacity>
+            
+            {/* Simple Phone Number Input - No Modal */}
+            <Input
+              id="phoneNumber"
+              onInputChanged={inputChangedHandler}
+              errorText={formState.inputValidities['phoneNumber']}
+              placeholder="Phone Number (Optional)"
+              placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
+              keyboardType="phone-pad"
+              initialValue={formState.inputValues.phoneNumber}
+              containerStyle={styles.inputWrapper}
+            />
+            
+            {/* Address Fields */}
+            <Input
+              id="address"
+              onInputChanged={inputChangedHandler}
+              errorText={formState.inputValidities['address']}
+              placeholder="Address (Optional)"
+              placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
+              initialValue={formState.inputValues.address}
+              containerStyle={styles.inputWrapper}
+            />
+            
+            <Input
+              id="city"
+              onInputChanged={inputChangedHandler}
+              errorText={formState.inputValidities['city']}
+              placeholder="City (Optional)"
+              placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
+              initialValue={formState.inputValues.city}
+              containerStyle={styles.inputWrapper}
+            />
+            
+            <Input
+              id="zipCode"
+              onInputChanged={inputChangedHandler}
+              errorText={formState.inputValidities['zipCode']}
+              placeholder="ZIP Code (Optional)"
+              placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
+              initialValue={formState.inputValues.zipCode}
+              containerStyle={styles.inputWrapper}
+            />
+            
             <Input
               id="occupation"
               onInputChanged={inputChangedHandler}
               errorText={formState.inputValidities['occupation']}
-              placeholder="Occupation"
+              placeholder="Occupation (Optional)"
               placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
+              initialValue={formState.inputValues.occupation}
+              containerStyle={styles.inputWrapper}
             />
           </View>
+          
+          {/* Add padding at bottom to prevent button overlap */}
+          <View style={{ height: 50 }} />
         </ScrollView>
       </View>
+      
       <DatePickerModal
         open={openStartDatePicker}
         startDate={startDate}
         selectedDate={startedDate}
         onClose={() => setOpenStartDatePicker(false)}
-        onChangeStartDate={(date) => setStartedDate(date)}
+        onChangeStartDate={handleDateChange}
       />
+      
       {RenderAreasCodesModal()}
+      
       <View style={styles.bottomContainer}>
         <Button
           title="Update"
           filled
           style={styles.continueButton}
-          onPress={() => navigation.navigate("Profile")}
+          onPress={handleUpdateProfile}
+          isLoading={loading}
         />
       </View>
     </SafeAreaView>
@@ -338,12 +435,17 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    padding: 16,
     backgroundColor: COLORS.white
   },
-  avatarContainer: {
-    marginVertical: 12,
+  scrollContent: {
+    paddingHorizontal: 16,
+    paddingBottom: 20,
+  },
+  avatarSection: {
     alignItems: "center",
+    marginVertical: 20,
+  },
+  avatarContainer: {
     width: 130,
     height: 130,
     borderRadius: 65,
@@ -364,56 +466,63 @@ const styles = StyleSheet.create({
     bottom: 0,
     right: 0,
   },
-  inputContainer: {
+  formContainer: {
+    marginTop: 10,
+  },
+  inputWrapper: {
+    marginBottom: 12, // Consistent spacing between inputs
+  },
+  datePickerBtn: {
     flexDirection: "row",
-    borderColor: COLORS.greyscale500,
-    borderWidth: .4,
-    borderRadius: 6,
-    height: 52,
-    width: SIZES.width - 32,
-    alignItems: 'center',
-    marginVertical: 16,
-    backgroundColor: COLORS.greyscale500,
-  },
-  downIcon: {
-    width: 10,
-    height: 10,
-    tintColor: "#111"
-  },
-  selectFlagContainer: {
-    width: 90,
-    height: 50,
-    marginHorizontal: 5,
-    flexDirection: "row",
-  },
-  flagIcon: {
-    width: 30,
-    height: 30
-  },
-  input: {
-    flex: 1,
-    marginVertical: 10,
-    height: 40,
-    fontSize: 14,
-    color: "#111"
-  },
-  inputBtn: {
-    borderWidth: 1,
-    borderRadius: 12,
-    borderColor: COLORS.greyscale500,
-    height: 50,
-    paddingLeft: 8,
-    fontSize: 18,
     justifyContent: "space-between",
-    marginTop: 4,
-    backgroundColor: COLORS.greyscale500,
+    alignItems: "center",
+    height: 52,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+  },
+  datePickerText: {
+    fontSize: 14,
+    fontFamily: "regular",
+  },
+  phoneContainer: {
+    flexDirection: "row",
+    marginBottom: 12,
+    gap: 10, // Add gap between country code and phone input
+  },
+  countryCodeBtn: {
     flexDirection: "row",
     alignItems: "center",
-    paddingRight: 8
+    height: 52,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    minWidth: 100,
   },
-  rowContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between"
+  countryCodeText: {
+    fontSize: 14,
+    fontFamily: "medium",
+    marginHorizontal: 6,
+  },
+  flagIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+  },
+  downIcon: {
+    width: 12,
+    height: 12,
+    marginLeft: 4,
+  },
+  phoneInput: {
+    flex: 1,
+    height: 52,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    fontSize: 14,
+    fontFamily: "regular",
+    borderWidth: 1,
   },
   bottomContainer: {
     position: "absolute",
@@ -421,8 +530,7 @@ const styles = StyleSheet.create({
     right: 16,
     left: 16,
     flexDirection: "row",
-    justifyContent: "space-between",
-    width: SIZES.width - 32,
+    justifyContent: "center",
     alignItems: "center"
   },
   continueButton: {
@@ -431,17 +539,6 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
     borderColor: COLORS.primary
   },
-  genderContainer: {
-    flexDirection: "row",
-    borderColor: COLORS.greyscale500,
-    borderWidth: .4,
-    borderRadius: 6,
-    height: 58,
-    width: SIZES.width - 32,
-    alignItems: 'center',
-    marginVertical: 16,
-    backgroundColor: COLORS.greyscale500,
-  }
 });
 
 const pickerSelectStyles = StyleSheet.create({

@@ -1,134 +1,199 @@
 import { View, Text, StyleSheet, TouchableOpacity, Image, FlatList, Alert, RefreshControl } from 'react-native';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { COLORS, icons } from '../constants';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNotifications } from '../context/NotificationContext';
 import { useTheme } from '../theme/ThemeProvider';
 import { useAuth } from '../context/AuthContext';
 import NotificationCard from '../components/NotificationCard';
-import { sendTestNotification } from '../lib/services/notification';
+import { getOrCreateConversation } from '../lib/services/chat';
 
 const Notifications = ({ navigation }) => {
   const { colors, dark } = useTheme();
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const { 
     notifications, 
     unreadCount, 
     loading, 
     refreshing, 
+    userNotificationStats,
     markAsRead, 
     markAllAsRead, 
-    deleteNotif, 
-    deleteAll, 
-    refreshNotifications 
+    deleteAll,
+    refreshNotifications
   } = useNotifications();
 
-  const [selectedNotifications, setSelectedNotifications] = useState(new Set());
-  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  // Log recent notifications (first 5)
+  console.log('📋 Recent Notifications (first 5):', notifications.slice(0, 5).map(notification => ({
+    id: notification.id,
+    type: notification.type,
+    title: notification.title,
+    message: notification.message,
+    isRead: notification.is_read,
+    createdAt: notification.created_at,
+    relatedId: notification.related_id,
+    relatedType: notification.related_type,
+    channel: notification.channel,
+    // Add detailed logging for debugging
+    typeType: typeof notification.type,
+    typeValue: notification.type,
+    isNewMessageType: notification.type === 'new_message',
+    relatedTypeType: typeof notification.related_type,
+    relatedTypeValue: notification.related_type,
+    isUserRelatedType: notification.related_type === 'user'
+  })));
 
+  // Check if user is authenticated
+  const isUserAuthenticated = () => {
+    return user && user.id;
+  };
+
+  // Handle notification press with user context
   const handleNotificationPress = async (notification) => {
-    if (isSelectionMode) {
-      toggleNotificationSelection(notification.id);
+    console.log('🔔 NOTIFICATION CLICKED - Full notification data:', notification);
+    
+    if (!isUserAuthenticated()) {
+      Alert.alert('Authentication Required', 'Please log in to view notifications');
+      navigation.navigate('Login');
       return;
     }
 
+    console.log('✅ User is authenticated, proceeding with notification action');
+    console.log('📊 Notification details:', {
+      id: notification.id,
+      type: notification.type,
+      related_id: notification.related_id,
+      related_type: notification.related_type,
+      title: notification.title,
+      message: notification.message
+    });
+
     if (!notification.is_read) {
+      console.log('📖 Marking notification as read...');
       await markAsRead(notification.id);
+      console.log('✅ Notification marked as read');
     }
 
     // Handle navigation based on notification type and data
-    handleNotificationAction(notification);
+    console.log('🧭 Starting notification action handling...');
+    await handleNotificationAction(notification);
   };
 
-  const handleNotificationAction = (notification) => {
-    const { type, data } = notification;
+  const handleNotificationAction = async (notification) => {
+    const { type, related_id, related_type, title, message } = notification;
+    
+    console.log('🔔 Handling notification action:', {
+      type,
+      related_id,
+      related_type,
+      title,
+      message
+    });
+    
+    console.log('🔍 Checking type:', type);
+    console.log('🔍 type type:', typeof type);
+    console.log('🔍 type === "new_message":', type === 'new_message');
+    console.log('🔍 related_type:', related_type);
+    console.log('🔍 related_id:', related_id);
+    console.log('🔍 Current user ID:', user?.id);
     
     switch (type) {
-      case 'message':
-        if (data?.senderId) {
-          navigation.navigate('Chat', { userId: data.senderId });
+      case 'new_message':
+        console.log('✅ Matched type: new_message - proceeding to chat');
+        console.log('🔍 Checking conditions: related_id exists?', !!related_id, 'related_type === "user"?', related_type === 'user');
+        
+        if (related_id && related_type === 'user') {
+          try {
+            console.log('💬 Getting or creating conversation between users:', user.id, related_id);
+            const conversationId = await getOrCreateConversation(user.id, related_id);
+            console.log('✅ Conversation ID:', conversationId);
+            
+            if (conversationId) {
+              console.log('🧭 Navigating to Chat screen with conversationId:', conversationId);
+              navigation.navigate('Chat', { 
+                conversationId: conversationId,
+                notificationData: {
+                  title,
+                  message,
+                  notificationId: notification.id
+                }
+              });
+              console.log('✅ Navigation to Chat completed');
+            } else {
+              console.error('❌ No conversation ID returned from getOrCreateConversation');
+              Alert.alert('Error', 'Unable to create conversation. Please try again.');
+            }
+          } catch (error) {
+            console.error('❌ Error getting conversation:', error);
+            Alert.alert('Error', 'Unable to open chat. Please try again.');
+          }
+        } else {
+          console.log('⚠️ Message notification missing related_id or related_type is not "user"');
+          console.log('⚠️ related_id:', related_id, 'related_type:', related_type);
+          console.log('⚠️ Falling back to Inbox navigation');
+          // Fallback to inbox
+          navigation.navigate('Inbox');
         }
         break;
-      case 'booking':
-        if (data?.bookingId) {
-          navigation.navigate('BookingDetails', { bookingId: data.bookingId });
+      case 'booking_created':
+      case 'booking_confirmed':
+      case 'booking_cancelled':
+      case 'booking_completed':
+        console.log('✅ Matched type: booking - navigating to BookingDetails');
+        if (related_id && related_type === 'booking') {
+          navigation.navigate('BookingDetails', { bookingId: related_id });
+        } else {
+          navigation.navigate('Bookings');
         }
         break;
-      case 'payment':
-        if (data?.paymentId) {
-          navigation.navigate('PaymentMethod', { paymentId: data.paymentId });
+      case 'payment_received':
+        console.log('✅ Matched type: payment - navigating to PaymentMethod');
+        if (related_id && related_type === 'payment') {
+          navigation.navigate('PaymentMethod', { paymentId: related_id });
+        } else {
+          navigation.navigate('PaymentMethods');
         }
         break;
-      case 'promo':
-        if (data?.promoId) {
-          navigation.navigate('PopularServices');
-        }
+      case 'service_rating':
+        console.log('✅ Matched type: service_rating - navigating to PopularServices');
+        navigation.navigate('PopularServices');
+        break;
+      case 'profile_updated':
+        console.log('✅ Matched type: profile_updated - navigating to Profile');
+        navigation.navigate('Profile');
+        break;
+      case 'admin_notification':
+      case 'system_notification':
+        console.log('✅ Matched type: system notification - no specific navigation');
+        // System notifications might not need specific navigation
         break;
       default:
+        console.log('⚠️ No specific action for type:', type);
+        console.log('⚠️ Available type values:', ['new_message', 'booking_created', 'booking_confirmed', 'booking_cancelled', 'booking_completed', 'payment_received', 'service_rating', 'profile_updated', 'admin_notification', 'system_notification']);
         // Default action or no action
         break;
     }
   };
 
-  const toggleNotificationSelection = (notificationId) => {
-    setSelectedNotifications(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(notificationId)) {
-        newSet.delete(notificationId);
-      } else {
-        newSet.add(notificationId);
-      }
-      return newSet;
-    });
-  };
+  const handleMarkAllAsRead = async () => {
+    if (!isUserAuthenticated()) {
+      Alert.alert('Authentication Required', 'Please log in to manage notifications');
+      return;
+    }
 
-  const toggleSelectionMode = () => {
-    setIsSelectionMode(!isSelectionMode);
-    setSelectedNotifications(new Set());
-  };
-
-  const handleMarkSelectedAsRead = async () => {
-    if (selectedNotifications.size === 0) return;
-    
     try {
-      for (const notificationId of selectedNotifications) {
-        await markAsRead(notificationId);
-      }
-      setSelectedNotifications(new Set());
-      setIsSelectionMode(false);
+      await markAllAsRead();
     } catch (error) {
-      Alert.alert('Error', 'Failed to mark notifications as read');
+      Alert.alert('Error', 'Failed to mark all notifications as read');
     }
   };
 
-  const handleDeleteSelected = async () => {
-    if (selectedNotifications.size === 0) return;
-    
-    Alert.alert(
-      'Delete Notifications',
-      `Are you sure you want to delete ${selectedNotifications.size} notification${selectedNotifications.size > 1 ? 's' : ''}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              for (const notificationId of selectedNotifications) {
-                await deleteNotif(notificationId);
-              }
-              setSelectedNotifications(new Set());
-              setIsSelectionMode(false);
-            } catch (error) {
-              Alert.alert('Error', 'Failed to delete notifications');
-            }
-          }
-        }
-      ]
-    );
-  };
-
   const handleClearAll = () => {
+    if (!isUserAuthenticated()) {
+      Alert.alert('Authentication Required', 'Please log in to manage notifications');
+      return;
+    }
+
     Alert.alert(
       'Clear All Notifications',
       'Are you sure you want to clear all notifications? This action cannot be undone.',
@@ -148,27 +213,6 @@ const Notifications = ({ navigation }) => {
       ]
     );
   };
-
-  const handleMarkAllAsRead = async () => {
-    try {
-      await markAllAsRead();
-    } catch (error) {
-      Alert.alert('Error', 'Failed to mark all notifications as read');
-    }
-  };
-
-  const handleTestNotification = async (type) => {
-    if (!user?.id) return;
-    
-    try {
-      await sendTestNotification(user.id, type);
-      Alert.alert('Success', `Test ${type} notification sent!`);
-    } catch (error) {
-      Alert.alert('Error', 'Failed to send test notification');
-    }
-  };
-
-
 
   const renderHeader = () => {
     return (
@@ -190,102 +234,66 @@ const Notifications = ({ navigation }) => {
           color: dark ? COLORS.white : COLORS.greyscale900
         }]}>Notifications</Text>
         <View style={styles.headerActions}>
-          <TouchableOpacity onPress={toggleSelectionMode} style={styles.headerActionButton}>
-            <Text style={[styles.headerAction, {
-              color: dark ? COLORS.white : COLORS.primary
-            }]}>
-              {isSelectionMode ? 'Cancel' : 'Select'}
-            </Text>
-          </TouchableOpacity>
-                     <TouchableOpacity 
-             onPress={() => handleTestNotification('message')} 
-             style={styles.headerActionButton}
-           >
-             <Text style={[styles.headerAction, {
-               color: dark ? COLORS.white : COLORS.success
-             }]}>
-               Test
-             </Text>
-           </TouchableOpacity>
-
-
         </View>
       </View>
     )
   };
 
-  const renderSelectionActions = () => {
-    if (!isSelectionMode) return null;
 
-    return (
-      <View style={[styles.selectionActions, {
-        backgroundColor: dark ? COLORS.dark2 : COLORS.white
-      }]}>
-        <TouchableOpacity 
-          style={styles.selectionButton}
-          onPress={handleMarkSelectedAsRead}
-          disabled={selectedNotifications.size === 0}
-        >
-          <Text style={[styles.selectionButtonText, {
-            color: selectedNotifications.size === 0 ? COLORS.gray3 : COLORS.primary
-          }]}>
-            Mark Read ({selectedNotifications.size})
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={styles.selectionButton}
-          onPress={handleDeleteSelected}
-          disabled={selectedNotifications.size === 0}
-        >
-          <Text style={[styles.selectionButtonText, {
-            color: selectedNotifications.size === 0 ? COLORS.gray3 : COLORS.error
-          }]}>
-            Delete ({selectedNotifications.size})
-          </Text>
-        </TouchableOpacity>
-      </View>
-    );
-  };
 
   const renderNotificationItem = ({ item }) => (
     <NotificationCard
       notification={item}
-      isSelected={selectedNotifications.has(item.id)}
-      isSelectionMode={isSelectionMode}
       onPress={() => handleNotificationPress(item)}
-      onLongPress={() => {
-        if (!isSelectionMode) {
-          setIsSelectionMode(true);
-          setSelectedNotifications(new Set([item.id]));
-        }
-      }}
     />
   );
 
-  const renderEmptyState = () => (
-    <View style={styles.emptyContainer}>
-      <Image
-        source={icons.notification}
-        style={styles.emptyIcon}
-        resizeMode="contain"
-      />
-      <Text style={[styles.emptyTitle, {
-        color: dark ? COLORS.white : COLORS.greyscale900
-      }]}>No notifications yet</Text>
-      <Text style={[styles.emptySubtitle, {
-        color: dark ? COLORS.gray3 : COLORS.gray3
-      }]}>
-        You'll see your notifications here when they arrive
-      </Text>
-    </View>
-  );
+  const renderEmptyState = () => {
+    if (!isUserAuthenticated()) {
+      return (
+        <View style={styles.emptyContainer}>
+          <Image
+            source={icons.notification}
+            style={styles.emptyIcon}
+            resizeMode="contain"
+          />
+          <Text style={[styles.emptyTitle, {
+            color: dark ? COLORS.white : COLORS.greyscale900
+          }]}>Login to see notifications</Text>
+          <Text style={[styles.emptySubtitle, {
+            color: dark ? COLORS.gray3 : COLORS.gray3
+          }]}>
+            Sign in to your account to view and manage your notifications
+          </Text>
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.emptyContainer}>
+        <Image
+          source={icons.notification}
+          style={styles.emptyIcon}
+          resizeMode="contain"
+        />
+        <Text style={[styles.emptyTitle, {
+          color: dark ? COLORS.white : COLORS.greyscale900
+        }]}>No notifications yet</Text>
+        <Text style={[styles.emptySubtitle, {
+          color: dark ? COLORS.gray3 : COLORS.gray3
+        }]}>
+          You'll see your notifications here when they arrive
+        </Text>
+      </View>
+    );
+  };
 
   return (
     <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         {renderHeader()}
-        {renderSelectionActions()}
 
+        {renderSelectionActions()}
 
 
         <FlatList
@@ -349,28 +357,13 @@ const styles = StyleSheet.create({
     color: COLORS.primary
   },
   headerActionButton: {
-    marginLeft: 12
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    backgroundColor: COLORS.secondaryWhite,
+    marginLeft: 8
   },
-  selectionActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 12,
-    marginBottom: 16,
-    borderRadius: 8,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2
-  },
-  selectionButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8
-  },
-  selectionButtonText: {
-    fontSize: 14,
-    fontFamily: "medium"
-  },
+
   headerNoti: {
     flexDirection: "row",
     alignItems: "center",
@@ -438,14 +431,12 @@ const styles = StyleSheet.create({
     fontFamily: "bold",
     marginBottom: 8
   },
-     emptySubtitle: {
-     fontSize: 14,
-     fontFamily: "regular",
-     textAlign: 'center',
-     paddingHorizontal: 32
-   },
-   
-
+  emptySubtitle: {
+    fontSize: 14,
+    fontFamily: "regular",
+    textAlign: 'center',
+    paddingHorizontal: 32
+  }
 })
 
 export default Notifications

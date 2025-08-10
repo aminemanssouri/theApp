@@ -11,8 +11,8 @@ import Button from '../components/Button';
 import SocialButton from '../components/SocialButton';
 import OrSeparator from '../components/OrSeparator';
 import { useTheme } from '../theme/ThemeProvider';
-import { signIn } from '../lib/services/auth';
-
+import { signIn,signInWithGoogle } from '../lib/services/auth';
+import { supabase } from '../lib/supabase';
 const isTestMode = false;
 
 const initialState = {
@@ -35,6 +35,10 @@ const Login = ({ navigation }) => {
   const [isLoading, setIsLoading] = useState(false);
   const { colors, dark } = useTheme();
 
+  useEffect(() => {
+    console.log('🔄 Login screen loading state:', isLoading);
+  }, [isLoading]);
+
   const inputChangedHandler = useCallback(
     (inputId, inputValue) => {
       const result = validateInput(inputId, inputValue)
@@ -53,36 +57,38 @@ const Login = ({ navigation }) => {
   const handleLogin = async () => {
     const { email, password } = formState.inputValues;
     const { email: emailError, password: passwordError } = formState.inputValidities;
-    
+    console.log('🟡 handleLogin called');
+    console.log('📝 Credentials:', { email, password: password ? '***' : '' });
     if (!email || !password) {
+      console.log('❌ Missing email or password');
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
-    
     if (emailError || passwordError) {
+      console.log('❌ Validation error:', { emailError, passwordError });
       Alert.alert('Error', 'Please correct the errors in the form');
       return;
     }
-
     setIsLoading(true);
     setError(null);
-
     try {
+      console.log('🔗 Attempting signIn...');
       const { data, error } = await signIn(email, password);
-
       if (error) {
+        console.log('❌ signIn error:', error);
         setError(error.message);
         Alert.alert('Login Failed', error.message);
       } else {
-        // Login successful - Supabase automatically handles the session
-        // console.log('Login successful:', data.user);
+        console.log('✅ signIn success:', data);
         navigation.navigate("Main");
       }
     } catch (err) {
+      console.log('❌ Exception in handleLogin:', err);
       setError(err.message);
       Alert.alert('Error', err.message);
     } finally {
       setIsLoading(false);
+      console.log('🔄 handleLogin finished, loading set to false');
     }
   };
 
@@ -97,10 +103,28 @@ const Login = ({ navigation }) => {
   };
 
   // Implementing google authentication
-  const googleAuthHandler = () => {
-    console.log("Google Authentication")
-  };
-
+const googleAuthHandler = async () => {
+  setIsLoading(true)
+  try {
+    const { data, error } = await signInWithGoogle()
+    if (error) throw error
+    
+    console.log('Google Sign In Data:', data);
+    
+    // Check if we have a valid session
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (sessionData?.session) {
+      console.log('Google authentication successful');
+      navigation.navigate("Main");
+    } else {
+      console.log('Authentication completed but no session found');
+    }
+  } catch (error) {
+    Alert.alert('Error', error.message)
+  } finally {
+    setIsLoading(false)
+  }
+};
   return (
     <SafeAreaView style={[styles.area, {
       backgroundColor: colors.background }]}>

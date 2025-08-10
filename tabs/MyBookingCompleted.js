@@ -95,8 +95,8 @@ const MyBookingCompleted = () => {
               <View style={styles.infoLeft}>
                 <Image
                   source={
-                    item.worker?.users?.[0]?.profile_picture 
-                      ? { uri: item.worker.users[0].profile_picture }
+                    item.worker?.profile_picture 
+                      ? { uri: item.worker.profile_picture }
                       : require('../assets/images/users/user1.jpeg')
                   }
                   style={styles.itemImage}
@@ -105,8 +105,8 @@ const MyBookingCompleted = () => {
                   <Text style={[styles.itemName, { 
                     color: dark ? COLORS.white : COLORS.greyscale900
                   }]}>
-                    {item.worker?.users?.[0] 
-                      ? `${item.worker.users[0].first_name} ${item.worker.users[0].last_name}`
+                    {item.worker?.first_name && item.worker?.last_name
+                      ? `${item.worker.first_name} ${item.worker.last_name}`
                       : "Service Provider"}
                   </Text>
                   <View style={styles.itemSubDetails}>

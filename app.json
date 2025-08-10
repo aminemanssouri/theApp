@@ -1,15 +1,16 @@
 {
   "expo": {
-    "name": "ProvidaPro",
-    "slug": "ProvidaPro",
+    "name": "",
+    "slug": "bricollano",
     "version": "1.0.0",
+    "scheme": "bricollano",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/logos/BRICOLLANO-logo-black.png",
     "userInterfaceStyle": "automatic",
     "splash": {
-      "image": "./assets/images/splash.png",
+      "image": "./assets/logos/BRICOLLANO-logo-blue.png",
       "resizeMode": "contain",
-      "backgroundColor": "#335EF7"
+      "backgroundColor": "#FFFFFF"
     },
     "assetBundlePatterns": [
       "**/*"
@@ -19,12 +20,19 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#335EF7"
+        "foregroundImage": "./assets/logos/BRICOLLANO-logo-black.png",
+        "backgroundColor": "transparent"
       }
     },
     "web": {
-      "favicon": "./assets/images/favicon.png"
-    }
+
+
+      "favicon": "./assets/logos/BRICOLLANO-logo-black.png"
+
+    },
+    "plugins": [
+      "expo-web-browser"
+    ]
+
   }
 }
