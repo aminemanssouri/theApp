@@ -292,31 +292,9 @@ const Notifications = ({ navigation }) => {
     <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         {renderHeader()}
-        
-        <View style={styles.headerNoti}>
-          <View style={styles.headerNotiLeft}>
-            <Text style={[styles.notiTitle, {
-              color: dark ? COLORS.white : COLORS.greyscale900
-            }]}>Recent</Text>
-            {unreadCount > 0 && (
-              <View style={styles.headerNotiView}>
-                <Text style={styles.headerNotiTitle}>{unreadCount}</Text>
-              </View>
-            )}
-          </View>
-          <View style={styles.headerActions}>
-            {unreadCount > 0 && isUserAuthenticated() && (
-              <TouchableOpacity onPress={handleMarkAllAsRead} style={styles.headerActionButton}>
-                <Text style={styles.markAllRead}>Mark All Read</Text>
-              </TouchableOpacity>
-            )}
-            {isUserAuthenticated() && (
-              <TouchableOpacity onPress={handleClearAll} style={styles.headerActionButton}>
-                <Text style={styles.clearAll}>Clear All</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        </View>
+
+        {renderSelectionActions()}
+
 
         <FlatList
           data={notifications}
