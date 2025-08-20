@@ -227,8 +227,10 @@ const WorkerDetails = ({ route, navigation }) => {
             <TouchableOpacity
               onPress={() => navigation.navigate("BookingStep1", {
                 serviceId,
+                serviceName: worker?.service_name || 'Service', // Add service name
                 workerId: worker?.id,
-                workerName: worker?.full_name || 'Professional'
+                workerName: worker?.full_name || 'Professional',
+                workerRate: worker?.hourly_rate || 30 // Pass hourly rate
               })}
               style={styles.buttonActionRight}>
               <Image

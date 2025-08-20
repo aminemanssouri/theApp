@@ -321,44 +321,35 @@ const Home = ({ navigation }) => {
   * render search bar
   */
   const renderSearchBar = () => {
-    // Navigate to search screen
-    const navigateToSearch = () => {
-      navigation.navigate('Search', { initialQuery: search });
+    const handleInputFocus = () => {
+      // Navigate to Search screen
+      navigation.navigate('Search');
     };
 
     return (
-      <View style={[styles.searchContainer, {  
-        borderColor: dark ? COLORS.grayscale700 : "#E5E7EB"
-      }]}>
-        <TouchableOpacity onPress={navigateToSearch} style={styles.searchIconContainer}>
-          <Image
-            source={icons.search2}
-            resizeMode='contain'
-            style={styles.searchIcon}
-          />
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.searchInput}
-          activeOpacity={0.8}
-          onPress={navigateToSearch}
-        >
-          <Text style={{
-            color: "#BABABA",
-            fontSize: 14,
-          }}>Search services...</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity onPress={() => navigation.navigate('Search', { showFilters: true })}>
-          <Image
-            source={icons.filter}
-            resizeMode='contain'
-            style={[styles.filterIcon, { 
-              tintColor: dark? COLORS.white : COLORS.greyscale900
-            }]}
-          />
-        </TouchableOpacity>
-      </View>
+      <TouchableOpacity 
+        style={[styles.searchContainer, {  
+          borderColor: dark ? COLORS.grayscale700 : "#E5E7EB"
+        }]}
+        onPress={handleInputFocus}
+        activeOpacity={0.8}
+      >
+        <Image
+          source={icons.search2}
+          resizeMode='contain'
+          style={styles.searchIcon}
+        />
+        <Text style={styles.searchPlaceholder}>
+          Search services...
+        </Text>
+        <Image
+          source={icons.filter}
+          resizeMode='contain'
+          style={[styles.filterIcon, { 
+            tintColor: dark? COLORS.white : COLORS.greyscale900
+          }]}
+        />
+      </TouchableOpacity>
     )
   }
 
@@ -479,8 +470,27 @@ const Home = ({ navigation }) => {
       ? services // Show all services if "all" is selected
       : services.filter(service => selectedCategories.includes(service.categoryId));
       
-    console.log(`✅ Filtered to ${filteredServices.length} services based on selected categories`);
+    // Use the categories directly from state (which already include the "All" option)
+    const filterCategories = categories;
 
+    // Category item for filtering
+    const renderCategoryItem = ({ item }) => (
+      <TouchableOpacity
+        style={{
+          backgroundColor: selectedCategories.includes(item.id) ? COLORS.primary : "transparent",
+          padding: 10,
+          marginVertical: 5,
+          borderColor: COLORS.primary,
+          borderWidth: 1.3,
+          borderRadius: 24,
+          marginRight: 12,
+        }}
+        onPress={() => toggleCategory(item.id)}>
+        <Text style={{
+          color: selectedCategories.includes(item.id) ? COLORS.white : COLORS.primary
+        }}>{item.name}</Text>
+      </TouchableOpacity>
+    );
     return (
       <View>
         <SubHeaderItem
@@ -790,7 +800,16 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontSize: 10,
     fontFamily: 'semiBold',
-  }
+  },
+  searchPlaceholder: {
+    flex: 1,
+    fontSize: 14,
+    marginHorizontal: 8,
+    color: "#BABABA",
+    borderRightColor: "#BABABA",
+    borderRightWidth: .4,
+    paddingRight: 8,
+  },
 })
 
 export default Home

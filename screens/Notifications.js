@@ -230,84 +230,41 @@ const Notifications = ({ navigation }) => {
             }]}
           />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, {
-          color: dark ? COLORS.white : COLORS.greyscale900
-        }]}>Notifications</Text>
+        <View style={styles.headerTitleContainer}>
+          <Text style={[styles.headerTitle, {
+            color: dark ? COLORS.white : COLORS.greyscale900
+          }]}>Notifications</Text>
+          {unreadCount > 0 && (
+            <View style={styles.unreadBadge}>
+              <Text style={styles.unreadBadgeText}>{unreadCount}</Text>
+            </View>
+          )}
+        </View>
         <View style={styles.headerActions}>
+          {notifications.length > 0 && (
+            <>
+              <TouchableOpacity
+                onPress={handleMarkAllAsRead}
+                style={styles.headerActionButton}>
+                <Text style={[styles.markAllRead, {
+                  color: COLORS.primary
+                }]}>Mark All Read</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleClearAll}
+                style={styles.headerActionButton}>
+                <Text style={[styles.clearAll, {
+                  color: COLORS.error
+                }]}>Clear All</Text>
+              </TouchableOpacity>
+            </>
+          )}
         </View>
       </View>
     )
   };
 
-  const renderUserInfo = () => {
-    if (!isUserAuthenticated()) {
-      return (
-        <View style={[styles.userInfoContainer, {
-          backgroundColor: dark ? COLORS.dark2 : COLORS.secondaryWhite
-        }]}>
-          <Text style={[styles.userInfoText, {
-            color: dark ? COLORS.white : COLORS.greyscale900
-          }]}>
-            Please log in to view your notifications
-          </Text>
-          <TouchableOpacity 
-            style={styles.loginButton}
-            onPress={() => navigation.navigate('Login')}
-          >
-            <Text style={styles.loginButtonText}>Login</Text>
-          </TouchableOpacity>
-        </View>
-      );
-    }
 
-    return (
-      <View style={[styles.userInfoContainer, {
-        backgroundColor: dark ? COLORS.dark2 : COLORS.secondaryWhite
-      }]}>
-        <View style={styles.userInfoRow}>
-          <Text style={[styles.userInfoText, {
-            color: dark ? COLORS.white : COLORS.greyscale900
-          }]}>
-            Welcome back, {userProfile?.first_name || user?.email?.split('@')[0] || 'User'}!
-          </Text>
-        </View>
-        <View style={styles.statsContainer}>
-          <View style={styles.statItem}>
-            <Text style={[styles.statNumber, { color: COLORS.primary }]}>
-              {userNotificationStats.total}
-            </Text>
-            <Text style={[styles.statLabel, { color: dark ? COLORS.gray3 : COLORS.gray3 }]}>
-              Total
-            </Text>
-          </View>
-          <View style={styles.statItem}>
-            <Text style={[styles.statNumber, { color: COLORS.error }]}>
-              {userNotificationStats.unread}
-            </Text>
-            <Text style={[styles.statLabel, { color: dark ? COLORS.gray3 : COLORS.gray3 }]}>
-              Unread
-            </Text>
-          </View>
-          <View style={styles.statItem}>
-            <Text style={[styles.statNumber, { color: COLORS.success }]}>
-              {userNotificationStats.today}
-            </Text>
-            <Text style={[styles.statLabel, { color: dark ? COLORS.gray3 : COLORS.gray3 }]}>
-              Today
-            </Text>
-          </View>
-          <View style={styles.statItem}>
-            <Text style={[styles.statNumber, { color: COLORS.warning }]}>
-              {userNotificationStats.thisWeek}
-            </Text>
-            <Text style={[styles.statLabel, { color: dark ? COLORS.gray3 : COLORS.gray3 }]}>
-              This Week
-            </Text>
-          </View>
-        </View>
-      </View>
-    );
-  };
 
   const renderNotificationItem = ({ item }) => (
     <NotificationCard
@@ -360,32 +317,6 @@ const Notifications = ({ navigation }) => {
     <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         {renderHeader()}
-        {renderUserInfo()}
-        
-        <View style={styles.headerNoti}>
-          <View style={styles.headerNotiLeft}>
-            <Text style={[styles.notiTitle, {
-              color: dark ? COLORS.white : COLORS.greyscale900
-            }]}>Recent</Text>
-            {unreadCount > 0 && (
-              <View style={styles.headerNotiView}>
-                <Text style={styles.headerNotiTitle}>{unreadCount}</Text>
-              </View>
-            )}
-          </View>
-          <View style={styles.headerActions}>
-            {unreadCount > 0 && isUserAuthenticated() && (
-              <TouchableOpacity onPress={handleMarkAllAsRead} style={styles.headerActionButton}>
-                <Text style={styles.markAllRead}>Mark All Read</Text>
-              </TouchableOpacity>
-            )}
-            {isUserAuthenticated() && (
-              <TouchableOpacity onPress={handleClearAll} style={styles.headerActionButton}>
-                <Text style={styles.clearAll}>Clear All</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        </View>
 
         <FlatList
           data={notifications}
@@ -437,10 +368,30 @@ const styles = StyleSheet.create({
     height: 24,
     tintColor: COLORS.black
   },
+  headerTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
   headerTitle: {
     fontSize: 16,
     fontFamily: "bold",
     color: COLORS.black
+  },
+  unreadBadge: {
+    backgroundColor: COLORS.primary,
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 8
+  },
+  unreadBadgeText: {
+    color: COLORS.white,
+    fontSize: 12,
+    fontFamily: 'bold',
+    paddingHorizontal: 4
   },
   headerAction: {
     fontSize: 14,
@@ -454,57 +405,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.secondaryWhite,
     marginLeft: 8
   },
-  userInfoContainer: {
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 16,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2
-  },
-  userInfoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12
-  },
-  userInfoText: {
-    fontSize: 16,
-    fontFamily: "medium",
-    color: COLORS.greyscale900
-  },
-  loginButton: {
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    borderRadius: 8,
-    alignSelf: 'flex-start',
-    marginTop: 8
-  },
-  loginButtonText: {
-    color: COLORS.white,
-    fontSize: 14,
-    fontFamily: "medium"
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around'
-  },
-  statItem: {
-    alignItems: 'center'
-  },
-  statNumber: {
-    fontSize: 18,
-    fontFamily: "bold",
-    marginBottom: 4
-  },
-  statLabel: {
-    fontSize: 12,
-    fontFamily: "regular",
-    color: COLORS.gray3
-  },
+
   headerNoti: {
     flexDirection: "row",
     alignItems: "center",

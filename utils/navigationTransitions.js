@@ -208,6 +208,7 @@ export const getTransitionConfig = (screenName) => {
       };
     
     // Others
+   
     case 'MyBookings':
     case 'YourAddress':
     case 'EReceipt':

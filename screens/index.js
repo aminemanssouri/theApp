@@ -52,6 +52,9 @@ import CancelBookingPaymentMethods from "./CancelBookingPaymentMethods";
 import MyBookings from "./MyBookings";
 import ReviewSummary from "./ReviewSummary";
 import WorkerDetails from "./WorkerDetails";
+import AllServices from "./AllServices";
+import CreditCardPayment from './CreditCardPayment';
+import CryptoPayment from './CryptoPayment';
 
 export {
     Onboarding1,
@@ -107,5 +110,8 @@ export {
     CancelBookingPaymentMethods,
     MyBookings,
     ReviewSummary,
-    WorkerDetails
+    WorkerDetails,
+    AllServices,
+    CreditCardPayment,
+    CryptoPayment
 }
