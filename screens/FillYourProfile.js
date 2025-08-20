@@ -277,13 +277,13 @@ const FillYourProfile = ({ navigation }) => {
             borderColor: dark ? COLORS.dark3 : COLORS.tansparentPrimary
           }}
           textColor={dark ? COLORS.white : COLORS.primary}
-          onPress={() => navigation.navigate("CreateNewPIN")}
+          onPress={() => navigation.navigate("Main")}
         />
         <Button
           title="Continue"
           filled
           style={styles.continueButton}
-          onPress={() => navigation.navigate("CreateNewPIN")}
+          onPress={() => navigation.navigate("Main")}
         />
       </View>
     </SafeAreaView>

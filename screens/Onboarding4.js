@@ -50,12 +50,12 @@ const Onboarding4 = ({ navigation }) => {
             <View style={Onboarding1Styles.titleContainer}>
               <Text style={[Onboarding1Styles.title, {
                 color: colors.text
-              }]}>Rate & Review</Text>
-              <Text style={Onboarding1Styles.subTitle}>Share Your Experience</Text>
+              }]}>Book in Seconds,</Text>
+              <Text style={Onboarding1Styles.subTitle}>Not Hours</Text>
             </View>
 
             <Text style={[Onboarding1Styles.description, { color: colors.text }]}>
-            Help others by rating your service experience and providing valuable feedback.
+              Enjoy a simple booking process with secure payments and service guarantees for complete peace of mind.
             </Text>
 
             <View style={Onboarding1Styles.dotsContainer}>

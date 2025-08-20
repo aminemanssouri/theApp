@@ -50,12 +50,12 @@ const Onboarding3 = ({ navigation }) => {
             <View style={Onboarding1Styles.titleContainer}>
               <Text style={[Onboarding1Styles.title, {
                 color: colors.text
-              }]}>Track Progress</Text>
-              <Text style={Onboarding1Styles.subTitle}>Real-time Updates</Text>
+              }]}>Verified Professionals</Text>
+              <Text style={Onboarding1Styles.subTitle}>You Can Trust</Text>
             </View>
 
             <Text style={[Onboarding1Styles.description, { color: colors.text }]}>
-            Stay informed with real-time updates on your service progress and provider location.
+              All our service providers are background-checked and rated by real customers to ensure quality and safety.
             </Text>
 
             <View style={Onboarding1Styles.dotsContainer}>

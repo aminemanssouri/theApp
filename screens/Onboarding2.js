@@ -50,12 +50,12 @@ const Onboarding2 = ({ navigation }) => {
             <View style={Onboarding1Styles.titleContainer}>
               <Text style={[Onboarding1Styles.title, {
                 color: colors.text
-              }]}>Book Services</Text>
-              <Text style={Onboarding1Styles.subTitle}>Easily & Quickly</Text>
+              }]}>Any Service,</Text>
+              <Text style={Onboarding1Styles.subTitle}>Any Time</Text>
             </View>
 
             <Text style={[Onboarding1Styles.description, { color: colors.text }]}>
-            Find and book trusted service providers for cleaning, repairs, and more with just a few taps.
+              From home repairs to personal care, find all the services you need in one place, available when you need them.
             </Text>
 
             <View style={Onboarding1Styles.dotsContainer}>

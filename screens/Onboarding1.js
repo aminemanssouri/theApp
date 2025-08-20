@@ -50,12 +50,12 @@ const Onboarding = ({ navigation }) => {
             <View style={Onboarding1Styles.titleContainer}>
               <Text style={[Onboarding1Styles.title, {
                 color: colors.text
-              }]}>Welcome to</Text>
-              <Text style={Onboarding1Styles.subTitle}>Provida App</Text>
+              }]}>Find Expert Services</Text>
+              <Text style={Onboarding1Styles.subTitle}>at Your Fingertips</Text>
             </View>
 
             <Text style={[Onboarding1Styles.description, { color: colors.text }]}>
-            We're here to make your life easier by connecting you with top-notch service providers for all your home needs.
+              Discover and book local service professionals instantly, whenever and wherever you need them.
             </Text>
 
             <View style={Onboarding1Styles.dotsContainer}>
