@@ -243,33 +243,40 @@ const Favourite = ({ navigation }) => {
 const styles = StyleSheet.create({
     area: {
         flex: 1,
-        backgroundColor: COLORS.white
-    },
-    container: {
-        flex: 1,
         backgroundColor: COLORS.white,
-        padding: 16
+            paddingTop: Platform.OS === 'android' ? 25 : 0,
+
     },
+container: {
+    flex: 1,
+    backgroundColor: COLORS.white,
+    paddingHorizontal: 16, 
+     marginBottom: 32,
+    paddingVertical: 16,
+
+  },
     headerContainer: {
         flexDirection: "row",
-        width: SIZES.width - 32,
+            alignItems: "center",
         justifyContent: "space-between",
-        marginBottom: 16
+        marginBottom: 14
     },
     headerLeft: {
         flexDirection: "row",
         alignItems: "center"
     },
+  
+    headerTitle: {
+        fontSize: 22,
+        fontFamily: 'bold',
+        color: COLORS.black,
+        marginLeft: 12
+    }, 
+    
     backIcon: {
         height: 24,
         width: 24,
         tintColor: COLORS.black
-    },
-    headerTitle: {
-        fontSize: 20,
-        fontFamily: 'bold',
-        color: COLORS.black,
-        marginLeft: 16
     },
     moreIcon: {
         width: 24,
@@ -283,7 +290,7 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
-        marginVertical: 12,
+        marginVertical: 16,
         paddingHorizontal: 16,
         width: "100%"
     },

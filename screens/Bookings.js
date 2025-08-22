@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, Image, useWindowDimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, useWindowDimensions,Platform } from 'react-native';
 import React, { useRef, useCallback } from 'react';
 import { COLORS, SIZES, icons } from '../constants'
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -144,20 +144,24 @@ const MyBooking = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  area: {
-    flex: 1,
-    backgroundColor: COLORS.white
-  },
-  container: {
+   area: {
+     flex: 1,
+     backgroundColor: COLORS.white,
+  
+   },
+ container: {
     flex: 1,
     backgroundColor: COLORS.white,
-    padding: 16
+    padding: 16,
+    marginBottom: 32,
+    paddingVertical: 16,
+
   },
   headerContainer: {
     flexDirection: "row",
-    width: SIZES.width - 32,
     justifyContent: "space-between",
-    marginBottom: 16
+        marginBottom: 14
+
   },
   headerLeft: {
     flexDirection: "row",
