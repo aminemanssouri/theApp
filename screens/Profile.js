@@ -37,11 +37,16 @@ const Profile = ({ navigation }) => {
     return (
       <TouchableOpacity style={styles.headerContainer}>
         <View style={styles.headerLeft}>
-          <Image
-            source={images.logo}
-            resizeMode='contain'
-            style={styles.logo}
-          />
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}>
+            <Image
+              source={icons.back}
+              resizeMode='contain'
+              style={[styles.backIcon, {
+                tintColor: dark ? COLORS.white : COLORS.greyscale900
+              }]}
+            />
+          </TouchableOpacity>
           <Text style={[styles.headerTitle, {
             color: dark ? COLORS.white : COLORS.greyscale900
           }]}>Profile</Text>
@@ -295,13 +300,12 @@ const Profile = ({ navigation }) => {
             textColor={dark ? COLORS.white : COLORS.primary}
             onPress={() => refRBSheet.current.close()}
           />
-        <Button
-  title="Yes, Logout"
-  filled
-  style={styles.logoutButton}
-  
-  
-/>
+            <Button
+      title="Yes, Logout"
+      filled
+      style={styles.logoutButton}
+      
+    />
         </View>
       </RBSheet>
     </View>
@@ -311,18 +315,23 @@ const Profile = ({ navigation }) => {
 const styles = StyleSheet.create({
   area: {
     flex: 1,
-    backgroundColor: COLORS.white
+    backgroundColor: COLORS.white,
+    paddingTop: Platform.OS === 'android' ? 25 : 0,
+
   },
   container: {
     flex: 1,
     backgroundColor: COLORS.white,
     padding: 16,
-    marginBottom: 32
+    marginBottom: 32,
+    paddingVertical: 16,
+
   },
   headerContainer: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between"
+    justifyContent: "space-between",
+    marginBottom: 14
   },
   headerLeft: {
     flexDirection: "row",
@@ -344,6 +353,11 @@ const styles = StyleSheet.create({
     width: 24,
     tintColor: COLORS.greyscale900
   },
+   backIcon: {
+        height: 24,
+        width: 24,
+        tintColor: COLORS.black
+    },
   profileContainer: {
     alignItems: "center",
     borderBottomColor: COLORS.grayscale400,

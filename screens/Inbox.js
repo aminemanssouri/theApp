@@ -10,7 +10,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { markMessagesRead } from '../lib/services/chat';
 
-const Inbox = () => {
+const Inbox = ({ navigation }) => {
   const layout = useWindowDimensions();
   const { colors, dark } = useTheme();
   const insets = getSafeAreaInsets();
@@ -157,11 +157,16 @@ const Inbox = () => {
     return (
       <View style={[styles.headerContainer, { backgroundColor: colors.background }]}>
         <View style={[styles.headerLeft, { backgroundColor: colors.background }]}>
-          <Image
-            source={images.logo}
-            resizeMode='contain'
-            style={styles.headerLogo}
-          />
+          <TouchableOpacity
+                      onPress={() => navigation.goBack()}>
+                      <Image
+                        source={icons.back}
+                        resizeMode='contain'
+                        style={[styles.backIcon, {
+                          tintColor: dark ? COLORS.white : COLORS.greyscale900
+                        }]}
+                      />
+                    </TouchableOpacity>
           <Text style={[styles.headerTitle, {
             color: dark ? COLORS.white : COLORS.greyscale900
           }]}>Inbox</Text>
@@ -300,12 +305,13 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    paddingHorizontal: 16
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+
   },
   headerContainer: {
     flexDirection: "row",
     alignItems: "center",
-    width: SIZES.width - 32,
     justifyContent: "space-between",
   },
   headerLeft: {
@@ -313,13 +319,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   headerLogo: {
-    height: 36,
-    width: 36,
+    height: 32,
+    width: 32,
     tintColor: COLORS.primary
   },
-  headerTitle: {
-    fontSize: 20,
+   headerTitle: {
+    fontSize: 22,
     fontFamily: "bold",
+    color: COLORS.greyscale900,
     marginLeft: 12
   },
   headerRight: {
@@ -334,7 +341,13 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     marginLeft: 12
+    
   },
+   backIcon: {
+        height: 24,
+        width: 24,
+        tintColor: COLORS.black
+    },
   searchBarContainer: {
     width: '100%',
     paddingVertical: 8,

@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
   headerContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    width: "100%",
+     
     marginBottom: 12,
     alignItems: "center"
   },
