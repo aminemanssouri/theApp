@@ -1,4 +1,6 @@
 import * as SplashScreen from 'expo-splash-screen'
+import * as Notifications from 'expo-notifications'
+
 import { View } from 'react-native'
 import { useFonts } from 'expo-font'
 import { useCallback } from 'react'
@@ -13,6 +15,15 @@ import { NotificationProvider } from './context/NotificationContext'
 LogBox.ignoreAllLogs();
 
 SplashScreen.preventAutoHideAsync()
+
+// Show alerts while app is foregrounded
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
 
 export default function App() {
   const [fontsLoaded] = useFonts(FONTS)

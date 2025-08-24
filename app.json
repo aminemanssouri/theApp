@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "",
+    "name": "BRICOLLANO",
     "slug": "bricollano",
     "version": "1.0.0",
     "scheme": "bricollano",
@@ -25,14 +25,17 @@
       }
     },
     "web": {
-
-
       "favicon": "./assets/logos/BRICOLLANO-logo-black.png"
-
     },
     "plugins": [
-      "expo-web-browser"
-    ]
-
+      "expo-web-browser",
+      "expo-notifications"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "32be857b-e444-4b17-b2bd-d8b94d70cfb6"
+      }
+    },
+    "owner": "amine300"
   }
 }

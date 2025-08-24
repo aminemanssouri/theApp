@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { getCurrentUser, onAuthStateChange, getUserProfile } from '../lib/services/auth';
+import { registerPushTokenForUser } from '../utils/registerPushToken';
 
 const AuthContext = createContext({});
 
@@ -61,6 +62,8 @@ export const AuthProvider = ({ children }) => {
         // Fetch user profile if user exists
         if (session?.user?.id) {
           await fetchUserProfile(session.user.id);
+          // Register push token for this user
+          registerPushTokenForUser(session.user.id);
         }
       }
     } catch (error) {
@@ -96,6 +99,8 @@ export const AuthProvider = ({ children }) => {
       // Fetch user profile when auth state changes
       if (session?.user?.id) {
         await fetchUserProfile(session.user.id);
+        // Register push token for this user
+        registerPushTokenForUser(session.user.id);
       } else {
         setUserProfile(null);
       }
