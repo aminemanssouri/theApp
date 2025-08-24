@@ -16,13 +16,18 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "bricollano.info.com",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/logos/BRICOLLANO-logo-black.png",
         "backgroundColor": "transparent"
-      }
+      },
+      "package": "bricollano.info.com"
     },
     "web": {
       "favicon": "./assets/logos/BRICOLLANO-logo-black.png"
@@ -33,9 +38,9 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "32be857b-e444-4b17-b2bd-d8b94d70cfb6"
+        "projectId": "0237e1bf-7d62-4aa8-ab62-e613c6f36607"
       }
     },
-    "owner": "amine300"
+    "owner": "bricollano"
   }
 }
