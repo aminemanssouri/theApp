@@ -10,6 +10,7 @@ import { LogBox } from 'react-native'
 import { ThemeProvider } from './theme/ThemeProvider'
 import { AuthProvider } from './context/AuthContext'
 import { NotificationProvider } from './context/NotificationContext'
+import { StatusBar } from 'react-native';
 
 //Ignore all log notifications
 LogBox.ignoreAllLogs();
@@ -42,6 +43,11 @@ export default function App() {
     <AuthProvider>
       <ThemeProvider>
         <NotificationProvider>
+          <StatusBar 
+    backgroundColor="transparent" 
+    translucent={true}
+    barStyle="light-content" 
+  />
           <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
             <AppNavigation />
           </View>

@@ -16,16 +16,12 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "bricollano.info.com",
-      "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
-      }
+      "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/logos/BRICOLLANO-logo-black.png",
-        "backgroundColor": "transparent"
+        "backgroundColor": "#FFFFFF"
       },
       "package": "bricollano.info.com"
     },
@@ -34,7 +30,15 @@
     },
     "plugins": [
       "expo-web-browser",
-      "expo-notifications"
+      "expo-notifications",
+      [
+        "@stripe/stripe-react-native",
+        {
+          "merchantIdentifier": "merchant.bricollano.info.com",
+          "enableGooglePay": true
+        }
+      ],
+      "expo-font"
     ],
     "extra": {
       "eas": {
