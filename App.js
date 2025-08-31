@@ -46,7 +46,7 @@ export default function App() {
           <StatusBar 
     backgroundColor="transparent" 
     translucent={true}
-    barStyle="light-content" 
+    
   />
           <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
             <AppNavigation />
