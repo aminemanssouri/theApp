@@ -21,21 +21,30 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/logos/BRICOLLANO-logo-black.png",
-        "backgroundColor": "transparent"
-      }
+        "backgroundColor": "#FFFFFF"
+      },
+      "package": "bricollano.info.com"
     },
     "web": {
       "favicon": "./assets/logos/BRICOLLANO-logo-black.png"
     },
     "plugins": [
       "expo-web-browser",
-      "expo-notifications"
+      "expo-notifications",
+      [
+        "@stripe/stripe-react-native",
+        {
+          "merchantIdentifier": "merchant.bricollano.info.com",
+          "enableGooglePay": true
+        }
+      ],
+      "expo-font"
     ],
     "extra": {
       "eas": {
-        "projectId": "32be857b-e444-4b17-b2bd-d8b94d70cfb6"
+        "projectId": "0237e1bf-7d62-4aa8-ab62-e613c6f36607"
       }
     },
-    "owner": "amine300"
+    "owner": "bricollano"
   }
 }

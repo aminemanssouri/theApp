@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import  { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, useWindowDimensions, ActivityIndicator, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SIZES, icons, images } from '../constants';
 import ReviewStars from '../components/ReviewStars';
-import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
+import { TabView, TabBar } from 'react-native-tab-view';
 import { ProfileReviews, ProfileServices } from '../tabs';
 import { useTheme } from '../theme/ThemeProvider';
 import { useAuth } from '../context/AuthContext';
-import { getWorkerDetails, getWorkerServices } from '../lib/services/workers';
+import { getWorkerDetails } from '../lib/services/workers';
 import { createConversation, getUserConversations } from '../lib/services/chat';
 import { findOrCreateConversation } from '../lib/services/chat-helper';
 

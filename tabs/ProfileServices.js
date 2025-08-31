@@ -55,8 +55,7 @@ const ProfileServices = () => {
                      color: dark ? COLORS.grayscale200 : COLORS.grayscale700
                 }]}>{"  "}255 Grand Park Avenue, New York.</Text>
             </View>
-            <ProviderLocationMap providerCoordinates={providerCoordinates} />
-        </ScrollView>
+         </ScrollView>
     )
 };
 

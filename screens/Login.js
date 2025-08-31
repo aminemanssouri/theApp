@@ -216,15 +216,7 @@ const googleAuthHandler = async () => {
 
             <OrSeparator text="or continue with" />
             <View style={styles.socialBtnContainer}>
-              <SocialButton
-                icon={icons.appleLogo}
-                onPress={appleAuthHandler}
-                tintColor={dark ? COLORS.white : COLORS.black}
-              />
-              <SocialButton
-                icon={icons.facebook}
-                onPress={facebookAuthHandler}
-              />
+              
               <SocialButton
                 icon={icons.google}
                 onPress={googleAuthHandler}
