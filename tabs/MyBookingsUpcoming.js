@@ -1,7 +1,8 @@
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
-import { View, Text, FlatList, Image, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, Image, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native';
+
 import { COLORS } from '../constants';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../theme/ThemeProvider';
 import { getUpcomingBookings } from '../lib/services/booking';
 import { useAuth } from '../context/AuthContext';
@@ -12,8 +13,8 @@ const MyBookingsUpcoming = forwardRef((props, ref) => {
   const { colors, dark } = useTheme();
   const { user, loading: authLoading } = useAuth();
   const [bookings, setBookings] = useState([]);
-    const [loading, setLoading] = useState(true);
-
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const fetchUpcomingBookings = async () => {
     if (!user?.id) return;
@@ -55,6 +56,25 @@ const MyBookingsUpcoming = forwardRef((props, ref) => {
       };
     }, [user?.id, authLoading]);
 
+  // Refetch when screen gains focus
+  useFocusEffect(
+    React.useCallback(() => {
+      if (!authLoading && user?.id) {
+        fetchUpcomingBookings();
+      }
+    }, [authLoading, user?.id])
+  );
+
+  const onRefresh = async () => {
+    if (!user?.id) return;
+    try {
+      setRefreshing(true);
+      await fetchUpcomingBookings();
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   if (loading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -87,7 +107,14 @@ const MyBookingsUpcoming = forwardRef((props, ref) => {
       <FlatList
         data={bookings}
         showsVerticalScrollIndicator={false}
-        keyExtractor={item => item.id}
+        keyExtractor={item => String(item.id)}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={COLORS.primary}
+          />
+        }
         renderItem={({ item, index }) => (
           <View style={styles.itemContainer}>
             <View style={styles.statusContainer}>
@@ -106,7 +133,9 @@ const MyBookingsUpcoming = forwardRef((props, ref) => {
               <View style={styles.infoLeft}>
                 <Image
                   source={
-                    item.worker?.profile_picture 
+                    item.worker?.Image
+                      ? { uri: item.worker.Image }
+                      : item.worker?.profile_picture
                       ? { uri: item.worker.profile_picture }
                       : require('../assets/images/users/user1.jpeg')
                   }

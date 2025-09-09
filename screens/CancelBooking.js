@@ -1,5 +1,6 @@
-import { View, Text, StyleSheet, TextInput } from 'react-native';
-import React, { useState } from 'react';
+import { View, Text, StyleSheet, TextInput, Alert } from 'react-native';
+import React, { useState, useCallback } from 'react';
+
 import { ScrollView } from 'react-native-virtualized-view';
 import { COLORS, SIZES } from "../constants";
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -7,23 +8,25 @@ import ReasonItem from '../components/ReasonItem';
 import Button from '../components/Button';
 import Header from '../components/Header';
 import { useTheme } from '../theme/ThemeProvider';
+import { useAuth } from '../context/AuthContext';
+import { cancelBooking } from '../lib/services/booking';
 
-const CancelBooking = ({ navigation }) => {
+const CancelBooking = ({ navigation, route }) => {
   const { colors, dark } = useTheme();
-  
+  const { user } = useAuth();
+  const bookingId = route?.params?.bookingId;
+  const [comment, setComment] = useState("");
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+
   /***
    * Render content
    */
   const renderContent = () => {
-    const [comment, setComment] = useState("");
-    const [selectedItem, setSelectedItem] = useState(null);
-
     const handleCheckboxPress = (itemTitle) => {
       if (selectedItem === itemTitle) {
-        // If the clicked item is already selected, deselect it
         setSelectedItem(null);
       } else {
-        // Otherwise, select the clicked item
         setSelectedItem(itemTitle);
       }
     };
@@ -31,6 +34,7 @@ const CancelBooking = ({ navigation }) => {
     const handleCommentChange = (text) => {
       setComment(text);
     };
+
     return (
       <View style={{ marginVertical: 12 }}>
         <Text style={[styles.inputLabel, {
@@ -80,6 +84,8 @@ const CancelBooking = ({ navigation }) => {
           placeholderTextColor={dark ? COLORS.secondaryWhite : COLORS.greyscale900}
           multiline={true}
           numberOfLines={4} // Set the number of lines you want to display initially
+          value={comment}
+          onChangeText={handleCommentChange}
         />
       </View>
     )
@@ -88,6 +94,28 @@ const CancelBooking = ({ navigation }) => {
   /**
       * Render submit buttons
       */
+  const handleSubmit = useCallback(async () => {
+    if (!bookingId || !user?.id) {
+      Alert.alert('Cancel Booking', 'Missing booking information.');
+      return;
+    }
+    const reason = selectedItem === 'Others' ? comment : (selectedItem || comment || 'No reason provided');
+    try {
+      setSubmitting(true);
+      const res = await cancelBooking(bookingId, user.id, reason);
+      if (res?.success === false) {
+        Alert.alert('Cancel Booking', res?.message || 'Cancellation failed');
+      } else {
+        Alert.alert('Cancel Booking', 'Booking cancelled successfully.');
+        navigation.goBack();
+      }
+    } catch (e) {
+      Alert.alert('Cancel Booking', e?.message || 'An error occurred while cancelling');
+    } finally {
+      setSubmitting(false);
+    }
+  }, [bookingId, user?.id, selectedItem, comment, navigation]);
+
   const renderSubmitButton = () => {
     return (
       <View style={[styles.btnContainer, {
@@ -97,7 +125,9 @@ const CancelBooking = ({ navigation }) => {
           title="Submit"
           filled
           style={styles.submitBtn}
-          onPress={() => navigation.navigate("CancelBookingPaymentMethods")}
+          onPress={handleSubmit}
+          loading={submitting}
+          disabled={submitting}
         />
       </View>
     )

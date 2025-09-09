@@ -15,6 +15,10 @@ import RNPickerSelect from 'react-native-picker-select';
 import { useTheme } from '../theme/ThemeProvider';
 import { useAuth } from '../context/AuthContext';
 import { updateUserProfile } from '../lib/services/auth';
+import { supabase } from '../lib/supabase';
+
+// Storage bucket name for profile avatars. Ensure this bucket exists in Supabase Storage.
+const AVATAR_BUCKET = 'profile-images';
 
 const EditProfile = ({ navigation }) => {
   const { user, userProfile, refreshUserProfile } = useAuth();
@@ -41,14 +45,14 @@ const EditProfile = ({ navigation }) => {
       zipCode: userProfile?.zip_code || ''
     },
     inputValidities: {
-      firstName: true,
-      lastName: true,
-      email: true,
-      phoneNumber: true,
-      occupation: true,
-      address: true,
-      city: true,
-      zipCode: true
+      firstName: undefined,
+      lastName: undefined,
+      email: undefined,
+      phoneNumber: undefined,
+      occupation: undefined,
+      address: undefined,
+      city: undefined,
+      zipCode: undefined
     },
     formIsValid: true,
   });
@@ -63,6 +67,54 @@ const EditProfile = ({ navigation }) => {
 
   const handleGenderChange = (value) => {
     setSelectedGender(value);
+  };
+
+  // Upload selected image to Supabase Storage and return public URL
+  const uploadProfileImageIfNeeded = async () => {
+    try {
+      // If no new image picked, keep existing URL
+      if (!image?.uri) {
+        return userProfile?.profile_picture || null;
+      }
+
+      // Derive file extension from uri if possible
+      const extMatch = image.uri.match(/\.([a-zA-Z0-9]+)(?:\?.*)?$/);
+      const ext = (extMatch && extMatch[1]) ? extMatch[1].toLowerCase() : 'jpg';
+      const filePath = `profiles/${user.id}-${Date.now()}.${ext}`;
+
+      // Get file data as ArrayBuffer and convert to Blob for RN compatibility
+      const resp = await fetch(image.uri);
+      if (!resp.ok) {
+        throw new Error(`Failed to read image (status ${resp.status})`);
+      }
+      const arrayBuffer = await resp.arrayBuffer();
+      const contentType = `image/${ext === 'jpg' ? 'jpeg' : ext}`;
+
+      // Upload to bucket (make sure it exists and is public or has proper policies)
+      const { error: uploadError } = await supabase.storage
+        .from(AVATAR_BUCKET)
+        .upload(filePath, arrayBuffer, {
+          contentType,
+          upsert: true,
+        });
+
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        Alert.alert('Image Upload Failed', uploadError.message || 'Could not upload profile image.');
+        throw uploadError;
+      }
+
+      const { data: publicUrlData } = supabase.storage
+        .from(AVATAR_BUCKET)
+        .getPublicUrl(filePath);
+
+      return publicUrlData?.publicUrl || null;
+    } catch (e) {
+      console.error('Failed to upload profile image:', e);
+      Alert.alert('Image Upload Error', e.message || 'Failed to upload profile image.');
+      // Do not block profile update if image upload fails; return previous value
+      return userProfile?.profile_picture || null;
+    }
   };
 
   const today = new Date();
@@ -117,6 +169,9 @@ const EditProfile = ({ navigation }) => {
 
     setLoading(true);
     try {
+      // Upload image if any, and get URL
+      const profilePictureUrl = await uploadProfileImageIfNeeded();
+
       // Parse date of birth
       const dateOfBirth = startedDate !== "Select Date of Birth" 
         ? new Date(startedDate.split('/').reverse().join('-')).toISOString()
@@ -132,6 +187,7 @@ const EditProfile = ({ navigation }) => {
         address: formState.inputValues.address,
         city: formState.inputValues.city,
         zip_code: formState.inputValues.zipCode,
+        profile_picture: profilePictureUrl,
         updated_at: new Date().toISOString()
       };
 
@@ -280,7 +336,13 @@ const EditProfile = ({ navigation }) => {
           <View style={styles.avatarSection}>
             <View style={styles.avatarContainer}>
               <Image
-                source={image === null ? images.user1 : image}
+                source={
+                  image
+                    ? image
+                    : (userProfile?.profile_picture
+                        ? { uri: userProfile.profile_picture }
+                        : images.user1)
+                }
                 resizeMode="cover"
                 style={styles.avatar} />
               <TouchableOpacity
