@@ -67,7 +67,18 @@ const Profile = ({ navigation }) => {
    * Render User Profile
    */
   const renderProfile = () => {
-    const [image, setImage] = useState(images.user1)
+    const [image, setImage] = useState(null)
+
+    // Get profile image from database or fallback to default
+    const getProfileImage = () => {
+      if (image) {
+        return image; // User just picked a new image
+      } else if (userProfile?.profile_picture) {
+        return { uri: userProfile.profile_picture }; // From database
+      } else {
+        return images.user1; // Default fallback
+      }
+    };
 
     const pickImage = async () => {
       try {
@@ -102,7 +113,7 @@ const Profile = ({ navigation }) => {
       <View style={styles.profileContainer}>
         <View>
           <Image
-            source={image}
+            source={getProfileImage()}
             resizeMode='cover'
             style={styles.avatar}
           />
