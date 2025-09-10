@@ -1,19 +1,24 @@
-import { View, Text, StyleSheet, TouchableOpacity, Image, FlatList, Platform } from 'react-native';
-import React, { useRef, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Image, FlatList, Platform, Alert } from 'react-native';
+import React, { useRef, useState, useEffect } from 'react';
 import { COLORS, SIZES, icons } from '../constants';
 import { getSafeAreaInsets } from '../utils/safeAreaUtils';
 import { ScrollView } from 'react-native-virtualized-view';
-import { category, myWishlistServices as initialWishlistServices } from '../data';
+import { category } from '../data';
 import RBSheet from "react-native-raw-bottom-sheet";
 import Button from '../components/Button';
 import WishlistServiceCard from '../components/WishlistServiceCard';
 import { useTheme } from '../theme/ThemeProvider';
+import { useAuth } from '../context/AuthContext';
+import { getUserFavoriteServices, getUserFavoriteWorkers, removeFavoriteById } from '../lib/services/favorites';
 
 const Favourite = ({ navigation }) => {
     const refRBSheet = useRef();
     const [selectedWishlistItem, setSelectedWishlistItem] = useState(null);
-    const [myWishlistServices, setMyWishlistServices] = useState(initialWishlistServices || []);
+    const [myWishlistServices, setMyWishlistServices] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const { colors, dark } = useTheme();
+    const { user } = useAuth();
     const insets = getSafeAreaInsets();
 
     // Calculate bottom spacing to avoid tab bar overlap
@@ -28,18 +33,179 @@ const Favourite = ({ navigation }) => {
         }
     };
 
-    const handleRemoveBookmark = () => {
-        // Implement your logic to remove the selectedWishlistItem from the bookmark list
-        if (selectedWishlistItem) {
-            const updatedBookmarkCourses = myWishlistServices.filter(
-                (course) => course.id !== selectedWishlistItem.id
-            );
-            setMyWishlistServices(updatedBookmarkCourses);
-
-            // Close the bottom sheet
-            refRBSheet.current.close();
+    // Load user's favorite services and workers from database
+    const loadFavorites = async () => {
+        if (!user?.id) {
+            console.log('No user ID found, cannot load favorites');
+            setLoading(false);
+            return;
+        }
+        
+        try {
+            setLoading(true);
+            console.log('Loading favorites for user:', user.id);
+            
+            // Load both service and worker favorites
+            const [serviceFavorites, workerFavorites] = await Promise.all([
+                getUserFavoriteServices(user.id),
+                getUserFavoriteWorkers(user.id)
+            ]);
+            
+            console.log('Raw service favorites:', serviceFavorites);
+            console.log('Raw worker favorites:', workerFavorites);
+            
+            const allFavorites = [];
+            
+            // Transform service favorites
+            if (serviceFavorites && serviceFavorites.length > 0) {
+                const transformedServices = serviceFavorites.map(fav => {
+                    console.log('Transforming service favorite:', fav);
+                    return {
+                        id: fav.id,
+                        favoriteId: fav.favorite_id,
+                        favoriteType: 'service',
+                        name: fav.services?.name || 'Unknown Service',
+                        description: fav.services?.description || '',
+                        price: fav.services?.base_price || 0,
+                        image: fav.services?.icon || null,
+                        categoryId: fav.services?.service_categories?.id || '1',
+                        categoryName: fav.services?.service_categories?.name || 'General',
+                        isActive: fav.services?.is_active || false,
+                        createdAt: fav.created_at,
+                        // Mock data for compatibility with existing card
+                        providerName: 'Service Provider',
+                        rating: 4.5,
+                        numReviews: 0,
+                        isOnDiscount: false,
+                        oldPrice: null
+                    };
+                });
+                allFavorites.push(...transformedServices);
+            }
+            
+            // Transform worker favorites
+            if (workerFavorites && workerFavorites.length > 0) {
+                const transformedWorkers = workerFavorites.map(fav => {
+                    console.log('Transforming worker favorite:', fav);
+                    
+                    // Handle worker-service combinations differently
+                    if (fav.isWorkerService && fav.serviceMetadata) {
+                        return {
+                            id: `${fav.id}_${fav.serviceMetadata.service_id}`,
+                            favoriteId: fav.favorite_id,
+                            favoriteType: 'worker_service',
+                            name: `${fav.serviceMetadata.service_name || 'Service'} - ${fav.workers?.first_name || ''} ${fav.workers?.last_name || ''}`.trim(),
+                            description: fav.workers?.bio || 'Professional service provider',
+                            price: fav.workers?.hourly_rate || 0,
+                            image: fav.workers?.Image || null,
+                            categoryId: '1',
+                            categoryName: 'Worker Service',
+                            isActive: fav.workers?.is_available || false,
+                            createdAt: fav.created_at,
+                            providerName: `${fav.workers?.first_name || ''} ${fav.workers?.last_name || ''}`.trim() || 'Service Provider',
+                            rating: fav.workers?.average_rating || 0,
+                            numReviews: fav.workers?.total_jobs || 0,
+                            isOnDiscount: false,
+                            oldPrice: null,
+                            workerId: fav.favorite_id, // Worker ID is stored in favorite_id
+                            serviceId: fav.serviceMetadata.service_id
+                        };
+                    } else {
+                        // Regular worker favorites
+                        return {
+                            id: fav.id,
+                            favoriteId: fav.favorite_id,
+                            favoriteType: 'worker',
+                            name: `${fav.workers?.first_name || ''} ${fav.workers?.last_name || ''}`.trim() || 'Unknown Worker',
+                            description: fav.workers?.bio || 'Professional service provider',
+                            price: fav.workers?.hourly_rate || 0,
+                            image: fav.workers?.Image || null,
+                            categoryId: '1',
+                            categoryName: 'Worker',
+                            isActive: fav.workers?.is_available || false,
+                            createdAt: fav.created_at,
+                            providerName: 'Service Provider',
+                            rating: fav.workers?.average_rating || 0,
+                            numReviews: fav.workers?.total_jobs || 0,
+                            isOnDiscount: false,
+                            oldPrice: null,
+                            workerId: fav.favorite_id
+                        };
+                    }
+                });
+                allFavorites.push(...transformedWorkers);
+            }
+            
+            // Sort by creation date (newest first)
+            allFavorites.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            
+            console.log('All transformed favorites:', allFavorites);
+            setMyWishlistServices(allFavorites);
+            
+            if (allFavorites.length === 0) {
+                console.log('No favorites found for user');
+            }
+        } catch (error) {
+            console.error('Error loading favorites:', error);
+            setMyWishlistServices([]);
+        } finally {
+            setLoading(false);
         }
     };
+
+    // Remove favorite from database
+    const handleRemoveBookmark = async () => {
+        if (!selectedWishlistItem || !user?.id) return;
+        
+        try {
+            await removeFavoriteById(selectedWishlistItem.id, user.id);
+            
+            // Update local state
+            const updatedFavorites = myWishlistServices.filter(
+                (item) => item.id !== selectedWishlistItem.id
+            );
+            setMyWishlistServices(updatedFavorites);
+            
+            // Close the bottom sheet
+            refRBSheet.current.close();
+            
+            // Silently removed - no alert needed
+        } catch (error) {
+            console.error('Error removing favorite:', error);
+            Alert.alert('Error', 'Failed to remove from favorites');
+        }
+    };
+
+    // Refresh favorites
+    const onRefresh = async () => {
+        setRefreshing(true);
+        await loadFavorites();
+        setRefreshing(false);
+    };
+
+    // Load favorites on mount and when user changes
+    useEffect(() => {
+        console.log('Favourite screen useEffect triggered, user:', user);
+        if (user?.id) {
+            loadFavorites();
+        } else {
+            console.log('No user found, clearing favorites');
+            setMyWishlistServices([]);
+            setLoading(false);
+        }
+    }, [user?.id]);
+
+    // Add focus listener to reload favorites when screen comes into focus
+    useEffect(() => {
+        const unsubscribe = navigation.addListener('focus', () => {
+            console.log('Favourite screen focused, reloading favorites');
+            if (user?.id) {
+                loadFavorites();
+            }
+        });
+
+        return unsubscribe;
+    }, [navigation, user?.id]);
     
     /**
      * Render header
@@ -128,31 +294,61 @@ const Favourite = ({ navigation }) => {
                         renderItem={renderCategoryItem}
                     />
                 </View>
-                <FlatList
-                    data={filteredServices}
-                    keyExtractor={item => item.id}
-                    renderItem={({ item }) => {
-                        return (
-                            <WishlistServiceCard
-                                name={item.name}
-                                image={item.image}
-                                providerName={item.providerName}
-                                price={item.price}
-                                isOnDiscount={item.isOnDiscount}
-                                oldPrice={item.oldPrice}
-                                rating={item.rating}
-                                numReviews={item.numReviews}
-                                onPress={() => navigation.navigate("ServiceDetails")}
-                                categoryId={item.categoryId}
-                                bookmarkOnPress={() => {
-                                    // Show the bookmark item in the bottom sheet
-                                    setSelectedWishlistItem(item);
-                                    refRBSheet.current.open()
-                                }}
-                            />
-                        )
-                    }}
-                />
+                {loading ? (
+                    <View style={styles.loadingContainer}>
+                        <Text style={[styles.loadingText, { color: dark ? COLORS.white : COLORS.black }]}>
+                            Loading favorites...
+                        </Text>
+                    </View>
+                ) : filteredServices.length === 0 ? (
+                    <View style={styles.emptyContainer}>
+                        <Text style={[styles.emptyText, { color: dark ? COLORS.white : COLORS.black }]}>
+                            No favorites yet
+                        </Text>
+                        <Text style={[styles.emptySubtext, { color: dark ? COLORS.white : COLORS.greyscale600 }]}>
+                            Start adding services to your wishlist!
+                        </Text>
+                    </View>
+                ) : (
+                    <FlatList
+                        data={filteredServices}
+                        keyExtractor={item => item.id}
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                        renderItem={({ item }) => {
+                            return (
+                                <WishlistServiceCard
+                                    name={item.name}
+                                    image={item.image}
+                                    providerName={item.providerName}
+                                    price={item.price}
+                                    isOnDiscount={item.isOnDiscount}
+                                    oldPrice={item.oldPrice}
+                                    rating={item.rating}
+                                    numReviews={item.numReviews}
+                                    onPress={() => {
+                                        if (item.favoriteType === 'worker') {
+                                            navigation.navigate("WorkerDetails", { workerId: item.workerId || item.favoriteId });
+                                        } else if (item.favoriteType === 'worker_service') {
+                                            navigation.navigate("WorkerDetails", { 
+                                                workerId: item.workerId,
+                                                serviceId: item.serviceId
+                                            });
+                                        } else {
+                                            navigation.navigate("ServiceDetails", { serviceId: item.favoriteId });
+                                        }
+                                    }}
+                                    categoryId={item.categoryId}
+                                    bookmarkOnPress={() => {
+                                        // Show the bookmark item in the bottom sheet
+                                        setSelectedWishlistItem(item);
+                                        refRBSheet.current.open()
+                                    }}
+                                />
+                            )
+                        }}
+                    />
+                )}
             </View>
         )
     }
@@ -325,6 +521,32 @@ container: {
         height: .2,
         backgroundColor: COLORS.greyscale300,
         marginHorizontal: 16
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingVertical: 50
+    },
+    loadingText: {
+        fontSize: 16,
+        fontFamily: 'medium'
+    },
+    emptyContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingVertical: 50
+    },
+    emptyText: {
+        fontSize: 18,
+        fontFamily: 'bold',
+        marginBottom: 8
+    },
+    emptySubtext: {
+        fontSize: 14,
+        fontFamily: 'regular',
+        textAlign: 'center'
     }
 })
 

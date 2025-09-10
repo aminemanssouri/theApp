@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, Image, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, Image, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native';
+
 import { COLORS } from '../constants';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../theme/ThemeProvider';
 import { useAuth } from '../context/AuthContext';
 import { getCompletedBookings } from '../lib/services/booking';
@@ -12,6 +13,7 @@ const MyBookingCompleted = () => {
   const { user, loading: authLoading } = useAuth();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const fetchCompletedBookings = async () => {
     if (!user?.id) return;
@@ -46,6 +48,25 @@ const MyBookingCompleted = () => {
     };
   }, [user?.id, authLoading]);
 
+  // Refetch when screen gains focus
+  useFocusEffect(
+    React.useCallback(() => {
+      if (!authLoading && user?.id) {
+        fetchCompletedBookings();
+      }
+    }, [authLoading, user?.id])
+  );
+
+  const onRefresh = async () => {
+    if (!user?.id) return;
+    try {
+      setRefreshing(true);
+      await fetchCompletedBookings();
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   if (loading) {
     return (
       <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
@@ -77,7 +98,14 @@ const MyBookingCompleted = () => {
       <FlatList
         data={bookings}
         showsVerticalScrollIndicator={false}
-        keyExtractor={item => item.id}
+        keyExtractor={item => String(item.id)}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={COLORS.primary}
+          />
+        }
         renderItem={({ item, index }) => (
           <View style={styles.itemContainer}>
             <View style={styles.statusContainer}>
@@ -95,12 +123,15 @@ const MyBookingCompleted = () => {
               <View style={styles.infoLeft}>
                 <Image
                   source={
-                    item.worker?.profile_picture 
+                    item.worker?.Image
+                      ? { uri: item.worker.Image }
+                      : item.worker?.profile_picture
                       ? { uri: item.worker.profile_picture }
                       : require('../assets/images/users/user1.jpeg')
                   }
                   style={styles.itemImage}
                 />
+
                 <View style={styles.itemDetails}>
                   <Text style={[styles.itemName, { 
                     color: dark ? COLORS.white : COLORS.greyscale900
@@ -115,7 +146,8 @@ const MyBookingCompleted = () => {
                     }]}>€{item.total_amount || item.price}</Text>
                     <Text style={[styles.itemDate, { 
                       color: dark ? COLORS.grayscale200 : COLORS.grayscale700
-                    }]}> | {item.booking_date}</Text>
+                    }]}> | {new Date(item.booking_date).toLocaleDateString()}</Text>
+
                     <Text style={[styles.itemItems, { 
                       color: dark ? COLORS.grayscale200 : COLORS.grayscale700
                     }]}> | {item.city}</Text>
@@ -126,9 +158,17 @@ const MyBookingCompleted = () => {
             </View>
             <View style={styles.actionsContainer}>
               <TouchableOpacity
-                onPress={() => console.log("Archiving booking...")}
+                onPress={() => navigation.navigate('BookingStep1', {
+                  serviceId: item.service?.id || item.service_id,
+                  serviceName: item.service?.name,
+                  workerId: item.worker?.id || item.worker_id,
+                  workerName: item.worker?.first_name && item.worker?.last_name
+                    ? `${item.worker.first_name} ${item.worker.last_name}`
+                    : undefined,
+                  workerRate: item.worker?.rate || item.worker?.hourly_rate
+                })}
                 style={styles.rateButton}>
-                <Text style={styles.rateButtonText}>Archive</Text>
+                <Text style={styles.rateButtonText}>Re-book</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => navigation.navigate("EReceipt", { bookingId: item.id })}

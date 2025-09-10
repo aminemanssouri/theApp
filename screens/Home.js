@@ -516,6 +516,8 @@ const Home = ({ navigation }) => {
                   numReviews={item.numReviews}
                   worker={item.worker}
                   hasWorker={item.hasWorker}
+                  serviceId={item.serviceId}
+                  workerId={item.workerId}
                   onPress={() => {
                     if (item.hasWorker && item.workerId) {
                       navigation.navigate("WorkerDetails", { 

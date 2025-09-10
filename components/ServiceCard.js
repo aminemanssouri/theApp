@@ -1,8 +1,15 @@
-import { View, Text, StyleSheet, TouchableOpacity, Image, Animated } from 'react-native';
-import React, { useState, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Animated, Alert } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
 import { COLORS, SIZES, icons } from '../constants';
 import { FontAwesome } from '@expo/vector-icons';
 import { useTheme } from '../theme/ThemeProvider';
+import { useAuth } from '../context/AuthContext';
+import { 
+    toggleFavorite, 
+    isFavorited,
+    isWorkerServiceFavorited,
+    toggleWorkerServiceFavorite
+} from '../lib/services/favorites';
 
 const ServiceCard = ({
     name,
@@ -13,10 +20,14 @@ const ServiceCard = ({
     oldPrice,
     rating,
     numReviews,
-    onPress
+    onPress,
+    serviceId,
+    workerId
 }) => {
     const [isBookmarked, setIsBookmarked] = useState(false);
+    const [loading, setLoading] = useState(false);
     const { dark } = useTheme();
+    const { user } = useAuth();
     
     // Animation values
     const scaleAnim = useRef(new Animated.Value(1)).current;
@@ -52,6 +63,92 @@ const ServiceCard = ({
         ]).start();
     };
 
+    // Check if item is favorited on mount
+    useEffect(() => {
+        const checkFavoriteStatus = async () => {
+            if (!user?.id || (!serviceId && !workerId)) return;
+            
+            try {
+                if (workerId && serviceId) {
+                    // For worker-service combinations, check if this specific combination exists
+                    const favorited = await isWorkerServiceFavorited(user.id, workerId, serviceId);
+                    setIsBookmarked(favorited);
+                } else if (workerId) {
+                    // For worker-only favorites
+                    const favoriteType = 'worker';
+                    const favoriteId = workerId;
+                    const favorited = await isFavorited(user.id, favoriteType, favoriteId);
+                    setIsBookmarked(favorited);
+                } else {
+                    // For service-only favorites
+                    const favoriteType = 'service';
+                    const favoriteId = serviceId;
+                    const favorited = await isFavorited(user.id, favoriteType, favoriteId);
+                    setIsBookmarked(favorited);
+                }
+            } catch (error) {
+                console.error('Error checking favorite status:', error);
+            }
+        };
+        
+        checkFavoriteStatus();
+    }, [user?.id, serviceId, workerId]);
+
+    // Handle bookmark toggle
+    const handleBookmarkPress = async () => {
+        if (!user?.id) {
+            Alert.alert('Login Required', 'Please login to add favorites');
+            return;
+        }
+
+        if (!serviceId && !workerId) {
+            Alert.alert('Error', 'Cannot add to favorites - missing ID');
+            return;
+        }
+
+        if (loading) return;
+
+        try {
+            setLoading(true);
+            
+            let favoriteType, favoriteId, metadata = null;
+            
+            if (workerId && serviceId) {
+                // For worker-service combinations, use worker type with service metadata
+                favoriteType = 'worker';
+                favoriteId = workerId;
+                metadata = {
+                    service_id: serviceId,
+                    service_name: name,
+                    is_worker_service: true
+                };
+            } else if (workerId) {
+                // For worker-only favorites
+                favoriteType = 'worker';
+                favoriteId = workerId;
+            } else {
+                // For service-only favorites
+                favoriteType = 'service';
+                favoriteId = serviceId;
+            }
+            
+            if (workerId && serviceId) {
+                // For worker-service combinations, use special toggle function
+                const result = await toggleWorkerServiceFavorite(user.id, workerId, serviceId, name);
+                setIsBookmarked(result.isFavorited);
+            } else {
+                // For regular favorites
+                const result = await toggleFavorite(user.id, favoriteType, favoriteId, metadata);
+                setIsBookmarked(result.isFavorited);
+            }
+        } catch (error) {
+            console.error('Error toggling favorite:', error);
+            Alert.alert('Error', 'Failed to update favorites');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <Animated.View
             style={{
@@ -84,13 +181,15 @@ const ServiceCard = ({
                             </Text>
                         </View>
                         <TouchableOpacity
-                            onPress={() => setIsBookmarked(!isBookmarked)}
-                            style={styles.bookmarkButton}>
+                            onPress={handleBookmarkPress}
+                            style={styles.bookmarkButton}
+                            disabled={loading}>
                             <Image
                                 source={isBookmarked ? icons.heart : icons.heartOutline}
                                 resizeMode='contain'
                                 style={[styles.bookmarkIcon, { 
-                                    tintColor: isBookmarked? COLORS.red : COLORS.primary
+                                    tintColor: isBookmarked? COLORS.red : COLORS.primary,
+                                    opacity: loading ? 0.5 : 1
                                 }]}
                             />
                         </TouchableOpacity>

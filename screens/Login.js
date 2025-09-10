@@ -90,7 +90,10 @@ const Login = ({ navigation }) => {
         Alert.alert('Login Failed', error.message);
       } else {
         console.log('✅ signIn success:', data);
-        navigation.navigate("Main");
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Main' }],
+        });
       }
     } catch (err) {
       console.log('❌ Exception in handleLogin:', err);
@@ -133,7 +136,10 @@ const googleAuthHandler = async () => {
     const { data: sessionData } = await supabase.auth.getSession();
     if (sessionData?.session) {
       console.log('✅ Google authentication successful');
-      navigation.navigate("Main");
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Main' }],
+      });
     } else {
       console.log('❌ Authentication completed but no session found');
       Alert.alert('Login Error', 'Authentication completed but no valid session was created. Please try again.');
