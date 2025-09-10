@@ -426,6 +426,8 @@ const Search = ({ navigation, route }) => {
       onPress={() => navigation.navigate("WorkerDetails", { 
         workerId: item.workerId, serviceId: item.serviceId, workerServiceId: item.workerServiceId
       })}
+      serviceId={item.serviceId}
+      workerId={item.workerId}
       categoryId={item.categoryId}
     />
   ), [navigation]);
