@@ -6,6 +6,7 @@ import { Ionicons, AntDesign } from "@expo/vector-icons"
 import { ScrollView } from 'react-native-virtualized-view'
 import PaymentMethodItem from '../components/PaymentMethodItem'
 import { useTheme } from '../theme/ThemeProvider'
+import { t } from '../context/LanguageContext'
 
 const PaymentMethod = ({ navigation }) => {
   const [modalVisible, setModalVisible] = useState(false);
@@ -27,7 +28,7 @@ const PaymentMethod = ({ navigation }) => {
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { 
           color: dark? COLORS.white : COLORS.greyscale900
-        }]}>Select Payment Methods</Text>
+        }]}>{t('payment.payment_methods_title')}</Text>
         <TouchableOpacity>
           <Text style={styles.createTitle}>{"   "}</Text>
         </TouchableOpacity>
@@ -50,21 +51,21 @@ const PaymentMethod = ({ navigation }) => {
     return (
       <View style={{ marginVertical: 12 }}>
         <PaymentMethodItem
-          checked={selectedItem === 'Add a New Card'} // Check if it's the selected item
-          onPress={() => handleCheckboxPress('Add a New Card')} // Pass the item title
-          title="Add a New Card"
+          checked={selectedItem === 'add_card'}
+          onPress={() => handleCheckboxPress('add_card')}
+          title={t('settings.payment.add_new_card')}
           icon={icons.creditCard}
         />
         <PaymentMethodItem
-          checked={selectedItem === 'Paypal'}
-          onPress={() => handleCheckboxPress('Paypal')}
-          title="Paypal"
+          checked={selectedItem === 'paypal'}
+          onPress={() => handleCheckboxPress('paypal')}
+          title={t('payment.paypal')}
           icon={icons.paypal}
         />
         <PaymentMethodItem
-          checked={selectedItem === 'Apple Pay'}
-          onPress={() => handleCheckboxPress('Apple Pay')}
-          title="Apple Pay"
+          checked={selectedItem === 'apple'}
+          onPress={() => handleCheckboxPress('apple')}
+          title={t('payment.apple_pay')}
           icon={icons.appleLogo}
         />
         <TouchableOpacity
@@ -75,7 +76,7 @@ const PaymentMethod = ({ navigation }) => {
           <AntDesign name="pluscircleo" size={24} color="#BABABA" />
           <Text style={[styles.addBtnText, { 
             color: dark? COLORS.white : COLORS.grayscale700,
-          }]}>Add more</Text>
+          }]}>{t('payment.add_more')}</Text>
         </TouchableOpacity>
       </View>
     )
@@ -89,7 +90,7 @@ const PaymentMethod = ({ navigation }) => {
         <TouchableOpacity
           onPress={() => setModalVisible(true)}
           style={styles.bottomBtn}>
-          <Text style={styles.bottomBtnText}>Save</Text>
+          <Text style={styles.bottomBtnText}>{t('common.save')}</Text>
         </TouchableOpacity>
       </View>
     )
@@ -115,17 +116,17 @@ const PaymentMethod = ({ navigation }) => {
               />
               <Text style={[styles.modalTitle, { 
                 color: dark? COLORS.white : COLORS.black
-              }]}>Saved Successfully</Text>
+              }]}>{t('common.saved_successfully')}</Text>
               <Text style={[styles.modalSubtitle, { 
                   color: dark ? COLORS.grayscale200 : "#6C6C6C",
-              }]}>Get everything ready until it’s time to go on a trip</Text>
+              }]}>{t('payment.methods_saved_message')}</Text>
               <TouchableOpacity
                 onPress={() => {
                   setModalVisible(false)
                   navigation.navigate("Main")
                 }}
                 style={styles.modalBtn}>
-                <Text style={styles.modalBtnText}>Continue</Text>
+                <Text style={styles.modalBtnText}>{t('common.continue')}</Text>
               </TouchableOpacity>
             </View>
           </View>

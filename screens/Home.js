@@ -21,6 +21,7 @@ import ServiceCard from '../components/ServiceCard';
 import { useTheme } from '../theme/ThemeProvider';
 import { useNotifications } from '../context/NotificationContext';
 import { useAuth } from '../context/AuthContext';
+import { t, useI18n } from '../context/LanguageContext';
 
 const Home = ({ navigation }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -117,7 +118,7 @@ const Home = ({ navigation }) => {
     }
   };
 
-  // Fetch data from Supabase on component mount
+  // Fetch data from Supabase on component mount (and run debug test once)
   useEffect(() => {
     loadHomepageData();
     
@@ -181,6 +182,12 @@ const Home = ({ navigation }) => {
     setTimeout(testSQLFunction, 2000);
   }, []);
 
+  // Refetch when language changes so names/descriptions are localized
+  const { language } = useI18n();
+  useEffect(() => {
+    loadHomepageData();
+  }, [language]);
+
   const loadHomepageData = async () => {
     try {
       setLoading(true);
@@ -238,7 +245,6 @@ const Home = ({ navigation }) => {
   const getBottomSpacing = () => {
     const baseTabHeight = 60;
     const safeAreaBottom = insets.bottom;
-    
     if (Platform.OS === 'ios') {
       return baseTabHeight + safeAreaBottom + 20; // Extra padding for iOS
     } else {
@@ -246,21 +252,50 @@ const Home = ({ navigation }) => {
     }
   };
 
-  const renderBannerItem = ({ item }) => (
-    <View style={styles.bannerContainer}>
-      <View style={styles.bannerTopContainer}>
-        <View>
-          <Text style={styles.bannerDicount}>{item.discount} OFF</Text>
-          <Text style={styles.bannerDiscountName}>{item.discountName}</Text>
+  // Map banner item to localized copy (use id-based mapping for stability)
+  const getBannerCopy = (item) => {
+    const nameKeyById = {
+      1: 'banners.today_special',
+      2: 'banners.weekend_sale',
+      3: 'banners.limited_time_offer',
+    };
+    const bottomTitleKeyById = {
+      1: 'banners.get_discount_next_order',
+      2: 'banners.special_discount_weekend',
+      3: 'banners.limited_time_hurry',
+    };
+    const bottomSubtitleKeyById = {
+      1: 'banners.only_valid_for_today',
+      2: 'banners.this_weekend_only',
+      3: 'banners.valid_until_supplies_last',
+    };
+
+    const discountLabel = t('banners.discount_label', { discount: item.discount }) || `${item.discount} OFF`;
+    const discountName = t(nameKeyById[item.id]) || item.discountName;
+    const bottomTitle = t(bottomTitleKeyById[item.id]) || item.bottomTitle;
+    const bottomSubtitle = t(bottomSubtitleKeyById[item.id]) || item.bottomSubtitle;
+
+    return { discountLabel, discountName, bottomTitle, bottomSubtitle };
+  };
+
+  const renderBannerItem = ({ item }) => {
+    const { discountLabel, discountName, bottomTitle, bottomSubtitle } = getBannerCopy(item);
+    return (
+      <View style={styles.bannerContainer}>
+        <View style={styles.bannerTopContainer}>
+          <View>
+            <Text style={styles.bannerDicount}>{discountLabel}</Text>
+            <Text style={styles.bannerDiscountName}>{discountName}</Text>
+          </View>
+          <Text style={styles.bannerDiscountNum}>{item.discount}</Text>
         </View>
-        <Text style={styles.bannerDiscountNum}>{item.discount}</Text>
+        <View style={styles.bannerBottomContainer}>
+          <Text style={styles.bannerBottomTitle}>{bottomTitle}</Text>
+          <Text style={styles.bannerBottomSubtitle}>{bottomSubtitle}</Text>
+        </View>
       </View>
-      <View style={styles.bannerBottomContainer}>
-        <Text style={styles.bannerBottomTitle}>{item.bottomTitle}</Text>
-        <Text style={styles.bannerBottomSubtitle}>{item.bottomSubtitle}</Text>
-      </View>
-    </View>
-  );
+    );
+  };
 
   const keyExtractor = (item) => item.id.toString();
 
@@ -276,9 +311,7 @@ const Home = ({ navigation }) => {
       />
     );
   };
-  /**
-  * Render Header
-  */
+
   const renderHeader = () => {
     return (
       <View style={styles.headerContainer}>
@@ -293,7 +326,7 @@ const Home = ({ navigation }) => {
           </TouchableOpacity>
           <Text style={[styles.username, { 
             color: dark? COLORS.white : COLORS.greyscale900
-          }]}>Hi, Joanna!</Text>
+          }]}>{t('home.hi_name', { name: 'Joanna' })}</Text>
         </View>
         <TouchableOpacity
           onPress={handleNotificationPress}
@@ -340,7 +373,7 @@ const Home = ({ navigation }) => {
           style={styles.searchIcon}
         />
         <Text style={styles.searchPlaceholder}>
-          Search services...
+          {t('search.search_services')}
         </Text>
         <Image
           source={icons.filter}
@@ -396,7 +429,7 @@ const Home = ({ navigation }) => {
     
     // Create a complete list of categories with "All" at the beginning if not already present
     const allCategoriesList = hasAllCategory ? categories : [
-      { id: "all", name: "All", icon: icons.categoryAll || icons.categoryDefault }
+      { id: "all", name: t('search.all'), icon: icons.categoryAll || icons.categoryDefault }
     ].concat(categories);
 
     // Function to handle category selection
@@ -413,8 +446,8 @@ const Home = ({ navigation }) => {
     return (
       <View style={styles.categoriesContainer}>
         <SubHeaderItem
-          title="Categories"
-          navTitle={allCategories.length > categories.length ? "See all" : ""}
+          title={t('search.categories')}
+          navTitle={allCategories.length > categories.length ? t('common.see_all') : ""}
           onPress={allCategories.length > categories.length ? 
             () => navigation.navigate("AllCategories") : null}
         />
@@ -459,7 +492,7 @@ const Home = ({ navigation }) => {
       return (
         <View style={styles.noServicesContainer}>
           <Text style={[styles.noServicesText, { color: colors.text }]}>
-            No services found. Please try again later.
+            {t('service.no_services')}
           </Text>
         </View>
       );
@@ -494,8 +527,8 @@ const Home = ({ navigation }) => {
     return (
       <View>
         <SubHeaderItem
-          title="Popular Services"
-          navTitle="See all"
+          title={t('home.popular_services')}
+          navTitle={t('common.see_all')}
           onPress={() => navigation.navigate("AllServices", { showPopular: true })}
         />
         
@@ -539,7 +572,7 @@ const Home = ({ navigation }) => {
         ) : (
           <View style={styles.noServicesContainer}>
             <Text style={[styles.noServicesText, { color: colors.text }]}>
-              No services found in this category
+              {t('service.no_services_in_category')}
             </Text>
           </View>
         )}
@@ -565,7 +598,7 @@ const Home = ({ navigation }) => {
           
           {loading ? (
             <View style={styles.loadingContainer}>
-              <Text style={[styles.loadingText, { color: colors.text }]}>Loading...</Text>
+              <Text style={[styles.loadingText, { color: colors.text }]}>{t('common.loading')}</Text>
             </View>
           ) : (
             <>

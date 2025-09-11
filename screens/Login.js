@@ -13,6 +13,7 @@ import OrSeparator from '../components/OrSeparator';
 import { useTheme } from '../theme/ThemeProvider';
 import { signIn,signInWithGoogle } from '../lib/services/auth';
 import { supabase } from '../lib/supabase';
+import { t } from '../context/LanguageContext';
 const isTestMode = false;
 
 const initialState = {
@@ -49,7 +50,7 @@ const Login = ({ navigation }) => {
 
   useEffect(() => {
     if (error) {
-      Alert.alert('An error occured', error)
+      Alert.alert(t('common.error'), error)
     }
   }, [error]);
 
@@ -62,13 +63,13 @@ const Login = ({ navigation }) => {
     
     if (!email || !password) {
       console.log('❌ Missing email or password');
-      Alert.alert('Error', 'Please fill in all fields');
+      Alert.alert(t('common.error'), t('auth.please_fill_all_fields'));
       return;
     }
     
     if (emailError || passwordError) {
       console.log('❌ Validation error:', { emailError, passwordError });
-      Alert.alert('Error', 'Please correct the errors in the form');
+      Alert.alert(t('common.error'), t('auth.correct_errors_in_form'));
       return;
     }
     
@@ -87,7 +88,7 @@ const Login = ({ navigation }) => {
       if (error) {
         console.log('❌ signIn error:', error);
         setError(error.message);
-        Alert.alert('Login Failed', error.message);
+        Alert.alert(t('auth.login_failed'), error.message);
       } else {
         console.log('✅ signIn success:', data);
         navigation.reset({
@@ -98,7 +99,7 @@ const Login = ({ navigation }) => {
     } catch (err) {
       console.log('❌ Exception in handleLogin:', err);
       setError(err.message);
-      Alert.alert('Error', err.message);
+      Alert.alert(t('common.error'), err.message);
     } finally {
       // Add a small delay before turning off loading state
       setTimeout(() => {
@@ -142,11 +143,11 @@ const googleAuthHandler = async () => {
       });
     } else {
       console.log('❌ Authentication completed but no session found');
-      Alert.alert('Login Error', 'Authentication completed but no valid session was created. Please try again.');
+      Alert.alert(t('auth.login_error'), t('auth.authentication_no_session'));
     }
   } catch (error) {
     console.log('❌ Google authentication error:', error);
-    Alert.alert('Error', error.message);
+    Alert.alert(t('common.error'), error.message);
   } finally {
     // Add a small delay before turning off loading state
     setTimeout(() => {
@@ -172,12 +173,12 @@ const googleAuthHandler = async () => {
           </View>
           <Text style={[styles.title, {
             color: dark ? COLORS.white : COLORS.black
-          }]}>Login to Your Account</Text>
+          }]}>{t('auth.login_title')}</Text>
           <Input
             id="email"
             onInputChanged={inputChangedHandler}
             errorText={formState.inputValidities['email']}
-            placeholder="Email"
+            placeholder={t('auth.email')}
             placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
             icon={icons.email}
             keyboardType="email-address"
@@ -187,7 +188,7 @@ const googleAuthHandler = async () => {
             errorText={formState.inputValidities['password']}
             autoCapitalize="none"
             id="password"
-            placeholder="Password"
+            placeholder={t('auth.password')}
             placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
             icon={icons.padlock}
             secureTextEntry={true}
@@ -203,12 +204,12 @@ const googleAuthHandler = async () => {
               <View style={{ flex: 1 }}>
                 <Text style={[styles.privacy, {
                   color: dark ? COLORS.white : COLORS.black
-                }]}>Remenber me</Text>
+                }]}>{t('auth.remember_me')}</Text>
               </View>
             </View>
           </View>
           <Button
-            title="Login"
+            title={t('auth.login')}
             filled
             onPress={handleLogin}
             style={styles.button}
@@ -216,11 +217,11 @@ const googleAuthHandler = async () => {
           />
           <TouchableOpacity
             onPress={() => navigation.navigate("ForgotPasswordMethods")}>
-            <Text style={styles.forgotPasswordBtnText}>Forgot the password?</Text>
+            <Text style={styles.forgotPasswordBtnText}>{t('auth.forgot_password')}</Text>
           </TouchableOpacity>
           <View>
 
-            <OrSeparator text="or continue with" />
+            <OrSeparator text={t('common.or_continue_with')} />
             <View style={styles.socialBtnContainer}>
               
               <SocialButton
@@ -233,10 +234,10 @@ const googleAuthHandler = async () => {
         <View style={styles.bottomContainer}>
           <Text style={[styles.bottomLeft, {
             color: dark ? COLORS.white : COLORS.black
-          }]}>Don't have an account ?</Text>
+          }]}>{t('auth.dont_have_account')}</Text>
           <TouchableOpacity
             onPress={() => navigation.navigate("Signup")}>
-            <Text style={styles.bottomRight}>{"  "}Sign Up</Text>
+            <Text style={styles.bottomRight}>{"  "}{t('auth.sign_up')}</Text>
           </TouchableOpacity>
         </View>
       </View>

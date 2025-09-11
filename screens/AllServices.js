@@ -5,6 +5,7 @@ import { fetchActiveServices, transformServices } from '../lib/services/home';
 import { COLORS, SIZES } from "../constants";
 import ServiceCard from '../components/ServiceCard';
 import { useTheme } from '../theme/ThemeProvider';
+import { t } from '../context/LanguageContext';
 
 const AllServices = ({ navigation }) => {
   const { dark, colors } = useTheme();
@@ -25,13 +26,13 @@ const AllServices = ({ navigation }) => {
       
       if (error) {
         console.error('Error loading services:', error);
-        setError('Failed to load services. Please try again.');
+        setError(t('service.failed_load'));
         return;
       }
 
       if (!rawServices || rawServices.length === 0) {
         setServices([]);
-        setError('No services available');
+        setError(null);
         return;
       }
 
@@ -40,7 +41,7 @@ const AllServices = ({ navigation }) => {
       
     } catch (error) {
       console.error('Error in loadAllServices:', error);
-      setError('An unexpected error occurred');
+      setError(t('service.failed_load'));
     } finally {
       setLoading(false);
     }
@@ -59,7 +60,7 @@ const AllServices = ({ navigation }) => {
           />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: dark ? COLORS.white : COLORS.black }]}>
-          All Services
+          {t('service.all_services')}
         </Text>
         <View style={{ width: 24 }} /> {/* Empty view for layout balance */}
       </View>
@@ -72,7 +73,7 @@ const AllServices = ({ navigation }) => {
         <View style={styles.centerContainer}>
           <ActivityIndicator size="large" color={COLORS.primary} />
           <Text style={[styles.messageText, { color: colors.text }]}>
-            Loading services...
+            {t('service.loading_services')}
           </Text>
         </View>
       );
@@ -82,13 +83,13 @@ const AllServices = ({ navigation }) => {
       return (
         <View style={styles.centerContainer}>
           <Text style={[styles.messageText, { color: colors.text }]}>
-            {error}
+            {error || t('service.failed_load')}
           </Text>
           <TouchableOpacity 
             style={styles.retryButton}
             onPress={loadAllServices}
           >
-            <Text style={styles.retryText}>Try Again</Text>
+            <Text style={styles.retryText}>{t('common.try_again')}</Text>
           </TouchableOpacity>
         </View>
       );
@@ -98,7 +99,7 @@ const AllServices = ({ navigation }) => {
       return (
         <View style={styles.centerContainer}>
           <Text style={[styles.messageText, { color: colors.text }]}>
-            No services available
+            {t('service.no_services')}
           </Text>
         </View>
       );

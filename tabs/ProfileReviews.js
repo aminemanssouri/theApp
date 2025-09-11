@@ -7,10 +7,12 @@ import ReviewCard from '../components/ReviewCard';
 import { Fontisto } from "@expo/vector-icons";
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../theme/ThemeProvider';
+import { t } from '../context/LanguageContext';
 
 const ProfileReviews = () => {
   const navigation = useNavigation();
-  const [selectedRating, setSelectedRating] = useState("All");
+  const FILTER_ALL = t('reviews.filter_all');
+  const [selectedRating, setSelectedRating] = useState(FILTER_ALL);
   const { colors, dark } = useTheme();
 
   const renderRatingButton = (rating) => (
@@ -24,7 +26,12 @@ const ProfileReviews = () => {
     </TouchableOpacity>
   );
 
-  const filteredReviews = selectedRating === "All" ? reviews : reviews.filter(review => review.avgRating === selectedRating);
+  const filteredReviews = selectedRating === FILTER_ALL ? reviews : reviews.filter(review => review.avgRating === selectedRating);
+
+  const totalReviews = reviews?.length || 0;
+  const avgRating = totalReviews > 0
+    ? (reviews.reduce((sum, r) => sum + (Number(r.avgRating) || 0), 0) / totalReviews)
+    : 0;
 
   return (
     <ScrollView
@@ -39,17 +46,20 @@ const ProfileReviews = () => {
           />
           <Text style={[styles.starTitle, { 
             color: dark? COLORS.white : COLORS.greyscale900
-          }]}>{"  "}4.8 (4,479 reviews)</Text>
+          }]}> {t('reviews.summary', { rating: avgRating.toFixed(1), count: totalReviews })}</Text>
+
         </View>
         <TouchableOpacity
           onPress={() => navigation.navigate("ServiceDetailsReviews")}>
-          <Text style={styles.seeAll}>See All</Text>
+          <Text style={styles.seeAll}>{t('common.see_all')}</Text>
+
         </TouchableOpacity>
       </View>
       {/* Horizontal FlatList for rating buttons */}
       <FlatList
         horizontal
-        data={["All", 5, 4, "3", "2", "1"]}
+        data={[FILTER_ALL, 5, 4, "3", "2", "1"]}
+
         keyExtractor={(item) => item}
         renderItem={({ item }) => renderRatingButton(item)}
         showsHorizontalScrollIndicator={false}

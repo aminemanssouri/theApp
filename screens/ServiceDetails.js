@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, Image, useWindowDimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, useWindowDimensions, Alert } from 'react-native';
 import React from 'react';
 import { COLORS, SIZES, icons, images } from '../constants';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -7,6 +7,7 @@ import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
 import { ProfileReviews, ProfileServices } from '../tabs';
 import { useTheme } from '../theme/ThemeProvider';
 import { useAuth } from '../context/AuthContext';
+import { t } from '../context/LanguageContext';
 import { createConversation, getUserConversations } from '../lib/services/chat';
 
 const renderScene = SceneMap({
@@ -23,8 +24,8 @@ const ServiceDetails = (props) => {
 
   const [index, setIndex] = React.useState(0);
   const [routes] = React.useState([
-    { key: 'first', title: 'Services' },
-    { key: 'second', title: 'Reviews' }
+    { key: 'first', title: t('worker.services_tab') },
+    { key: 'second', title: t('worker.reviews_tab') }
   ]);
 
   /**
@@ -94,7 +95,7 @@ const ServiceDetails = (props) => {
           }]}>Mariana Juliana</Text>
           <Text style={[styles.yearExperience, {
             color: dark? COLORS.secondaryWhite: COLORS.greyscale900
-          }]}>5 years experience</Text>
+          }]}>{t('worker.years_experience', { years: 5 })}</Text>
           <View style={styles.reviewContainer}>
             <ReviewStars review={5} size={14} color="orange" />
             <Text style={[styles.ratingNum, { 
@@ -110,7 +111,7 @@ const ServiceDetails = (props) => {
               }]}>100+</Text>
               <Text style={[styles.viewText, { 
                 color: dark? COLORS.secondaryWhite: COLORS.greyscale900
-              }]}>Reviews</Text>
+              }]}>{t('worker.reviews_label')}</Text>
             </View>
             <View style={styles.view}>
               <Text style={[styles.viewNum, { 
@@ -118,7 +119,7 @@ const ServiceDetails = (props) => {
               }]}>500+</Text>
               <Text style={[styles.viewText, { 
                 color: dark? COLORS.secondaryWhite: COLORS.greyscale900
-              }]}>Ongoing</Text>
+              }]}>{t('worker.ongoing_label')}</Text>
             </View>
             <View style={styles.viewLeft}>
               <Text style={[styles.viewNum, { 
@@ -126,7 +127,7 @@ const ServiceDetails = (props) => {
               }]}>700+</Text>
               <Text style={[styles.viewText, { 
                 color: dark? COLORS.secondaryWhite: COLORS.greyscale900
-              }]}>Client</Text>
+              }]}>{t('worker.client_label')}</Text>
             </View>
           </View>
 
@@ -141,7 +142,7 @@ const ServiceDetails = (props) => {
                 resizeMode='contain'
                 style={styles.buttonActionIcon}
               />
-              <Text style={styles.buttonActionText}>{msgLoading ? 'Loading...' : 'Message'}</Text>
+              <Text style={styles.buttonActionText}>{msgLoading ? t('common.loading') : t('chat.message')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => props.navigation.navigate("BookingStep1")}
@@ -151,7 +152,7 @@ const ServiceDetails = (props) => {
                 resizeMode='contain'
                 style={styles.buttonActionIconRight}
               />
-              <Text style={styles.buttonActionTextRight}>Book Now</Text>
+              <Text style={styles.buttonActionTextRight}>{t('booking.book_now')}</Text>
             </TouchableOpacity>
           </View>
 
@@ -186,7 +187,7 @@ const ServiceDetails = (props) => {
       // 3. Navigate to Chat
       props.navigation.navigate('Chat', { conversationId, workerId: "880ed074-be77-41d3-baaf-30375483ea01" });
     } catch (err) {
-      alert('Failed to start conversation: ' + (err.message || err));
+      Alert.alert(t('common.error'), t('chat.failed_to_start'));
     } finally {
       setMsgLoading(false);
     }

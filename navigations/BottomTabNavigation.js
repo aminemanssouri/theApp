@@ -6,6 +6,7 @@ import { Bookings, Favourite, Home, Inbox, Profile } from '../screens';
 import { useTheme } from '../theme/ThemeProvider';
 import { useNotifications } from '../context/NotificationContext';
 import NotificationBadge from '../components/NotificationBadge';
+import { t } from '../context/LanguageContext';
 // Removed safe area context dependency
 
 const Tab = createBottomTabNavigator();
@@ -83,7 +84,7 @@ const BottomTabNavigation = () => {
                                 textAlign: 'center',
                                 numberOfLines: 1,
                             }} numberOfLines={1}>
-                                Home
+                                {t('navigation.home')}
                             </Text>
                         </View>
                     ),
@@ -124,7 +125,7 @@ const BottomTabNavigation = () => {
                                 fontSize: isSmallScreen ? 8 : 9,
                                 textAlign: 'center',
                             }} numberOfLines={1}>
-                                Bookings
+                                {t('navigation.bookings')}
                             </Text>
                         </View>
                     ),
@@ -160,7 +161,7 @@ const BottomTabNavigation = () => {
                                 fontSize: 9,
                                 textAlign: 'center',
                             }} numberOfLines={1}>
-                                Favourite
+                                {t('navigation.favorites')}
                             </Text>
                         </View>
                     ),
@@ -202,7 +203,7 @@ const BottomTabNavigation = () => {
                                     fontSize: 9,
                                     textAlign: 'center',
                                 }} numberOfLines={1}>
-                                    Inbox
+                                    {t('navigation.inbox')}
                                 </Text>
                             </View>
                             <NotificationBadge count={unreadCount} />
@@ -240,7 +241,7 @@ const BottomTabNavigation = () => {
                                 fontSize: 9,
                                 textAlign: 'center',
                             }} numberOfLines={1}>
-                                Profile
+                                {t('navigation.profile')}
                             </Text>
                         </View>
                     ),

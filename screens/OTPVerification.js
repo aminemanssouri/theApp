@@ -6,6 +6,7 @@ import { COLORS } from '../constants';
 import { OtpInput } from "react-native-otp-entry";
 import Button from "../components/Button";
 import { useTheme } from '../theme/ThemeProvider';
+import { t } from '../context/LanguageContext';
 
 const OTPVerification = ({ navigation }) => {
   const [time, setTime] = useState(55);
@@ -24,11 +25,13 @@ const OTPVerification = ({ navigation }) => {
   return (
     <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <Header title="Forgot Password" />
+        <Header title={t('auth.forgot_password_title')} />
+
         <ScrollView>
           <Text style={[styles.title, {
             color: dark ? COLORS.white : COLORS.black
-          }]}>Code has been send to +1 111 ******99</Text>
+          }]}>{t('auth.code_sent_to', { dest: '+1 111 ******99' })}</Text>
+
           <OtpInput
             numberOfDigits={4}
             onTextChange={(text) => console.log(text)}
@@ -52,19 +55,22 @@ const OTPVerification = ({ navigation }) => {
           <View style={styles.codeContainer}>
             <Text style={[styles.code, {
               color: dark ? COLORS.white : COLORS.greyscale900
-            }]}>Resend code in</Text>
+            }]}>{t('auth.resend_code_in')}</Text>
+
             <Text style={styles.time}>{`  ${time}  `}</Text>
             <Text style={[styles.code, {
               color: dark ? COLORS.white : COLORS.greyscale900
-            }]}>s</Text>
+            }]}>{t('common.seconds_short')}</Text>
+
           </View>
         </ScrollView>
         <Button
-          title="Verify"
+          title={t('auth.verify')}
           filled
           style={styles.button}
           onPress={() => { navigation.navigate("CreateNewPassword") }}
         />
+
       </View>
     </SafeAreaView>
   )

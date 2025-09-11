@@ -10,6 +10,7 @@ import MultiSlider from '@ptomasroos/react-native-multi-slider';
 import { FontAwesome } from "@expo/vector-icons";
 import ServiceCard from '../components/ServiceCard';
 import { useTheme } from '../theme/ThemeProvider';
+import { t, useI18n } from '../context/LanguageContext';
 import { fetchHomepageData, fetchActiveServices, transformServices } from '../lib/services/home'; // Import your service functions
 
 // Custom slider marker
@@ -77,7 +78,7 @@ class SearchInput extends React.Component {
           }]}
           value={this.state.text}
           onChangeText={this.onChangeText}
-          placeholder='Search services...'
+          placeholder={t('search.search_services')}
           placeholderTextColor="#BABABA"
           autoCorrect={false}
           autoCapitalize="none"
@@ -118,7 +119,7 @@ const HeaderContent = ({ navigation, dark, onSearchChange, resultsCount, searchQ
         <Text style={[styles.headerTitle, { 
           color: dark ? COLORS.white : COLORS.greyscale900
         }]}>
-          Search
+          {t('search.screen_title')}
         </Text>
       </View>
       <TouchableOpacity>
@@ -145,15 +146,9 @@ const HeaderContent = ({ navigation, dark, onSearchChange, resultsCount, searchQ
         <View style={styles.resultLeftView}>
           <Text style={[styles.subtitle, { 
             color: dark? COLORS.white : COLORS.greyscale900
-          }]}>Results for "</Text>
-          <Text style={[styles.subtitle, {
-            color: COLORS.primary
-          }]}>{searchQuery}</Text>
-          <Text style={[styles.subtitle, { 
-            color: dark? COLORS.white : COLORS.greyscale900
-          }]}>"</Text>
+          }]}>{t('search.results_for', { query: searchQuery })}</Text>
         </View>
-        <Text style={styles.subResult}>{resultsCount} found</Text>
+        <Text style={styles.subResult}>{resultsCount === 1 ? t('search.results_found_one') : t('search.results_found_other', { count: resultsCount })}</Text>
       </View>
     )}
   </>
@@ -178,6 +173,12 @@ const Search = ({ navigation, route }) => {
   useEffect(() => {
     fetchData();
   }, []);
+
+  // Refetch when language changes (names/descriptions localized)
+  const { language } = useI18n();
+  useEffect(() => {
+    fetchData();
+  }, [language]);
 
   const fetchData = async () => {
     try {
@@ -376,7 +377,7 @@ const Search = ({ navigation, route }) => {
         <View style={styles.centerContainer}>
           <ActivityIndicator size="large" color={COLORS.primary} />
           <Text style={[styles.loadingText, { color: dark ? COLORS.white : COLORS.black }]}>
-            Loading services...
+            {t('service.loading_services')}
           </Text>
         </View>
       );
@@ -386,10 +387,10 @@ const Search = ({ navigation, route }) => {
       return (
         <View style={styles.centerContainer}>
           <Text style={[styles.errorText, { color: dark ? COLORS.white : COLORS.black }]}>
-            {error}
+            {error || t('service.failed_load')}
           </Text>
           <TouchableOpacity style={styles.retryButton} onPress={fetchData}>
-            <Text style={styles.retryText}>Retry</Text>
+            <Text style={styles.retryText}>{t('common.retry')}</Text>
           </TouchableOpacity>
         </View>
       );
@@ -399,7 +400,7 @@ const Search = ({ navigation, route }) => {
       return (
         <View style={styles.centerContainer}>
           <Text style={[styles.noDataText, { color: dark ? COLORS.white : COLORS.black }]}>
-            No services available
+            {t('service.no_services')}
           </Text>
         </View>
       );
@@ -492,12 +493,12 @@ const Search = ({ navigation, route }) => {
         >
           <Text style={[styles.bottomTitle, { 
             color: dark ? COLORS.white : COLORS.greyscale900
-          }]}>Filter</Text>
+          }]}>{t('search.filter')}</Text>
           <View style={styles.separateLine} />
           <View style={{ width: SIZES.width - 32 }}>
             <Text style={[styles.sheetTitle, { 
               color: dark ? COLORS.white : COLORS.greyscale900
-            }]}>Category</Text>
+            }]}>{t('search.categories')}</Text>
             <FlatList
               data={realCategories.length > 0 ? realCategories : categories}
               keyExtractor={item => item.id.toString()}
@@ -507,7 +508,7 @@ const Search = ({ navigation, route }) => {
             />
             <Text style={[styles.sheetTitle, { 
               color: dark ? COLORS.white : COLORS.greyscale900
-            }]}>Price Range</Text>
+            }]}>{t('search.price_range')}</Text>
             <View style={styles.priceContainer}>
               <Text style={[styles.priceText, { color: dark ? COLORS.white : COLORS.greyscale900 }]}>
                 ${priceRange[0]}
@@ -534,7 +535,7 @@ const Search = ({ navigation, route }) => {
             />
             <Text style={[styles.sheetTitle, { 
               color: dark ? COLORS.white : COLORS.greyscale900
-            }]}>Rating</Text>
+            }]}>{t('search.rating')}</Text>
             <FlatList
               data={ratings}
               keyExtractor={item => item.id}
@@ -548,7 +549,7 @@ const Search = ({ navigation, route }) => {
 
           <View style={styles.bottomContainer}>
             <Button
-              title="Reset"
+              title={t('common.reset')}
               style={{
                 width: (SIZES.width - 32) / 2 - 8,
                 backgroundColor: dark ? COLORS.dark3 : COLORS.tansparentPrimary,
@@ -559,7 +560,7 @@ const Search = ({ navigation, route }) => {
               onPress={resetFilters}
             />
             <Button
-              title="Filter"
+              title={t('search.apply')}
               filled
               style={styles.logoutButton}
               onPress={applyFilters}

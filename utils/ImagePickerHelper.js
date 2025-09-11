@@ -1,3 +1,4 @@
+import { t } from '../context/LanguageContext';
 import { Platform, Alert, Linking } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 
@@ -36,7 +37,7 @@ export const launchImagePicker = async () => {
         }
     } catch (error) {
         console.error('❌ Image picker error:', error);
-        Alert.alert('Error', 'Failed to open image picker: ' + error.message);
+        Alert.alert(t('help.error'), 'Failed to open image picker: ' + error.message);
         
         // Direct camera fallback on error
         const tryCamera = await promptDirectCamera();
@@ -52,8 +53,8 @@ const checkMediaPermissions = async () => {
         if (!granted) {
             if (!canAskAgain || status === 'denied') {
                 Alert.alert(
-                    'Permission Needed',
-                    'We need access to your photos to select an image. You can enable this in Settings.',
+                    t('help.permission_needed'),
+                    t('help.we_need_access_to_your_photos'),
                     [
                         { text: 'Cancel', style: 'cancel' },
                         { text: 'Open Settings', onPress: () => Linking.openSettings() },
@@ -69,8 +70,8 @@ const checkMediaPermissions = async () => {
 
 const promptUseCameraFallback = async () => new Promise(resolve => {
     Alert.alert(
-        'No Photo Selected',
-        'Would you like to take a photo instead?',
+        t('help.no_photo_selected'),
+        t('help.would_you_like_to_take_a'),
         [
             { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
             { text: 'Open Camera', onPress: () => resolve(true) },
@@ -80,8 +81,8 @@ const promptUseCameraFallback = async () => new Promise(resolve => {
 
 const promptDirectCamera = async () => new Promise(resolve => {
     Alert.alert(
-        'Image Picker Error',
-        'The photo gallery could not be opened. Would you like to use the camera instead?',
+        t('help.image_picker_error'),
+        t('help.the_photo_gallery_could_not_be'),
         [
             { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
             { text: 'Use Camera', onPress: () => resolve(true) },
@@ -96,7 +97,7 @@ const launchCameraFallback = async () => {
         console.log('📱 Camera permission granted:', granted);
         
         if (!granted) {
-            Alert.alert('Camera Permission Needed', 'Enable camera access in Settings to take a photo.');
+            Alert.alert(t('help.camera_permission_needed'), t('help.enable_camera_access_in_settings_to'));
             return;
         }
         
@@ -118,6 +119,6 @@ const launchCameraFallback = async () => {
         }
     } catch (error) {
         console.error('❌ Camera error:', error);
-        Alert.alert('Camera Error', 'Failed to open camera: ' + error.message);
+        Alert.alert(t('help.camera_error'), 'Failed to open camera: ' + error.message);
     }
 }

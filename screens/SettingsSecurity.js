@@ -7,6 +7,7 @@ import { ScrollView } from 'react-native-virtualized-view';
 import GlobalSettingsItem from '../components/GlobalSettingsItem';
 import Button from '../components/Button';
 import { useTheme } from '../theme/ThemeProvider';
+import { t } from '../context/LanguageContext';
 
 const SettingsSecurity = ({ navigation }) => {
   const [isRememberMeEnabled, setIsRememberMeEnabled] = useState(true);
@@ -28,25 +29,25 @@ const SettingsSecurity = ({ navigation }) => {
   return (
     <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <Header title="Security"/>
+        <Header title={t('settings.security.title')}/>
         <ScrollView style={styles.scrollView}
           showsVerticalScrollIndicator={false}>
           <GlobalSettingsItem
-            title="Remember me"
+            title={t('settings.security.remember_me')}
             isNotificationEnabled={isRememberMeEnabled}
             toggleNotificationEnabled={toggleRememberMe}
           />
           <GlobalSettingsItem
-            title="Face ID"
+            title={t('settings.security.face_id')}
             isNotificationEnabled={isFaceIDEnabled}
             toggleNotificationEnabled={toggleFaceID} />
           <GlobalSettingsItem
-            title="Biometric ID"
+            title={t('settings.security.biometric_id')}
             isNotificationEnabled={isBiometricIDEnabled}
             toggleNotificationEnabled={toggleBiometricID}
           />
           <TouchableOpacity style={styles.view}>
-            <Text style={[styles.viewLeft, { color: dark ? COLORS.white : COLORS.greyscale900 }]}>Google Authenticator</Text>
+            <Text style={[styles.viewLeft, { color: dark ? COLORS.white : COLORS.greyscale900 }]}>{t('settings.security.google_authenticator')}</Text>
             <Image
               source={icons.arrowRight}
               resizeMode='contain'
@@ -54,7 +55,7 @@ const SettingsSecurity = ({ navigation }) => {
             />
           </TouchableOpacity>
           <Button
-            title="Change PIN"
+            title={t('settings.security.change_pin')}
             style={{
               backgroundColor: dark ? COLORS.dark3 : COLORS.tansparentPrimary,
               borderRadius: 32,
@@ -65,7 +66,7 @@ const SettingsSecurity = ({ navigation }) => {
             onPress={() => { navigation.navigate("ChangePIN") }}
           />
           <Button
-            title="Change Password"
+            title={t('settings.security.change_password')}
             style={{
               backgroundColor: dark ? COLORS.dark3 : COLORS.tansparentPrimary,
               borderRadius: 32,
@@ -76,7 +77,7 @@ const SettingsSecurity = ({ navigation }) => {
             onPress={() => { navigation.navigate("ChangePassword") }}
           />
           <Button
-            title="Change Email"
+            title={t('settings.security.change_email')}
             style={{
               backgroundColor: dark ? COLORS.dark3 : COLORS.tansparentPrimary,
               borderRadius: 32,

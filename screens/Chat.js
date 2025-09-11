@@ -26,30 +26,9 @@ import MessageBubble from '../components/MessageBubble';
 import ChatInput from '../components/ChatInput';
 import defaultAvatar from '../assets/images/avatar.jpeg';
 import { getSafeAreaBottom } from '../utils/safeAreaUtils';
+import { t } from '../context/LanguageContext';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
-
-function formatDate(dateStr) {
-  const date = new Date(dateStr);
-  const today = new Date();
-  if (
-    date.getDate() === today.getDate() &&
-    date.getMonth() === today.getMonth() &&
-    date.getFullYear() === today.getFullYear()
-  ) {
-    return 'Today';
-  }
-  const yesterday = new Date();
-  yesterday.setDate(today.getDate() - 1);
-  if (
-    date.getDate() === yesterday.getDate() &&
-    date.getMonth() === yesterday.getMonth() &&
-    date.getFullYear() === yesterday.getFullYear()
-  ) {
-    return 'Yesterday';
-  }
-  return date.toLocaleDateString();
-}
 
 const Chat = () => {
   const { user } = useAuth();
@@ -66,6 +45,28 @@ const Chat = () => {
   const [isOtherTyping, setIsOtherTyping] = useState(false);
   const [inputText, setInputText] = useState('');
   const [chatPartner, setChatPartner] = useState(workerInfo); // Store worker info
+  
+  const formatDateLocalized = (dateStr) => {
+    const date = new Date(dateStr);
+    const today = new Date();
+    if (
+      date.getDate() === today.getDate() &&
+      date.getMonth() === today.getMonth() &&
+      date.getFullYear() === today.getFullYear()
+    ) {
+      return t('chat.today');
+    }
+    const yesterday = new Date();
+    yesterday.setDate(today.getDate() - 1);
+    if (
+      date.getDate() === yesterday.getDate() &&
+      date.getMonth() === yesterday.getMonth() &&
+      date.getFullYear() === yesterday.getFullYear()
+    ) {
+      return t('chat.yesterday');
+    }
+    return date.toLocaleDateString();
+  };
   
   // Log notification data if coming from notification
   useEffect(() => {
@@ -120,7 +121,7 @@ const Chat = () => {
           if (data) {
             setChatPartner({
               id: data.id,
-              name: data.full_name || 'Professional', 
+              name: data.full_name || t('chat.professional'), 
               avatar_url: data.Image
             });
             console.log('Set chat partner:', data.full_name);
@@ -195,14 +196,14 @@ const Chat = () => {
     try {
       await sendMessage(conversationId, user.id, tempMsg.content);
     } catch (err) {
-      setError(err.message || err.toString() || 'Failed to send message');
+      setError(err.message || err.toString() || t('chat.failed_to_send'));
       setMessages((prev) => prev.filter((msg) => msg.id !== tempId));
-      Alert.alert('Error', 'Failed to send message. Please try again.');
+      Alert.alert(t('common.error'), t('chat.failed_to_send'));
     }
   };
 
   const handleAttachment = () => {
-    Alert.alert('Attachment', 'Attachment feature coming soon!');
+    Alert.alert(t('common.coming_soon'), t('chat.attachment_coming_soon'));
   };
 
   const handleTyping = (typing) => {
@@ -250,16 +251,16 @@ const Chat = () => {
         </View>
         <View style={styles.headerText}>
           <Text style={[styles.headerName, { color: dark ? COLORS.white : COLORS.black }]}>
-            {chatPartner?.name || 'Service Provider'}
+            {chatPartner?.name || t('chat.service_provider')}
           </Text>
           {chatPartner && (
-            <Text style={[styles.headerStatus, { color: dark ? COLORS.grayscale400 : COLORS.grayscale600 }]}>
-              Professional
+            <Text style={[styles.headerStatus, { color: dark ? COLORS.grayscale400 : COLORS.grayscale600 }]}> 
+              {t('chat.professional')}
             </Text>
           )}
           {notificationData && (
-            <Text style={[styles.notificationSubtitle, { color: dark ? COLORS.gray3 : COLORS.gray3 }]}>
-              New message
+            <Text style={[styles.notificationSubtitle, { color: dark ? COLORS.gray3 : COLORS.gray3 }]}> 
+              {t('chat.new_message')}
             </Text>
           )}
         </View>
@@ -286,7 +287,7 @@ const Chat = () => {
     else {
       const curr = messages[index];
       const prev = messages[index - 1];
-      if (curr && prev && formatDate(curr.created_at) !== formatDate(prev.created_at)) {
+      if (curr && prev && formatDateLocalized(curr.created_at) !== formatDateLocalized(prev.created_at)) {
         showDate = true;
       }
     }
@@ -303,7 +304,7 @@ const Chat = () => {
           { opacity: fadeAnim }
         ]}
       >
-        {showDate && renderDateSeparator(formatDate(item.created_at))}
+        {showDate && renderDateSeparator(formatDateLocalized(item.created_at))}
         <MessageBubble
           message={item.content}
           isMe={isMe}
@@ -323,7 +324,7 @@ const Chat = () => {
       <View style={[styles.loadingContainer, { backgroundColor: dark ? COLORS.dark1 : COLORS.white }]}>
         <ActivityIndicator size="large" color={COLORS.primary} />
         <Text style={[styles.loadingText, { color: dark ? COLORS.white : COLORS.black }]}>
-          Loading conversation...
+          {t('chat.loading_conversation')}
         </Text>
       </View>
     );
@@ -333,14 +334,14 @@ const Chat = () => {
     return (
       <View style={[styles.errorContainer, { backgroundColor: dark ? COLORS.dark1 : COLORS.white }]}>
         <Ionicons name="alert-circle" size={48} color={COLORS.error} />
-        <Text style={[styles.errorText, { color: dark ? COLORS.white : COLORS.black }]}>
-          {error?.message || error?.toString() || 'An error occurred.'}
+        <Text style={[styles.errorText, { color: dark ? COLORS.white : COLORS.black }]}> 
+          {error?.message || error?.toString() || t('common.error')}
         </Text>
         <TouchableOpacity 
           style={styles.retryButton}
           onPress={() => window.location.reload()}
         >
-          <Text style={styles.retryButtonText}>Retry</Text>
+          <Text style={styles.retryButtonText}>{t('chat.retry')}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -388,7 +389,7 @@ const Chat = () => {
           onSend={handleSend}
           onAttachment={handleAttachment}
           onTyping={handleTyping}
-          placeholder="Type a message..."
+          placeholder={t('chat.type_message')}
           maxLength={1000}
           disabled={false}
           showAttachment={false}

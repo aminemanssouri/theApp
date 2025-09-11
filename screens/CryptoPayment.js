@@ -20,6 +20,7 @@ import { createBooking } from '../lib/services/booking';
 import { supabase } from '../lib/supabase';
 import { coinbaseConfig } from '../config/coinbase.config';
 import { COINBASE_API_KEY } from '../config/coinbase.config';
+import { t } from '../context/LanguageContext';
 
 const CryptoPayment = ({ navigation, route }) => {
   const { dark, colors } = useTheme();
@@ -319,7 +320,7 @@ const CryptoPayment = ({ navigation, route }) => {
             <Ionicons name="close" size={24} color={dark ? COLORS.white : COLORS.black} />
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: dark ? COLORS.white : COLORS.black }]}>
-            Coinbase Payment
+            {t('payment.coinbase_header')}
           </Text>
           <View style={{ width: 24 }} />
         </View>
@@ -332,7 +333,7 @@ const CryptoPayment = ({ navigation, route }) => {
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color={COLORS.primary} />
               <Text style={[styles.loadingText, { color: dark ? COLORS.white : COLORS.black }]}>
-                Loading Coinbase checkout...
+                {t('payment.loading_coinbase_checkout')}
               </Text>
             </View>
           )}
@@ -351,7 +352,7 @@ const CryptoPayment = ({ navigation, route }) => {
           <Ionicons name="arrow-back" size={24} color={dark ? COLORS.white : COLORS.black} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: dark ? COLORS.white : COLORS.black }]}>
-          Cryptocurrency Payment
+          {t('payment.crypto_header')}
         </Text>
         <View style={{ width: 24 }} />
       </View>
@@ -361,7 +362,7 @@ const CryptoPayment = ({ navigation, route }) => {
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={COLORS.primary} />
             <Text style={[styles.loadingText, { color: dark ? COLORS.white : COLORS.black }]}>
-              Setting up your crypto payment...
+              {t('payment.crypto_setting_up')}
             </Text>
           </View>
         ) : chargeData ? (
@@ -374,7 +375,7 @@ const CryptoPayment = ({ navigation, route }) => {
               <Text style={[styles.amountLabel, { 
                 color: dark ? COLORS.gray : COLORS.grayscale700 
               }]}>
-                Total Amount
+                {t('payment.total_amount')}
               </Text>
               <Text style={[styles.amount, { color: COLORS.primary }]}>
                 €{price || 0}
@@ -382,7 +383,7 @@ const CryptoPayment = ({ navigation, route }) => {
               <Text style={[styles.serviceInfo, { 
                 color: dark ? COLORS.grayscale200 : COLORS.grayscale700 
               }]}>
-                {serviceName} with {workerName}
+                {t('payment.service_with_worker', { service: serviceName, worker: workerName })}
               </Text>
             </View>
 
@@ -393,7 +394,7 @@ const CryptoPayment = ({ navigation, route }) => {
               <Text style={[styles.sectionTitle, { 
                 color: dark ? COLORS.white : COLORS.black 
               }]}>
-                Supported Cryptocurrencies
+                {t('payment.supported_cryptos')}
               </Text>
               <View style={styles.cryptoGrid}>
                 {cryptoOptions.map((crypto) => (
@@ -428,7 +429,7 @@ const CryptoPayment = ({ navigation, route }) => {
                 <Text style={[styles.statusText, { 
                   color: dark ? COLORS.white : COLORS.black 
                 }]}>
-                  Payment Status: {paymentStatus === 'pending' ? 'Waiting for Payment' : paymentStatus}
+                  {t('payment.status_label')}: {paymentStatus === 'pending' ? t('payment.status_waiting') : paymentStatus}
                 </Text>
               </View>
               
@@ -436,7 +437,7 @@ const CryptoPayment = ({ navigation, route }) => {
                 <Text style={[styles.statusDescription, {
                   color: dark ? COLORS.grayscale200 : COLORS.grayscale700
                 }]}>
-                  Click "Pay with Crypto" to complete your payment using Coinbase Commerce.
+                  {t('payment.crypto_status_hint')}
                 </Text>
               )}
             </View>
@@ -450,15 +451,12 @@ const CryptoPayment = ({ navigation, route }) => {
                 <Text style={[styles.instructionsTitle, {
                   color: dark ? COLORS.white : COLORS.black
                 }]}>
-                  How it works:
+                  {t('payment.how_it_works')}
                 </Text>
                 <Text style={[styles.instructionsDescription, {
                   color: dark ? COLORS.grayscale200 : COLORS.grayscale700
                 }]}>
-                  1. Click "Pay with Crypto" below{"\n"}
-                  2. Choose your preferred cryptocurrency{"\n"}
-                  3. Complete payment in your crypto wallet{"\n"}
-                  4. Your booking will be confirmed automatically
+                  {t('payment.instructions')}
                 </Text>
               </View>
             </View>
@@ -471,13 +469,13 @@ const CryptoPayment = ({ navigation, route }) => {
             <Text style={[styles.errorText, {
               color: dark ? COLORS.white : COLORS.black
             }]}>
-              Failed to create payment request
+              {t('payment.failed_create_request')}
             </Text>
             <TouchableOpacity 
               style={styles.retryButton}
               onPress={createCharge}
             >
-              <Text style={styles.retryButtonText}>Try Again</Text>
+              <Text style={styles.retryButtonText}>{t('common.try_again')}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -497,7 +495,7 @@ const CryptoPayment = ({ navigation, route }) => {
             <Text style={[styles.cancelButtonText, {
               color: dark ? COLORS.white : COLORS.black
             }]}>
-              Cancel
+              {t('common.cancel')}
             </Text>
           </TouchableOpacity>
           
@@ -506,7 +504,7 @@ const CryptoPayment = ({ navigation, route }) => {
             onPress={openCoinbaseCheckout}>
             <Ionicons name="logo-bitcoin" size={20} color={COLORS.white} style={{ marginRight: 8 }} />
             <Text style={styles.payButtonText}>
-              Pay with Crypto
+              {t('payment.pay_with_crypto')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -520,7 +518,7 @@ const CryptoPayment = ({ navigation, route }) => {
             onPress={() => navigation.navigate('MyBookings')}>
             <Ionicons name="checkmark-circle" size={20} color={COLORS.white} style={{ marginRight: 8 }} />
             <Text style={styles.payButtonText}>
-              View Booking
+              {t('booking.actions.view_booking')}
             </Text>
           </TouchableOpacity>
         </View>

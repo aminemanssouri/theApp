@@ -10,6 +10,7 @@ import WishlistServiceCard from '../components/WishlistServiceCard';
 import { useTheme } from '../theme/ThemeProvider';
 import { useAuth } from '../context/AuthContext';
 import { getUserFavoriteServices, getUserFavoriteWorkers, removeFavoriteById } from '../lib/services/favorites';
+import { t } from '../context/LanguageContext';
 
 const Favourite = ({ navigation }) => {
     const refRBSheet = useRef();
@@ -64,16 +65,16 @@ const Favourite = ({ navigation }) => {
                         id: fav.id,
                         favoriteId: fav.favorite_id,
                         favoriteType: 'service',
-                        name: fav.services?.name || 'Unknown Service',
+                        name: fav.services?.name || t('service.unknown_service'),
                         description: fav.services?.description || '',
                         price: fav.services?.base_price || 0,
                         image: fav.services?.icon || null,
                         categoryId: fav.services?.service_categories?.id || '1',
-                        categoryName: fav.services?.service_categories?.name || 'General',
+                        categoryName: fav.services?.service_categories?.name || t('common.general'),
                         isActive: fav.services?.is_active || false,
                         createdAt: fav.created_at,
                         // Mock data for compatibility with existing card
-                        providerName: 'Service Provider',
+                        providerName: t('chat.service_provider'),
                         rating: 4.5,
                         numReviews: 0,
                         isOnDiscount: false,
@@ -94,15 +95,15 @@ const Favourite = ({ navigation }) => {
                             id: `${fav.id}_${fav.serviceMetadata.service_id}`,
                             favoriteId: fav.favorite_id,
                             favoriteType: 'worker_service',
-                            name: `${fav.serviceMetadata.service_name || 'Service'} - ${fav.workers?.first_name || ''} ${fav.workers?.last_name || ''}`.trim(),
-                            description: fav.workers?.bio || 'Professional service provider',
+                            name: `${fav.serviceMetadata.service_name || t('service.unknown_service')} - ${fav.workers?.first_name || ''} ${fav.workers?.last_name || ''}`.trim(),
+                            description: fav.workers?.bio || t('worker.professional'),
                             price: fav.workers?.hourly_rate || 0,
                             image: fav.workers?.Image || null,
                             categoryId: '1',
-                            categoryName: 'Worker Service',
+                            categoryName: t('worker.worker_service'),
                             isActive: fav.workers?.is_available || false,
                             createdAt: fav.created_at,
-                            providerName: `${fav.workers?.first_name || ''} ${fav.workers?.last_name || ''}`.trim() || 'Service Provider',
+                            providerName: `${fav.workers?.first_name || ''} ${fav.workers?.last_name || ''}`.trim() || t('chat.service_provider'),
                             rating: fav.workers?.average_rating || 0,
                             numReviews: fav.workers?.total_jobs || 0,
                             isOnDiscount: false,
@@ -116,15 +117,15 @@ const Favourite = ({ navigation }) => {
                             id: fav.id,
                             favoriteId: fav.favorite_id,
                             favoriteType: 'worker',
-                            name: `${fav.workers?.first_name || ''} ${fav.workers?.last_name || ''}`.trim() || 'Unknown Worker',
-                            description: fav.workers?.bio || 'Professional service provider',
+                            name: `${fav.workers?.first_name || ''} ${fav.workers?.last_name || ''}`.trim() || t('worker.unknown_worker'),
+                            description: fav.workers?.bio || t('worker.professional'),
                             price: fav.workers?.hourly_rate || 0,
                             image: fav.workers?.Image || null,
                             categoryId: '1',
-                            categoryName: 'Worker',
+                            categoryName: t('worker.worker'),
                             isActive: fav.workers?.is_available || false,
                             createdAt: fav.created_at,
-                            providerName: 'Service Provider',
+                            providerName: t('chat.service_provider'),
                             rating: fav.workers?.average_rating || 0,
                             numReviews: fav.workers?.total_jobs || 0,
                             isOnDiscount: false,
@@ -172,7 +173,7 @@ const Favourite = ({ navigation }) => {
             // Silently removed - no alert needed
         } catch (error) {
             console.error('Error removing favorite:', error);
-            Alert.alert('Error', 'Failed to remove from favorites');
+            Alert.alert(t('common.error'), t('favorites.failed_remove'));
         }
     };
 
@@ -227,7 +228,7 @@ const Favourite = ({ navigation }) => {
                     <Text style={[styles.headerTitle, { 
                         color: dark? COLORS.white : COLORS.greyscale900
                     }]}>
-                        My Wishlist
+                        {t('favorites.title')}
                     </Text>
                 </View>
                 <TouchableOpacity>
@@ -297,16 +298,16 @@ const Favourite = ({ navigation }) => {
                 {loading ? (
                     <View style={styles.loadingContainer}>
                         <Text style={[styles.loadingText, { color: dark ? COLORS.white : COLORS.black }]}>
-                            Loading favorites...
+                            {t('favorites.loading')}
                         </Text>
                     </View>
                 ) : filteredServices.length === 0 ? (
                     <View style={styles.emptyContainer}>
                         <Text style={[styles.emptyText, { color: dark ? COLORS.white : COLORS.black }]}>
-                            No favorites yet
+                            {t('favorites.empty_title')}
                         </Text>
                         <Text style={[styles.emptySubtext, { color: dark ? COLORS.white : COLORS.greyscale600 }]}>
-                            Start adding services to your wishlist!
+                            {t('favorites.empty_sub')}
                         </Text>
                     </View>
                 ) : (
@@ -389,7 +390,7 @@ const Favourite = ({ navigation }) => {
                 }}>
                 <Text style={[styles.bottomSubtitle, { 
                     color: dark ? COLORS.white : COLORS.black
-                }]}>Remove from Bookmark?</Text>
+                }]}>{t('favorites.remove_confirm_title')}</Text>
                 <View style={styles.separateLine} />
 
                 <View style={[styles.selectedBookmarkContainer, { 
@@ -414,7 +415,7 @@ const Favourite = ({ navigation }) => {
 
                 <View style={styles.bottomContainer}>
                     <Button
-                        title="Cancel"
+                        title={t('common.cancel')}
                         style={{
                             width: (SIZES.width - 32) / 2 - 8,
                             backgroundColor: dark ? COLORS.dark3 : COLORS.tansparentPrimary,
@@ -425,7 +426,7 @@ const Favourite = ({ navigation }) => {
                         onPress={() => refRBSheet.current.close()}
                     />
                     <Button
-                        title="Yes, Remove"
+                        title={t('favorites.yes_remove')}
                         filled
                         style={styles.removeButton}
                         onPress={handleRemoveBookmark}

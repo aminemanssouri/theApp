@@ -6,6 +6,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../theme/ThemeProvider';
 import { COLORS, SIZES } from '../constants';
 import { Ionicons } from '@expo/vector-icons';
+import { t } from '../context/LanguageContext';
 
 const Chats = ({ searchQuery = '' }) => {
   const navigation = useNavigation();
@@ -57,7 +58,7 @@ const Chats = ({ searchQuery = '' }) => {
       setConversations(convsWithLastMsg);
       animateIn();
     } catch (err) {
-      setError(err.message || 'Failed to load conversations');
+      setError(err.message || t('chat.loading_failed'));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -153,11 +154,11 @@ const Chats = ({ searchQuery = '' }) => {
     const diffInHours = (now - date) / (1000 * 60 * 60);
     
     if (diffInHours < 1) {
-      return 'Just now';
+      return t('chat.just_now');
     } else if (diffInHours < 24) {
       return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     } else if (diffInHours < 48) {
-      return 'Yesterday';
+      return t('chat.yesterday');
     } else {
       return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
     }
@@ -195,10 +196,10 @@ const Chats = ({ searchQuery = '' }) => {
             />
           </View>
           <Text style={[styles.emptyTitle, { color: dark ? COLORS.white : COLORS.black }]}>
-            No results found
+            {t('chat.no_results_title')}
           </Text>
           <Text style={[styles.emptySubtitle, { color: dark ? COLORS.grayscale400 : COLORS.grayscale600 }]}>
-            Try searching with a different name or check your spelling
+            {t('chat.no_results_subtitle')}
           </Text>
         </View>
       );
@@ -214,10 +215,10 @@ const Chats = ({ searchQuery = '' }) => {
           />
         </View>
         <Text style={[styles.emptyTitle, { color: dark ? COLORS.white : COLORS.black }]}>
-          No conversations yet
+          {t('chat.no_conversations_title')}
         </Text>
         <Text style={[styles.emptySubtitle, { color: dark ? COLORS.grayscale400 : COLORS.grayscale600 }]}>
-          Start a conversation with a service provider to get help
+          {t('chat.no_conversations_subtitle')}
         </Text>
       </View>
     );
@@ -286,8 +287,8 @@ const Chats = ({ searchQuery = '' }) => {
             <View style={[styles.conversationHeader, { backgroundColor: 'transparent' }]}>
               <Text style={[styles.participantName, { color: dark ? COLORS.white : COLORS.black }]}>
                 {searchQuery.trim() ? 
-                  highlightText(fullName.trim() || 'Service Provider', searchQuery) : 
-                  (fullName.trim() || 'Service Provider')
+                  highlightText(fullName.trim() || t('chat.service_provider'), searchQuery) : 
+                  (fullName.trim() || t('chat.service_provider'))
                 }
               </Text>
               <Text style={[styles.lastMessageTime, { color: dark ? COLORS.grayscale400 : COLORS.grayscale600 }]}>
@@ -308,7 +309,7 @@ const Chats = ({ searchQuery = '' }) => {
                 ]}
                 numberOfLines={1}
               >
-                {truncateMessage(lastMessage) || 'Start a conversation...'}
+                {truncateMessage(lastMessage) || t('chat.start_conversation_placeholder')}
               </Text>
               
               {hasUnread && (
@@ -339,7 +340,7 @@ const Chats = ({ searchQuery = '' }) => {
       <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={COLORS.primary} />
         <Text style={[styles.loadingText, { color: dark ? COLORS.white : COLORS.black }]}>
-          Loading conversations...
+          {t('chat.loading_conversations')}
         </Text>
       </View>
     );
@@ -349,11 +350,11 @@ const Chats = ({ searchQuery = '' }) => {
     return (
       <View style={[styles.errorContainer, { backgroundColor: colors.background }]}>
         <Ionicons name="alert-circle" size={48} color={COLORS.error} />
-        <Text style={[styles.errorText, { color: dark ? COLORS.white : COLORS.black }]}>
-          {error}
+        <Text style={[styles.errorText, { color: dark ? COLORS.white : COLORS.black }]}> 
+          {error || t('common.error')}
         </Text>
         <TouchableOpacity style={styles.retryButton} onPress={loadConversations}>
-          <Text style={styles.retryButtonText}>Retry</Text>
+          <Text style={styles.retryButtonText}>{t('chat.retry')}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -364,8 +365,10 @@ const Chats = ({ searchQuery = '' }) => {
       {/* Search Results Counter */}
       {searchQuery.trim() && (
         <View style={[styles.searchResultsContainer, { backgroundColor: colors.background }]}>
-          <Text style={[styles.searchResultsText, { color: dark ? COLORS.grayscale400 : COLORS.grayscale600 }]}>
-            {filteredConversations.length} conversation{filteredConversations.length !== 1 ? 's' : ''} found
+          <Text style={[styles.searchResultsText, { color: dark ? COLORS.grayscale400 : COLORS.grayscale600 }]}> 
+            {filteredConversations.length === 1
+              ? t('chat.conversations_found_one')
+              : t('chat.conversations_found_other', { count: filteredConversations.length })}
           </Text>
         </View>
       )}
