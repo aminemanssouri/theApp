@@ -25,7 +25,7 @@ import { Ionicons } from '@expo/vector-icons';
 import MessageBubble from '../components/MessageBubble';
 import ChatInput from '../components/ChatInput';
 import defaultAvatar from '../assets/images/avatar.jpeg';
-import { getSafeAreaBottom } from '../utils/safeAreaUtils';
+import { getSafeAreaBottom, getSafeAreaTop } from '../utils/safeAreaUtils';
 import { t } from '../context/LanguageContext';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
@@ -40,6 +40,7 @@ const Chat = () => {
   const notificationData = route.params?.notificationData;
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [messagesReady, setMessagesReady] = useState(false);
   const [error, setError] = useState(null);
   const [isTyping, setIsTyping] = useState(false);
   const [isOtherTyping, setIsOtherTyping] = useState(false);
@@ -79,6 +80,7 @@ const Chat = () => {
     setInputText(text);
   };
   const flatListRef = useRef();
+  const didInitialScroll = useRef(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const headerAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -104,14 +106,28 @@ const Chat = () => {
   useEffect(() => {
     if (!conversationId) return;
     setLoading(true);
+    setMessagesReady(false);
     
     // Load messages
     getConversationMessages(conversationId)
-      .then(setMessages)
+      .then((msgs) => {
+        setMessages(msgs);
+        // Reset scroll flag when new conversation loads
+        didInitialScroll.current = false;
+        
+        // Wait a bit longer to ensure messages are fully rendered
+        setTimeout(() => {
+          setMessagesReady(true);
+          setLoading(false);
+          animateIn();
+        }, 100);
+      })
       .catch(setError)
       .finally(() => {
-        setLoading(false);
-        animateIn();
+        // Only set loading false if there was an error
+        if (error) {
+          setLoading(false);
+        }
       });
       
     // If we don't have worker info already, try to fetch it from conversation
@@ -150,22 +166,10 @@ const Chat = () => {
   useEffect(() => {
     const onKeyboardShow = (e) => {
       setKeyboardHeight(e.endCoordinates.height);
-      // Reset any potential layout issues
-      setTimeout(() => {
-        if (flatListRef.current) {
-          flatListRef.current.scrollToEnd({ animated: true });
-        }
-      }, 100);
     };
     
     const onKeyboardHide = () => {
       setKeyboardHeight(0);
-      // Force layout recalculation when keyboard hides
-      setTimeout(() => {
-        if (flatListRef.current) {
-          flatListRef.current.scrollToEnd({ animated: false });
-        }
-      }, 50);
     };
 
     const showSub = Keyboard.addListener('keyboardDidShow', onKeyboardShow);
@@ -319,13 +323,23 @@ const Chat = () => {
     );
   };
 
-  if (loading) {
+  if (loading || !messagesReady) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: dark ? COLORS.dark1 : COLORS.white }]}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
-        <Text style={[styles.loadingText, { color: dark ? COLORS.white : COLORS.black }]}>
-          {t('chat.loading_conversation')}
-        </Text>
+      <View style={[styles.container, { backgroundColor: dark ? COLORS.dark1 : '#f8f9fa' }]}>
+        <StatusBar 
+          barStyle={dark ? 'light-content' : 'dark-content'}
+          backgroundColor={dark ? COLORS.dark1 : COLORS.white}
+          translucent={false}
+        />
+        <View style={{ paddingTop: getSafeAreaTop() }}>
+          {renderHeader()}
+        </View>
+        <View style={[styles.loadingContainer, { backgroundColor: dark ? COLORS.dark1 : '#f8f9fa' }]}>
+          <ActivityIndicator size="large" color={COLORS.primary} />
+          <Text style={[styles.loadingText, { color: dark ? COLORS.white : COLORS.black }]}>
+            {t('chat.loading_conversation')}
+          </Text>
+        </View>
       </View>
     );
   }
@@ -352,31 +366,37 @@ const Chat = () => {
       <StatusBar 
         barStyle={dark ? 'light-content' : 'dark-content'}
         backgroundColor={dark ? COLORS.dark1 : COLORS.white}
+        translucent={false}
       />
-      {renderHeader()}
+      <View style={{ paddingTop: getSafeAreaTop() }}>
+        {renderHeader()}
+      </View>
       <KeyboardAvoidingView
         style={styles.keyboardAvoidingView}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
-        enabled={true}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={0}
+        enabled={Platform.OS === 'ios'}
       >
         <FlatList
           ref={flatListRef}
-          data={messages}
+          data={messages.slice().reverse()}
           keyExtractor={item => item.id}
-          renderItem={renderMessage}
+          renderItem={({ item, index }) => {
+            const originalIndex = messages.length - 1 - index;
+            return renderMessage({ item, index: originalIndex });
+          }}
+          inverted
           contentContainerStyle={[
             styles.messagesContainer,
             { 
-              paddingBottom: keyboardHeight > 0 ? keyboardHeight + 20 : getSafeAreaBottom() + 100,
+              paddingTop: getSafeAreaBottom() + 20,
               flexGrow: 1
             }
           ]}
           keyboardShouldPersistTaps="handled"
-          onContentSizeChange={() => {
-            if (flatListRef.current) {
-              flatListRef.current.scrollToEnd({ animated: false });
-            }
+          maintainVisibleContentPosition={{
+            minIndexForVisible: 0,
+            autoscrollToTopThreshold: 10
           }}
           showsVerticalScrollIndicator={false}
           style={styles.messagesList}
