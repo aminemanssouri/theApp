@@ -24,12 +24,12 @@ const BottomTabNavigation = () => {
                 tabBarShowLabel: false,
                 headerShown: false,
                 sceneContainerStyle: {
-                    paddingTop: 0, // Force remove any default top padding
-                    marginTop: 0,  // Force remove any default top margin
+                    paddingTop: 0, 
+                    marginTop: 0,  
                 },
                 tabBarStyle: {
                     position: 'absolute',
-                    bottom: Platform.OS === 'android' ? 22 : 0, // Lift above Android navigation
+                    bottom: Platform.OS === 'android' ? 0 : 0, // Lift above Android navigation
                     left: isSmallScreen ? 5 : 10,
                     right: isSmallScreen ? 5 : 10,
                     height: Platform.OS === 'ios' ? 75 + getSafeAreaBottom() : 60,

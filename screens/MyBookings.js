@@ -48,11 +48,13 @@ const MyBookings = ({ navigation }) => {
         backgroundColor: COLORS.primary
       }}
       style={{
-        backgroundColor: colors.background
+        backgroundColor: colors.background,
+        shadowColor: 'transparent',
+        elevation: 0,
       }}
       renderLabel={({ route, focused, color }) => (
         <Text style={[{ 
-            color: focused ? COLORS.primary : (dark ? COLORS.gray3 : COLORS.grayscale700),
+            color: focused ? COLORS.primary : (dark ? COLORS.black : COLORS.black),
             fontFamily: focused ? "semiBold" : "regular",
             fontSize: 16
             }]}>
@@ -68,7 +70,7 @@ const MyBookings = ({ navigation }) => {
         flex: 1, 
         backgroundColor: colors.background
       }}>
-        <View style={{ paddingHorizontal: 16, paddingTop: 16 }}>
+        <View style={{ paddingHorizontal: 16, paddingTop: 37 }}>
           <Header title="My Bookings" />
         </View>
         <TabView
