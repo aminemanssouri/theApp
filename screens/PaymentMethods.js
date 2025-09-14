@@ -7,6 +7,7 @@ import { ScrollView } from 'react-native-virtualized-view';
 import PaymentMethodItem from '../components/PaymentMethodItem';
 import { useTheme } from '../theme/ThemeProvider';
 import { createBooking } from '../lib/services/booking';
+import { t } from '../context/LanguageContext';
 
 const PaymentMethods = ({ navigation, route }) => {
   const [modalVisible, setModalVisible] = useState(false);
@@ -29,7 +30,7 @@ const PaymentMethods = ({ navigation, route }) => {
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { 
           color: dark? COLORS.white : COLORS.greyscale900
-        }]}>Payment Methods</Text>
+        }]}>{t('payment.payment_methods_title')}</Text>
         <View style={{ width: 24 }} />
       </View>
     )
@@ -41,14 +42,14 @@ const PaymentMethods = ({ navigation, route }) => {
 
   const handleProcessPayment = async () => {
     if (!selectedItem) {
-      Alert.alert('Error', 'Please select a payment method');
+      Alert.alert(t('common.error'), t('payment.please_select_method'));
       return;
     }
 
     setLoading(true);
     
     try {
-      if (selectedItem === 'Credit/Debit Card') {
+      if (selectedItem === 'card') {
         navigation.navigate('CreditCardPayment', {
           bookingData,
           price,
@@ -56,7 +57,7 @@ const PaymentMethods = ({ navigation, route }) => {
           serviceName,
           workingHours
         });
-      } else if (selectedItem === 'Cryptocurrency') {
+      } else if (selectedItem === 'crypto') {
         navigation.navigate('CryptoPayment', {
           bookingData,
           price,
@@ -64,14 +65,14 @@ const PaymentMethods = ({ navigation, route }) => {
           serviceName,
           workingHours
         });
-      } else if (selectedItem === 'PayPal') {
-        Alert.alert('Coming Soon', 'PayPal integration coming soon!');
-      } else if (selectedItem === 'Apple Pay') {
-        Alert.alert('Coming Soon', 'Apple Pay integration coming soon!');
+      } else if (selectedItem === 'paypal') {
+        Alert.alert(t('common.coming_soon'), t('payment.paypal_coming_soon'));
+      } else if (selectedItem === 'apple') {
+        Alert.alert(t('common.coming_soon'), t('payment.apple_pay_coming_soon'));
       }
     } catch (error) {
       console.error('Payment processing failed:', error);
-      Alert.alert('Error', 'Failed to process payment. Please try again.');
+      Alert.alert(t('common.error'), t('payment.failed_to_process'));
     } finally {
       setLoading(false);
     }
@@ -81,31 +82,31 @@ const PaymentMethods = ({ navigation, route }) => {
     return (
       <View style={{ marginVertical: 12 }}>
         <PaymentMethodItem
-          checked={selectedItem === 'Credit/Debit Card'}
-          onPress={() => handleCheckboxPress('Credit/Debit Card')}
-          title="Credit/Debit Card"
-          subtitle="Visa, Mastercard, Amex"
+          checked={selectedItem === 'card'}
+          onPress={() => handleCheckboxPress('card')}
+          title={t('payment.credit_debit_card')}
+          subtitle={t('payment.credit_debit_card_sub')}
           icon={icons.creditCard}
         />
         <PaymentMethodItem
-          checked={selectedItem === 'Cryptocurrency'}
-          onPress={() => handleCheckboxPress('Cryptocurrency')}
-          title="Cryptocurrency"
-          subtitle="Bitcoin, Ethereum & more"
+          checked={selectedItem === 'crypto'}
+          onPress={() => handleCheckboxPress('crypto')}
+          title={t('payment.cryptocurrency')}
+          subtitle={t('payment.cryptocurrency_sub')}
           icon={icons.wallet || icons.creditCard}
         />
         <PaymentMethodItem
-          checked={selectedItem === 'PayPal'}
-          onPress={() => handleCheckboxPress('PayPal')}
-          title="PayPal"
-          subtitle="Pay with PayPal balance"
+          checked={selectedItem === 'paypal'}
+          onPress={() => handleCheckboxPress('paypal')}
+          title={t('payment.paypal')}
+          subtitle={t('payment.paypal_sub')}
           icon={icons.paypal}
         />
         <PaymentMethodItem
-          checked={selectedItem === 'Apple Pay'}
-          onPress={() => handleCheckboxPress('Apple Pay')}
-          title="Apple Pay"
-          subtitle="Quick and secure"
+          checked={selectedItem === 'apple'}
+          onPress={() => handleCheckboxPress('apple')}
+          title={t('payment.apple_pay')}
+          subtitle={t('payment.apple_pay_sub')}
           icon={icons.appleLogo}
         />
       </View>
@@ -118,7 +119,7 @@ const PaymentMethods = ({ navigation, route }) => {
         <View style={styles.bottomLeft}>
           <Text style={[styles.total, { 
              color: dark ? COLORS.grayscale200 : "#767676",
-          }]}>Total:</Text>
+          }]}>{t('payment.total')}</Text>
           <Text style={[styles.totalPrice, { 
             color: dark? COLORS.white : COLORS.greyscale900,
           }]}> ${price || 0}</Text>
@@ -128,7 +129,7 @@ const PaymentMethods = ({ navigation, route }) => {
           style={[styles.bottomBtn, loading && styles.bottomBtnDisabled]}
           disabled={loading}>
           <Text style={styles.bottomBtnText}>
-            {loading ? 'Processing...' : 'Continue'}
+            {loading ? t('payment.processing') : t('common.continue')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -142,7 +143,7 @@ const PaymentMethods = ({ navigation, route }) => {
         <ScrollView showsVerticalScrollIndicator={false}>
           <Text style={[styles.sectionTitle, {
             color: dark ? COLORS.white : COLORS.greyscale900
-          }]}>Select Payment Method</Text>
+          }]}>{t('payment.select_payment_method')}</Text>
           
           {renderContent()}
           
@@ -152,12 +153,12 @@ const PaymentMethods = ({ navigation, route }) => {
           }]}>
             <Text style={[styles.summaryTitle, {
               color: dark ? COLORS.white : COLORS.greyscale900
-            }]}>Booking Summary</Text>
+            }]}>{t('payment.booking_summary')}</Text>
             
             <View style={styles.summaryRow}>
               <Text style={[styles.summaryLabel, {
                 color: dark ? COLORS.grayscale200 : COLORS.grayscale700
-              }]}>Service:</Text>
+              }]}>{t('payment.service')}</Text>
               <Text style={[styles.summaryValue, {
                 color: dark ? COLORS.white : COLORS.greyscale900
               }]} numberOfLines={1}>{serviceName || 'Service'}</Text>
@@ -166,7 +167,7 @@ const PaymentMethods = ({ navigation, route }) => {
             <View style={styles.summaryRow}>
               <Text style={[styles.summaryLabel, {
                 color: dark ? COLORS.grayscale200 : COLORS.grayscale700
-              }]}>Provider:</Text>
+              }]}>{t('payment.provider')}</Text>
               <Text style={[styles.summaryValue, {
                 color: dark ? COLORS.white : COLORS.greyscale900
               }]} numberOfLines={1}>{workerName || 'Professional'}</Text>
@@ -175,10 +176,10 @@ const PaymentMethods = ({ navigation, route }) => {
             <View style={styles.summaryRow}>
               <Text style={[styles.summaryLabel, {
                 color: dark ? COLORS.grayscale200 : COLORS.grayscale700
-              }]}>Duration:</Text>
+              }]}>{t('payment.duration')}</Text>
               <Text style={[styles.summaryValue, {
                 color: dark ? COLORS.white : COLORS.greyscale900
-              }]}>{workingHours || 2} hours</Text>
+              }]}>{workingHours || 2} {t('payment.hours')}</Text>
             </View>
 
             <View style={[styles.divider, {
@@ -189,7 +190,7 @@ const PaymentMethods = ({ navigation, route }) => {
               <Text style={[styles.summaryLabel, {
                 color: dark ? COLORS.white : COLORS.greyscale900,
                 fontFamily: "semiBold"
-              }]}>Total Amount:</Text>
+              }]}>{t('payment.total_amount')}</Text>
               <Text style={[styles.summaryValue, {
                 color: COLORS.primary,
                 fontSize: 18
@@ -204,7 +205,7 @@ const PaymentMethods = ({ navigation, route }) => {
             <Text style={[styles.securityText, {
               color: dark ? COLORS.grayscale200 : COLORS.grayscale700
             }]}>
-              Your payment information is encrypted and secure
+              {t('payment.secure_note')}
             </Text>
           </View>
         </ScrollView>

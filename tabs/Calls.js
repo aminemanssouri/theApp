@@ -4,6 +4,7 @@ import { callData } from '../data';
 import { COLORS, icons } from '../constants';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../theme/ThemeProvider';
+import { t } from '../context/LanguageContext';
 
 const Calls = () => {
     const navigation = useNavigation();
@@ -35,7 +36,9 @@ const Calls = () => {
                                         : "red"
                             }]}
                         />
-                        <Text style={styles.status}>{item.status} | </Text>
+                        <Text style={styles.status}>
+                          {item.status === 'Incoming' ? t('calls.status.incoming') : item.status === 'Outgoing' ? t('calls.status.outgoing') : t('calls.status.cancelled')} | 
+                        </Text>
                         <Text style={styles.date}>{item.date}</Text>
                     </View>
                 </View>

@@ -6,6 +6,7 @@ import { COLORS } from '../constants';
 import { OtpInput } from "react-native-otp-entry";
 import Button from "../components/Button";
 import { useTheme } from '../theme/ThemeProvider';
+import { t } from '../context/LanguageContext';
 
 const ChangePIN = ({ navigation }) => {
   const { colors, dark } = useTheme();
@@ -13,12 +14,11 @@ const ChangePIN = ({ navigation }) => {
   return (
     <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <Header title="Change PIN"/>
+        <Header title={t('settings.security.change_pin')}/>
         <ScrollView>
           <Text style={[styles.title, {
             color: dark ? COLORS.white : COLORS.greyscale900
-          }]}>Change your PIN number to make your account
-            more secure.</Text>
+          }]}>{t('settings.security.pin_description')}</Text>
           <OtpInput
             numberOfDigits={4}
             onTextChange={(text) => console.log(text)}
@@ -40,7 +40,7 @@ const ChangePIN = ({ navigation }) => {
             }} />
         </ScrollView>
         <Button
-          title="Continue"
+          title={t('common.continue')}
           filled
           style={styles.button}
           onPress={() => { navigation.goBack() }}

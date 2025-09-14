@@ -6,6 +6,7 @@ import { fetchAllCategories, transformCategories } from '../lib/services/home';
 import Header from '../components/Header';
 import Category from '../components/Category';
 import { useTheme } from '../theme/ThemeProvider';
+import { t } from '../context/LanguageContext';
 
 const AllCategories = ({ navigation }) => {
   const [categories, setCategories] = useState([]);
@@ -39,7 +40,7 @@ const AllCategories = ({ navigation }) => {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <Header title="All Categories" goBack={() => navigation.goBack()} />
+      <Header title={t('service.all_categories')} goBack={() => navigation.goBack()} />
       
       {loading ? (
         <View style={styles.loadingContainer}>
@@ -66,7 +67,7 @@ const AllCategories = ({ navigation }) => {
         ) : (
           <View style={styles.emptyContainer}>
             <Text style={[styles.emptyText, { color: colors.text }]}>
-              No categories available at the moment
+              {t('service.no_categories_available')}
             </Text>
           </View>
         )

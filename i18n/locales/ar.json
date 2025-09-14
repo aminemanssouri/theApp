@@ -1,0 +1,207 @@
+{
+  "bookings": {
+    "title": "حجوزاتي",
+    "tab_upcoming": "القادمة",
+    "tab_completed": "المكتملة",
+    "tab_cancelled": "الملغاة"
+  },
+  "common": {
+    "error": "خطأ",
+    "success": "نجاح",
+    "see_all": "عرض الكل",
+    "loading": "جارٍ التحميل...",
+    "ok": "حسنًا",
+    "cancel": "إلغاء",
+    "submit": "إرسال",
+    "retry": "إعادة المحاولة",
+    "try_again": "أعد المحاولة",
+    "reset": "إعادة ضبط"
+  },
+  "service": {
+    "no_services": "لا توجد خدمات متاحة حاليًا",
+    "no_services_in_category": "لا توجد خدمات في هذه الفئة",
+    "reviews_count": "{{count}} مراجعات",
+    "all_services": "جميع الخدمات",
+    "loading_services": "جارٍ تحميل الخدمات...",
+    "failed_load": "فشل تحميل الخدمات",
+    "unknown_service": "خدمة غير معروفة",
+    "category": {
+      "cleaning": "تنظيف"
+    }
+  },
+  "search": {
+    "screen_title": "بحث",
+    "search_services": "ابحث عن الخدمات...",
+    "categories": "الفئات",
+    "all": "الكل",
+    "results_for": "النتائج لـ \"{{query}}\"",
+    "results_found_one": "تم العثور على نتيجة واحدة",
+    "results_found_other": "تم العثور على {{count}} نتائج",
+    "filter": "تصفية",
+    "price_range": "نطاق السعر",
+    "rating": "التقييم",
+    "apply": "تطبيق"
+  },
+  "payment": {
+    "service": "الخدمة",
+    "provider": "المزوّد",
+    "google_pay": "Google Pay"
+  },
+  "chat": {
+    "service_provider": "مقدم الخدمة",
+    "loading_failed": "فشل تحميل المحادثات",
+    "just_now": "الآن",
+    "yesterday": "أمس",
+    "today": "اليوم",
+    "no_results_title": "لا توجد نتائج",
+    "no_results_subtitle": "جرّب اسمًا مختلفًا أو راجع الإملاء",
+    "no_conversations_title": "لا توجد محادثات بعد",
+    "no_conversations_subtitle": "ابدأ محادثة مع مقدم خدمة للحصول على المساعدة",
+    "loading_conversations": "جارٍ تحميل المحادثات...",
+    "conversations_found_one": "تم العثور على محادثة واحدة",
+    "conversations_found_other": "تم العثور على {{count}} محادثات",
+    "start_conversation_placeholder": "ابدأ محادثة..."
+  },
+  "calls": {
+    "status": {
+      "incoming": "واردة",
+      "outgoing": "صادرة",
+      "cancelled": "ملغاة"
+    }
+  },
+  "worker": {
+    "available_providers": "مقدمو الخدمة المتاحون",
+    "none_for_service": "لا يوجد مقدمو خدمة لهذا الطلب",
+    "jobs_count": "({{count}} مهام)",
+    "per_hour": "/ساعة"
+  },
+  "favorites": {
+    "title": "قائمتي المفضلة",
+    "loading": "جارٍ تحميل المفضلة...",
+    "empty_title": "لا توجد عناصر مفضلة",
+    "empty_sub": "ابدأ بإضافة خدمات إلى قائمتك!",
+    "login_required_title": "يتطلب تسجيل الدخول",
+    "login_required_message": "يرجى تسجيل الدخول لإضافة المفضلة",
+    "missing_id": "لا يمكن الإضافة إلى المفضلة - المعرّف مفقود",
+    "failed_update": "فشل تحديث المفضلة",
+    "failed_remove": "فشل الإزالة من المفضلة",
+    "remove_confirm_title": "إزالة من الإشارات؟",
+    "yes_remove": "نعم، إزالة"
+  },
+  "booking": {
+    "book_now": "احجز الآن",
+    "details_title": "تفاصيل الحجز",
+    "select_date": "اختر التاريخ",
+    "working_hours": "ساعات العمل",
+    "cost_increase_after_hours": "زيادة التكلفة بعد {{hours}} ساعات من العمل",
+    "choose_start_time": "اختر وقت البدء",
+    "continue_with_price": "متابعة - €{{price}}",
+    "select_items_and_quantities": "حدد العناصر والكميات للخدمة",
+    "loading_addons": "جارٍ تحميل الخدمات الإضافية...",
+    "selected_items": "العناصر المحددة:",
+    "each": "لكل وحدة",
+    "base_service_hours": "الخدمة الأساسية ({{hours}} س):",
+    "additional_items": "عناصر إضافية:",
+    "total": "الإجمالي:",
+    "status": {
+      "completed": "مكتملة",
+      "cancelled": "ملغاة",
+      "confirmed": "مؤكدة",
+      "pending": "قيد الانتظار"
+    },
+    "empty": {
+      "completed_title": "لا توجد حجوزات مكتملة",
+      "completed_sub": "ليس لديك أي حجوزات مكتملة بعد.",
+      "cancelled_title": "لا توجد حجوزات ملغاة",
+      "cancelled_sub": "ليس لديك أي حجوزات ملغاة.",
+      "upcoming_title": "لا توجد حجوزات قادمة",
+      "upcoming_sub": "ليس لديك حجوزات قادمة في الوقت الحالي."
+    },
+    "actions": {
+      "view": "عرض",
+      "view_e_receipt": "عرض الإيصال الإلكتروني",
+      "cancel": "إلغاء",
+      "rebook": "إعادة الحجز",
+      "receipt": "إيصال",
+      "cancel_booking": "إلغاء الحجز",
+      "cancelling": "جارٍ الإلغاء...",
+      "yes_cancel": "نعم، إلغاء"
+    },
+    "alerts": {
+      "cancel_success_title": "تم إلغاء الحجز",
+      "cancel_success_msg": "تم إلغاء حجزك بنجاح.",
+      "cancel_success_fee_note": "تنطبق رسوم إلغاء قدرها €{{fee}} بسبب الإلغاء المتأخر (خلال 24 ساعة من وقت الخدمة).",
+      "cancel_success_refund_note": "سيتم إصدار استرداد بنسبة 80٪ وفقًا لسياستنا.",
+      "cancel_failed_title": "فشل الإلغاء",
+      "cancel_failed_generic": "فشل إلغاء الحجز. يرجى المحاولة مرة أخرى أو الاتصال بالدعم.",
+      "cancel_confirm_title": "هل أنت متأكد أنك تريد إلغاء الحجز؟",
+      "cancel_policy_note": "قد يتم رد 80٪ فقط من دفعتك وفقًا لسياستنا."
+    },
+    "cancel": {
+      "reason_prompt": "يرجى اختيار سبب الإلغاء",
+      "add_detailed_reason": "أضف سببًا مفصلًا",
+      "reason_placeholder": "اكتب سببك هنا...",
+      "missing_info": "معلومات الحجز مفقودة.",
+      "select_refund_method_note": "يرجى اختيار طريقة استرجاع (سيتم استرجاع 80% فقط)",
+      "paid_label": "المدفوع: {{amount}} €",
+      "refund_label": "المسترد: {{amount}} €",
+      "refund_modal_title": "تهانينا!",
+      "refund_modal_msg": "تم إلغاء طلب الحجز بنجاح. سيتم إعادة 80٪ من المبلغ إلى حسابك.",
+      "reasons": {
+        "schedule_change": "تغيير في الجدول",
+        "weather_conditions": "أحوال جوية",
+        "unexpected_work": "ظروف عمل مفاجئة",
+        "childcare_issue": "مشكلة رعاية الأطفال",
+        "travel_delays": "تأخيرات السفر",
+        "others": "أخرى"
+      }
+    },
+    "address_missing": "لا يوجد عنوان",
+    "rooms": {
+      "living_room": "غرفة المعيشة",
+      "kitchen": "المطبخ",
+      "bathroom": "الحمّام",
+      "bedroom": "غرفة النوم",
+      "dining_room": "غرفة الطعام",
+      "master_bedroom": "غرفة النوم الرئيسية",
+      "office": "مكتب",
+      "terrace": "شرفة",
+      "garden": "حديقة",
+      "garage": "مرآب"
+    }
+  },
+  "settings": {
+    "payment": {
+      "title": "الدفع",
+      "add_new_card": "إضافة بطاقة جديدة"
+    }
+  },
+  "profile_services": {
+    "description_title": "الوصف",
+    "description_body": "نقدم لك منظفًا ودودًا! هو هنا ليجعل منزلك يلمع. بفضل اهتمامه بالتفاصيل وخدمته الموثوقة، يمكنك الاعتماد عليه لترك مساحتك نظيفة ومرتبة. سواء كان ذلك إزالة الغبار أو المسح أو الكنس، فهم يغطيون ذلك. استرخ ودع المُنظف يعتني بالأعمال الشاقة نيابةً عنك!",
+    "view_less": "عرض أقل",
+    "view_more": "عرض المزيد",
+    "service_type": "نوع الخدمة",
+    "location": "الموقع"
+  },
+  "reviews": {
+    "filter_all": "الكل",
+    "summary": "{{rating}} ({{count}} مراجعات)",
+    "screen_title": "ملخص المراجعة",
+    "modal_congrats_title": "تهانينا!",
+    "modal_congrats_msg": "لقد أكملت الدفع وحجزت خدمة بنجاح.",
+    "labels": {
+      "services": "الخدمات",
+      "category": "الفئة",
+      "workers": "الموظفون",
+      "date_time": "التاريخ والوقت",
+      "working_hours": "ساعات العمل",
+      "amount": "المبلغ",
+      "tax": "الضرائب",
+      "total": "الإجمالي"
+    },
+    "actions": {
+      "change": "تغيير"
+    }
+  }
+}

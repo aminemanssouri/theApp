@@ -7,6 +7,7 @@ import { ScrollView } from 'react-native-virtualized-view';
 import { friends } from '../data';
 import InviteFriendCard from '../components/InviteFriendCard';
 import { useTheme } from '../theme/ThemeProvider';
+import { t } from '../context/LanguageContext';
 
 const InviteFriends = () => {
   const { colors } = useTheme();
@@ -14,7 +15,7 @@ const InviteFriends = () => {
   return (
     <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <Header title="Invite Friends"/>
+        <Header title={t('profile.invite_friends')}/>
         <ScrollView
           style={styles.scrollView}
           showsVerticalScrollIndicator={false}>

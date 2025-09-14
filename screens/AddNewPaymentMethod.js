@@ -1,4 +1,5 @@
-import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, Image, StyleSheet, Alert } from 'react-native';
+
 import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useState, useReducer, useCallback, useEffect } from 'react';
 import { useNavigation } from '@react-navigation/native';
@@ -10,6 +11,7 @@ import { reducer } from '../utils/reducers/formReducers';
 import Button from '../components/Button';
 import { StatusBar } from 'expo-status-bar';
 import { useTheme } from '../theme/ThemeProvider';
+import { t } from '../context/LanguageContext';
 
 const initialState = {
     inputValues: {
@@ -42,7 +44,7 @@ const AddNewPaymentMethod = ({ navigation }) => {
 
     useEffect(() => {
         if (error) {
-            Alert.alert('An error occured', error)
+            Alert.alert(t('common.error'), error)
         }
     }, [error])
     const renderHeader = () => {
@@ -62,7 +64,7 @@ const AddNewPaymentMethod = ({ navigation }) => {
                 </TouchableOpacity>
                 <Text style={[styles.headerTitle, { 
                     color: dark? COLORS.white : COLORS.greyscale900
-                }]}>Add Card</Text>
+                }]}>{t('settings.payment.add_new_card')}</Text>
             </View>
         )
     }
@@ -74,25 +76,25 @@ const AddNewPaymentMethod = ({ navigation }) => {
                     <Text style={[commonStyles.inputHeader, { 
                         color: dark? COLORS.white : COLORS.greyscale900
                     }]}>
-                        Card Holder Name
+                        {t('payment.cardholder_name')}
                     </Text>
                     <Input
                         id="creditCardHolderName"
                         onInputChanged={inputChangedHandler}
                         errorText={formState.inputValidities['creditCardHolderName']}
-                        placeholder="Vishal Khadok"
+                        placeholder={t('payment.cardholder_name_placeholder')}
                         placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
                     />
                 </View>
                 <View style={{ marginTop: 12 }}>
                     <Text style={[commonStyles.inputHeader, { 
                         color: dark? COLORS.white : COLORS.greyscale900
-                    }]}>Card Number</Text>
+                    }]}>{t('payment.card_number')}</Text>
                     <Input
                         id="creditCardNumber"
                         onInputChanged={inputChangedHandler}
                         errorText={formState.inputValidities['creditCardNumber']}
-                        placeholder="2143"
+                        placeholder={t('payment.card_number_placeholder')}
                         placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
                     />
                 </View>
@@ -106,25 +108,25 @@ const AddNewPaymentMethod = ({ navigation }) => {
                         <Text style={[commonStyles.inputHeader, { 
                             color: dark? COLORS.white : COLORS.greyscale900
                         }]}>
-                            Expire Date
+                            {t('payment.expiry_date')}
                         </Text>
                         <Input
                             id="creditCardExpiryDate"
                             onInputChanged={inputChangedHandler}
                             errorText={formState.inputValidities['creditCardExpiryDate']}
-                            placeholder="mm/yyyy"
+                            placeholder={t('payment.expiry_date_placeholder')}
                             placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
                         />
                     </View>
                     <View style={{ width: (SIZES.width - 32) / 2 - 10 }}>
                         <Text style={[commonStyles.inputHeader, { 
                             color: dark? COLORS.white : COLORS.greyscale900
-                        }]}>CVV</Text>
+                        }]}>{t('payment.cvv')}</Text>
                         <Input
                             id="cvv"
                             onInputChanged={inputChangedHandler}
                             errorText={formState.inputValidities['cvv']}
-                            placeholder="..."
+                            placeholder={t('payment.cvv_placeholder')}
                             placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
                         />
                     </View>
@@ -143,7 +145,7 @@ const AddNewPaymentMethod = ({ navigation }) => {
                     style={styles.bottomContainer}>
                     <Button
                         filled
-                        title="ADD"
+                        title={t('settings.payment.add_new_card')}
                         style={{ borderRadius: 30 }}
                         onPress={() => navigation.navigate('AddNewPaymentMethodDeclined')}
                     />

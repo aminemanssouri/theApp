@@ -1,4 +1,5 @@
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Alert } from 'react-native';
+
 import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useState, useReducer, useCallback, useEffect } from 'react';
 import { commonStyles } from '../styles/CommonStyles';
@@ -10,6 +11,7 @@ import Button from '../components/Button';
 import Header from '../components/Header';
 import Card from '../components/Card';
 import { useTheme } from '../theme/ThemeProvider';
+import { t } from '../context/LanguageContext';
 
 const initialState = {
   inputValues: {
@@ -42,7 +44,7 @@ const AddNewCard = ({ navigation }) => {
 
   useEffect(() => {
     if (error) {
-      Alert.alert('An error occured', error)
+      Alert.alert(t('common.error'), error)
     }
   }, [error]);
 
@@ -58,24 +60,24 @@ const AddNewCard = ({ navigation }) => {
         <View style={{ marginTop: 12 }}>
           <Text style={[commonStyles.inputHeader, {
             color: dark ? COLORS.white : COLORS.black
-          }]}>Card Holder Name</Text>
+          }]}>{t('payment.cardholder_name')}</Text>
           <Input
             id="creditCardHolderName"
             onInputChanged={inputChangedHandler}
             errorText={formState.inputValidities['creditCardHolderName']}
-            placeholder="Vishal Khadok"
+            placeholder={t('payment.cardholder_name_placeholder')}
             placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
           />
         </View>
         <View style={{ marginTop: 12 }}>
           <Text style={[commonStyles.inputHeader, {
             color: dark ? COLORS.white : COLORS.black
-          }]}>Card Number</Text>
+          }]}>{t('payment.card_number')}</Text>
           <Input
             id="creditCardNumber"
             onInputChanged={inputChangedHandler}
             errorText={formState.inputValidities['creditCardNumber']}
-            placeholder="2143"
+            placeholder={t('payment.card_number_placeholder')}
             placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
           />
         </View>
@@ -83,24 +85,24 @@ const AddNewCard = ({ navigation }) => {
           <View style={{ width: (SIZES.width - 32) / 2 - 10 }}>
             <Text style={[commonStyles.inputHeader, {
               color: dark ? COLORS.white : COLORS.black
-            }]}>Expire Date</Text>
+            }]}>{t('payment.expiry_date')}</Text>
             <Input
               id="creditCardExpiryDate"
               onInputChanged={inputChangedHandler}
               errorText={formState.inputValidities['creditCardExpiryDate']}
-              placeholder="mm/yyyy"
+              placeholder={t('payment.expiry_date_placeholder')}
               placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
             />
           </View>
           <View style={{ width: (SIZES.width - 32) / 2 - 10 }}>
             <Text style={[commonStyles.inputHeader, {
               color: dark ? COLORS.white : COLORS.black
-            }]}>CVV</Text>
+            }]}>{t('payment.cvv')}</Text>
             <Input
               id="cvv"
               onInputChanged={inputChangedHandler}
               errorText={formState.inputValidities['cvv']}
-              placeholder="..."
+              placeholder={t('payment.cvv_placeholder')}
               placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
             />
           </View>
@@ -112,7 +114,8 @@ const AddNewCard = ({ navigation }) => {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <View style={{ flex: 1, margin: 16 }}>
-        <Header title="Add New Card"/>
+        <Header title={t('settings.payment.add_new_card')}/>
+
         {renderPaymentForm()}
         <View 
           style={{
@@ -122,7 +125,7 @@ const AddNewCard = ({ navigation }) => {
           }}>
           <Button
             filled
-            title="Add New Card"
+            title={t('settings.payment.add_new_card')}
             onPress={() => navigation.goBack()}
             style={styles.addBtn}
           />
