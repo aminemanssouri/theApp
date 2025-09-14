@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, Image, TouchableOpacity, Platform } from 'react
 import React from 'react';
 import { COLORS } from '../constants';
 import { useTheme } from '../theme/ThemeProvider';
+import { t } from '../context/LanguageContext';
 
 const PaymentMethodItemConnected = ({ onPress, title, icon, tintColor }) => {
   const { dark } = useTheme();
@@ -27,7 +28,7 @@ const PaymentMethodItemConnected = ({ onPress, title, icon, tintColor }) => {
         </View>
       </View>
       <View style={styles.leftContainer}>
-        <Text style={styles.connectedTitle}>Connected</Text>
+        <Text style={styles.connectedTitle}>{t('payment.connected')}</Text>
       </View>
     </TouchableOpacity>
   );

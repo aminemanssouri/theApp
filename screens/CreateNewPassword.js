@@ -9,6 +9,7 @@ import Input from '../components/Input';
 import Checkbox from 'expo-checkbox';
 import Button from '../components/Button';
 import { useTheme } from '../theme/ThemeProvider';
+import { t } from '../context/LanguageContext';
 
 const isTestMode = true;
 
@@ -41,7 +42,7 @@ const CreateNewPassword = ({ navigation }) => {
 
   useEffect(() => {
     if (error) {
-      Alert.alert('An error occured', error)
+      Alert.alert(t('common.error'), error)
     }
   }, [error])
 
@@ -63,10 +64,10 @@ const CreateNewPassword = ({ navigation }) => {
                 resizeMode='contain'
                 style={styles.modalIllustration}
               />
-              <Text style={styles.modalTitle}>Congratulations!</Text>
-              <Text style={styles.modalSubtitle}>Your account is ready to use. You will be redirected to the Home page in a few seconds..</Text>
+              <Text style={styles.modalTitle}>{t('auth.congratulations')}</Text>
+              <Text style={styles.modalSubtitle}>{t('auth.account_ready_redirect')}</Text>
               <Button
-                title="Continue"
+                title={t('common.continue')}
                 filled
                 onPress={() => {
                   setModalVisible(false)
@@ -87,7 +88,7 @@ const CreateNewPassword = ({ navigation }) => {
   return (
     <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <Header title="Create New Password" />
+        <Header title={t('auth.create_new_password_title')} />
         <ScrollView showsVerticalScrollIndicator={false}>
           <View style={styles.logoContainer}>
             <Image
@@ -98,13 +99,13 @@ const CreateNewPassword = ({ navigation }) => {
           </View>
           <Text style={[styles.title, {
             color: dark ? COLORS.white : COLORS.black
-          }]}>Create Your New Password</Text>
+          }]}>{t('auth.create_your_new_password')}</Text>
           <Input
             onInputChanged={inputChangedHandler}
             errorText={formState.inputValidities['newPassword']}
             autoCapitalize="none"
             id="newPassword"
-            placeholder="New Password"
+            placeholder={t('auth.new_password')}
             placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
             icon={icons.padlock}
             secureTextEntry={true}
@@ -114,7 +115,7 @@ const CreateNewPassword = ({ navigation }) => {
             errorText={formState.inputValidities['confirmNewPassword']}
             autoCapitalize="none"
             id="confirmNewPassword"
-            placeholder="Confirm New Password"
+            placeholder={t('auth.confirm_new_password')}
             placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
             icon={icons.padlock}
             secureTextEntry={true}
@@ -130,7 +131,7 @@ const CreateNewPassword = ({ navigation }) => {
               <View style={{ flex: 1 }}>
                 <Text style={[styles.privacy, {
                   color: dark ? COLORS.white : COLORS.black
-                }]}>Remenber me</Text>
+                }]}>{t('auth.remember_me')}</Text>
               </View>
             </View>
           </View>
@@ -138,7 +139,7 @@ const CreateNewPassword = ({ navigation }) => {
           </View>
         </ScrollView>
         <Button
-          title="Continue"
+          title={t('common.continue')}
           filled
           onPress={() => setModalVisible(true)}
           style={styles.button}

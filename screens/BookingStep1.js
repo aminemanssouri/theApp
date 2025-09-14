@@ -7,9 +7,11 @@ import BookingItem from '../components/BookingItem';
 import Button from '../components/Button';
 import { useTheme } from '../theme/ThemeProvider';
 import { getServiceAddons } from '../lib/services/addons';
+import { useI18n } from '../context/LanguageContext';
 
 const BookingStep1 = ({ navigation, route }) => {
     const { colors, dark } = useTheme();
+    const { t } = useI18n();
     const { serviceId, serviceName, workerId, workerName, workerRate } = route.params || {};
     
     const [selectedItems, setSelectedItems] = useState({});
@@ -46,6 +48,26 @@ const BookingStep1 = ({ navigation, route }) => {
         }));
         
         return [...addonItems];
+    };
+
+    // Localize known addon names (e.g., room names) while leaving unknown names as-is
+    const localizeAddonName = (name) => {
+        if (!name) return name;
+        const key = String(name).trim().toLowerCase();
+        const map = {
+            'living room': 'booking.rooms.living_room',
+            'kitchen': 'booking.rooms.kitchen',
+            'bathroom': 'booking.rooms.bathroom',
+            'bedroom': 'booking.rooms.bedroom',
+            'dining room': 'booking.rooms.dining_room',
+            'master bedroom': 'booking.rooms.master_bedroom',
+            'office': 'booking.rooms.office',
+            'terrace': 'booking.rooms.terrace',
+            'garden': 'booking.rooms.garden',
+            'garage': 'booking.rooms.garage',
+        };
+        const tKey = map[key];
+        return tKey ? t(tKey) : name;
     };
     
     const handleItemChange = (itemId, itemName, quantity, itemPrice = 10, isAddon = false, addonId = null) => {
@@ -97,13 +119,13 @@ const BookingStep1 = ({ navigation, route }) => {
             <Text style={[styles.itemNum, { 
                 color: dark? COLORS.white : COLORS.greyscale900,
                 marginTop: 22
-            }]}>Select items and quantities for the service</Text>
+            }]}>{t('booking.select_items_and_quantities')}</Text>
             
             {loadingAddons && (
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="small" color={COLORS.primary} />
                     <Text style={[styles.loadingText, { color: colors.text }]}>
-                        Loading additional services...
+                        {t('booking.loading_addons')}
                     </Text>
                 </View>
             )}
@@ -122,7 +144,7 @@ const BookingStep1 = ({ navigation, route }) => {
             }]}>
                 <Text style={[styles.summaryTitle, {
                     color: dark ? COLORS.white : COLORS.greyscale900
-                }]}>Selected Items:</Text>
+                }]}>{t('booking.selected_items')}</Text>
                 {Object.values(selectedItems).map(item => (
                     <View key={item.id} style={styles.summaryItem}>
                         <View style={styles.summaryItemInfo}>
@@ -131,7 +153,7 @@ const BookingStep1 = ({ navigation, route }) => {
                             }]}>{item.name}</Text>
                             <Text style={[styles.summaryItemPrice, {
                                 color: dark ? COLORS.white : COLORS.grayscale600
-                            }]}>${item.price} each</Text>
+                            }]}>${item.price} {t('booking.each')}</Text>
                         </View>
                         <View style={styles.summaryItemQuantityContainer}>
                             <Text style={[styles.summaryItemQuantity, {
@@ -154,7 +176,7 @@ const BookingStep1 = ({ navigation, route }) => {
                     <View style={styles.priceRow}>
                         <Text style={[styles.priceLabel, {
                             color: dark ? COLORS.grayscale200 : COLORS.grayscale700
-                        }]}>Base Service (2 hrs):</Text>
+                        }]}>{t('booking.base_service_hours', { hours: 2 })}</Text>
                         <Text style={[styles.priceValue, {
                             color: dark ? COLORS.white : COLORS.greyscale900
                         }]}>${(workerRate || 30) * 2}</Text>
@@ -162,7 +184,7 @@ const BookingStep1 = ({ navigation, route }) => {
                     <View style={styles.priceRow}>
                         <Text style={[styles.priceLabel, {
                             color: dark ? COLORS.grayscale200 : COLORS.grayscale700
-                        }]}>Additional Items:</Text>
+                        }]}>{t('booking.additional_items')}</Text>
                         <Text style={[styles.priceValue, {
                             color: dark ? COLORS.white : COLORS.greyscale900
                         }]}>${Object.values(selectedItems).reduce((sum, item) => sum + (item.price * item.quantity), 0).toFixed(2)}</Text>
@@ -170,7 +192,7 @@ const BookingStep1 = ({ navigation, route }) => {
                     <View style={[styles.priceRow, { marginTop: 8 }]}>
                         <Text style={[styles.totalLabel, {
                             color: dark ? COLORS.white : COLORS.greyscale900
-                        }]}>Total:</Text>
+                        }]}>{t('booking.total')}</Text>
                         <Text style={[styles.totalValue, {
                             color: COLORS.primary
                         }]}>${calculatePrice().toFixed(2)}</Text>
@@ -183,7 +205,7 @@ const BookingStep1 = ({ navigation, route }) => {
     return (
         <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
             <View style={[styles.container, { backgroundColor: colors.background }]}>
-                <Header title={serviceName || "House Cleaning"} />
+                <Header title={serviceName || t('service.unknown_service')} />
                 
                 {/* Single FlatList for better performance */}
                 <FlatList
@@ -191,25 +213,28 @@ const BookingStep1 = ({ navigation, route }) => {
                     keyExtractor={item => item.id}
                     ListHeaderComponent={ListHeaderComponent}
                     ListFooterComponent={ListFooterComponent}
-                    renderItem={({ item }) => (
-                        <BookingItem 
-                            itemId={item.id}
-                            name={item.name}
-                            price={item.price}
-                            description={item.description}
-                            onQuantityChange={(quantity) => {
-                                handleItemChange(
-                                    item.id, 
-                                    item.name, 
-                                    quantity, 
-                                    item.price || 10,
-                                    item.isAddon || false,
-                                    item.addonId || null
-                                );
-                            }}
-                            initialQuantity={selectedItems[item.id]?.quantity || 0}
-                        />
-                    )}
+                    renderItem={({ item }) => {
+                        const displayName = localizeAddonName(item.name);
+                        return (
+                            <BookingItem 
+                                itemId={item.id}
+                                name={displayName}
+                                price={item.price}
+                                description={item.description}
+                                onQuantityChange={(quantity) => {
+                                    handleItemChange(
+                                        item.id, 
+                                        displayName, 
+                                        quantity, 
+                                        item.price || 10,
+                                        item.isAddon || false,
+                                        item.addonId || null
+                                    );
+                                }}
+                                initialQuantity={selectedItems[item.id]?.quantity || 0}
+                            />
+                        );
+                    }}
                     showsVerticalScrollIndicator={false}
                     contentContainerStyle={styles.listContent}
                     // Performance optimizations
@@ -226,7 +251,7 @@ const BookingStep1 = ({ navigation, route }) => {
                 backgroundColor: dark ? COLORS.dark1 : COLORS.white
             }]}>
                 <Button
-                    title={`Continue - $${calculatePrice().toFixed(2)}`}
+                    title={t('booking.continue_with_price', { price: calculatePrice().toFixed(2) })}
                     style={styles.bottomBtn}
                     filled
                     onPress={() => navigation.navigate('BookingDetails', {

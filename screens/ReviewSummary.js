@@ -6,6 +6,7 @@ import Header from '../components/Header';
 import { ScrollView } from 'react-native-virtualized-view';
 import Button from '../components/Button';
 import { useTheme } from '../theme/ThemeProvider';
+import { t } from '../context/LanguageContext';
 
 const ReviewSummary = ({ navigation }) => {
   const [modalVisible, setModalVisible] = useState(false);
@@ -36,14 +37,14 @@ const ReviewSummary = ({ navigation }) => {
                   style={styles.editPencilIcon}
                 />
               </View>
-              <Text style={styles.modalTitle}>Congratulations!</Text>
+              <Text style={styles.modalTitle}>{t('reviews.modal_congrats_title')}</Text>
               <Text style={[styles.modalSubtitle, {
                 color: dark ? COLORS.white : COLORS.black,
               }]}>
-                You have successfully made a payment and booked a service.
+                {t('reviews.modal_congrats_msg')}
               </Text>
               <Button
-                title="Continue"
+                title={t('common.continue')}
                 filled
                 onPress={() => {
                   setModalVisible(false)
@@ -52,7 +53,7 @@ const ReviewSummary = ({ navigation }) => {
                 style={styles.successBtn}
               />
               <Button
-                title="View E-Receipt"
+                title={t('booking.actions.view_e_receipt')}
                 onPress={() => {
                   setModalVisible(false)
                   navigation.navigate("EReceipt")
@@ -81,32 +82,32 @@ const ReviewSummary = ({ navigation }) => {
       <View style={[styles.container, {
         backgroundColor: dark ? COLORS.dark1 : COLORS.white
       }]}>
-        <Header title="Review Summary" />
+        <Header title={t('reviews.screen_title')} />
         <ScrollView showsVerticalScrollIndicator={false}>
 
           <View style={[styles.summaryContainer, {
             backgroundColor: dark ? COLORS.dark2 : COLORS.white,
           }]}>
             <View style={styles.view}>
-              <Text style={styles.viewLeft}>Services</Text>
+              <Text style={styles.viewLeft}>{t('reviews.labels.services')}</Text>
               <Text style={[styles.viewRight, { color: dark ? COLORS.white : COLORS.greyscale900 }]}>House Cleaning</Text>
             </View>
             <View style={styles.view}>
-              <Text style={styles.viewLeft}>Category</Text>
-              <Text style={[styles.viewRight, { color: dark ? COLORS.white : COLORS.greyscale900 }]}>Cleaning</Text>
+              <Text style={styles.viewLeft}>{t('reviews.labels.category')}</Text>
+              <Text style={[styles.viewRight, { color: dark ? COLORS.white : COLORS.greyscale900 }]}>{t('service.category.cleaning')}</Text>
             </View>
 
             <View style={styles.view}>
-              <Text style={styles.viewLeft}>Workers</Text>
+              <Text style={styles.viewLeft}>{t('reviews.labels.workers')}</Text>
               <Text style={[styles.viewRight, { color: dark ? COLORS.white : COLORS.greyscale900 }]}>Jenny Wilson</Text>
             </View>
             <View style={styles.view}>
-              <Text style={styles.viewLeft}>Date & Time</Text>
+              <Text style={styles.viewLeft}>{t('reviews.labels.date_time')}</Text>
               <Text style={[styles.viewRight, { color: dark ? COLORS.white : COLORS.greyscale900 }]}>Dec 23, 2025 | 10:00 AM</Text>
             </View>
             <View style={styles.view}>
-              <Text style={styles.viewLeft}>Working Hours</Text>
-              <Text style={[styles.viewRight, { color: dark ? COLORS.white : COLORS.greyscale900 }]}>2 hours</Text>
+              <Text style={styles.viewLeft}>{t('reviews.labels.working_hours')}</Text>
+              <Text style={[styles.viewRight, { color: dark ? COLORS.white : COLORS.greyscale900 }]}>2 {t('payment.hours')}</Text>
             </View>
           </View>
 
@@ -114,18 +115,18 @@ const ReviewSummary = ({ navigation }) => {
             backgroundColor: dark ? COLORS.dark2 : COLORS.white,
           }]}>
             <View style={styles.view}>
-              <Text style={styles.viewLeft}>Amount</Text>
+              <Text style={styles.viewLeft}>{t('reviews.labels.amount')}</Text>
               <Text style={[styles.viewRight, { color: dark ? COLORS.white : COLORS.greyscale900 }]}>$60</Text>
             </View>
             <View style={styles.view}>
-              <Text style={styles.viewLeft}>Tax</Text>
+              <Text style={styles.viewLeft}>{t('reviews.labels.tax')}</Text>
               <Text style={[styles.viewRight, { color: dark ? COLORS.white : COLORS.greyscale900 }]}>$5.55</Text>
             </View>
             <View style={[styles.separateLine, {
               backgroundColor: dark ? COLORS.greyScale800 : COLORS.grayscale200
             }]} />
             <View style={styles.view}>
-              <Text style={styles.viewLeft}>Total</Text>
+              <Text style={styles.viewLeft}>{t('reviews.labels.total')}</Text>
               <Text style={[styles.viewRight, { color: dark ? COLORS.white : COLORS.greyscale900 }]}>$65.55</Text>
             </View>
           </View>
@@ -146,13 +147,13 @@ const ReviewSummary = ({ navigation }) => {
             </View>
             <TouchableOpacity
               onPress={() => navigation.navigate("AddNewCard")}>
-              <Text style={styles.changeBtnText}>Change</Text>
+              <Text style={styles.changeBtnText}>{t('reviews.actions.change')}</Text>
             </TouchableOpacity>
           </View>
 
         </ScrollView>
         <Button
-          title="Continue"
+          title={t('common.continue')}
           onPress={() => setModalVisible(true)}
           filled
           style={styles.continueBtn}

@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { COLORS, icons } from '../constants';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNotifications } from '../context/NotificationContext';
+import { t } from '../context/LanguageContext';
+
 import { useTheme } from '../theme/ThemeProvider';
 import { useAuth } from '../context/AuthContext';
 import NotificationCard from '../components/NotificationCard';
@@ -53,7 +55,7 @@ const Notifications = ({ navigation }) => {
     console.log('🔔 NOTIFICATION CLICKED - Full notification data:', notification);
     
     if (!isUserAuthenticated()) {
-      Alert.alert('Authentication Required', 'Please log in to view notifications');
+      Alert.alert(t('notifications.auth_required'), t('notifications.please_login'));
       navigation.navigate('Login');
       return;
     }
@@ -121,11 +123,11 @@ const Notifications = ({ navigation }) => {
               console.log('✅ Navigation to Chat completed');
             } else {
               console.error('❌ No conversation ID returned from getOrCreateConversation');
-              Alert.alert('Error', 'Unable to create conversation. Please try again.');
+              Alert.alert(t('common.error'), t('notifications.unable_to_create_conversation'));
             }
           } catch (error) {
             console.error('❌ Error getting conversation:', error);
-            Alert.alert('Error', 'Unable to open chat. Please try again.');
+            Alert.alert(t('common.error'), t('notifications.unable_to_open_chat'));
           }
         } else {
           console.log('⚠️ Message notification missing related_id or related_type is not "user"');
@@ -177,36 +179,36 @@ const Notifications = ({ navigation }) => {
 
   const handleMarkAllAsRead = async () => {
     if (!isUserAuthenticated()) {
-      Alert.alert('Authentication Required', 'Please log in to manage notifications');
+      Alert.alert(t('notifications.auth_required'), t('notifications.please_login'));
       return;
     }
 
     try {
       await markAllAsRead();
     } catch (error) {
-      Alert.alert('Error', 'Failed to mark all notifications as read');
+      Alert.alert(t('common.error'), t('notifications.failed_mark_all'));
     }
   };
 
   const handleClearAll = () => {
     if (!isUserAuthenticated()) {
-      Alert.alert('Authentication Required', 'Please log in to manage notifications');
+      Alert.alert(t('notifications.auth_required'), t('notifications.please_login'));
       return;
     }
 
     Alert.alert(
-      'Clear All Notifications',
-      'Are you sure you want to clear all notifications? This action cannot be undone.',
+      t('notifications.clear_all_title'),
+      t('notifications.clear_all_message'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Clear All',
+          text: t('notifications.clear_all_button'),
           style: 'destructive',
           onPress: async () => {
             try {
               await deleteAll();
             } catch (error) {
-              Alert.alert('Error', 'Failed to clear all notifications');
+              Alert.alert(t('common.error'), t('notifications.failed_clear_all'));
             }
           }
         }
@@ -233,7 +235,8 @@ const Notifications = ({ navigation }) => {
         <View style={styles.headerTitleContainer}>
           <Text style={[styles.headerTitle, {
             color: dark ? COLORS.white : COLORS.greyscale900
-          }]}>Notifications</Text>
+          }]}>{t('notifications.title')}</Text>
+
           {unreadCount > 0 && (
             <View style={styles.unreadBadge}>
               <Text style={styles.unreadBadgeText}>{unreadCount}</Text>
@@ -248,14 +251,16 @@ const Notifications = ({ navigation }) => {
                 style={styles.headerActionButton}>
                 <Text style={[styles.markAllRead, {
                   color: COLORS.primary
-                }]}>Mark All Read</Text>
+                }]}>{t('notifications.mark_all_read')}</Text>
+
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={handleClearAll}
                 style={styles.headerActionButton}>
                 <Text style={[styles.clearAll, {
                   color: COLORS.error
-                }]}>Clear All</Text>
+                }]}>{t('notifications.clear_all')}</Text>
+
               </TouchableOpacity>
             </>
           )}
@@ -263,8 +268,6 @@ const Notifications = ({ navigation }) => {
       </View>
     )
   };
-
-
 
   const renderNotificationItem = ({ item }) => (
     <NotificationCard
@@ -284,11 +287,13 @@ const Notifications = ({ navigation }) => {
           />
           <Text style={[styles.emptyTitle, {
             color: dark ? COLORS.white : COLORS.greyscale900
-          }]}>Login to see notifications</Text>
+          }]}>{t('notifications.login_to_see')}</Text>
+
           <Text style={[styles.emptySubtitle, {
             color: dark ? COLORS.gray3 : COLORS.gray3
           }]}>
-            Sign in to your account to view and manage your notifications
+            {t('notifications.sign_in_to_view')}
+
           </Text>
         </View>
       );
@@ -303,11 +308,13 @@ const Notifications = ({ navigation }) => {
         />
         <Text style={[styles.emptyTitle, {
           color: dark ? COLORS.white : COLORS.greyscale900
-        }]}>No notifications yet</Text>
+        }]}>{t('notifications.empty_title')}</Text>
+
         <Text style={[styles.emptySubtitle, {
           color: dark ? COLORS.gray3 : COLORS.gray3
         }]}>
-          You'll see your notifications here when they arrive
+          {t('notifications.empty_subtitle')}
+
         </Text>
       </View>
     );

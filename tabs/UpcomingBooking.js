@@ -10,6 +10,7 @@ import { useAuth } from '../context/AuthContext';
 import { ActivityIndicator } from 'react-native';
 import { FontAwesome } from "@expo/vector-icons";
 import { supabase } from '../lib/supabase';
+import { t } from '../context/LanguageContext';
 
 const UpcomingBooking = forwardRef((props, ref) => {
   const [bookings, setBookings] = useState([]);
@@ -87,18 +88,18 @@ const UpcomingBooking = forwardRef((props, ref) => {
       refRBSheet.current.close();
       
       // Show success message with cancellation fee info if applicable
-      let alertMessage = "Your booking has been cancelled successfully.";
+      let alertMessage = t('booking.alerts.cancel_success_msg');
       
       if (result && result.cancellation_fee) {
-        alertMessage += `\n\nA cancellation fee of €${result.cancellation_fee} applies due to late cancellation (within 24 hours of service time).`;
+        alertMessage += `\n\n${t('booking.alerts.cancel_success_fee_note', { fee: result.cancellation_fee })}`;
       } else {
-        alertMessage += "\n\nA refund of 80% will be processed according to our policy.";
+        alertMessage += `\n\n${t('booking.alerts.cancel_success_refund_note')}`;
       }
       
       Alert.alert(
-        "Booking Cancelled",
+        t('booking.alerts.cancel_success_title'),
         alertMessage,
-        [{ text: "OK" }]
+        [{ text: t('common.ok') }]
       );
       
       // Refresh the bookings list to reflect the change
@@ -108,12 +109,12 @@ const UpcomingBooking = forwardRef((props, ref) => {
       console.error('❌ Error cancelling booking:', error);
       
       // Show specific error message from backend or generic message
-      const errorMessage = error.message || "Failed to cancel the booking. Please try again or contact support.";
+      const errorMessage = error.message || t('booking.alerts.cancel_failed_generic');
       
       Alert.alert(
-        "Cancellation Failed", 
+        t('booking.alerts.cancel_failed_title'), 
         errorMessage,
-        [{ text: "OK" }]
+        [{ text: t('common.ok') }]
       );
     } finally {
       setCancelling(false);
@@ -139,12 +140,12 @@ const UpcomingBooking = forwardRef((props, ref) => {
           color: dark ? COLORS.secondaryWhite : COLORS.greyscale900,
           textAlign: 'center',
           marginBottom: 8
-        }]}>No Upcoming Bookings</Text>
+        }]}>{t('booking.empty.upcoming_title')}</Text>
         <Text style={[styles.address, {
           color: dark ? COLORS.grayscale400 : COLORS.grayscale700,
           textAlign: 'center',
           marginBottom: 20
-        }]}>You don't have any upcoming bookings at the moment.</Text>
+        }]}>{t('booking.empty.upcoming_sub')}</Text>
       </View>
     );
   }
@@ -178,7 +179,7 @@ const UpcomingBooking = forwardRef((props, ref) => {
                 />
                 <View style={styles.reviewContainer}>
                   <FontAwesome name="star" size={12} color="orange" />
-                  <Text style={styles.rating}>{item.worker?.average_rating || "N/A"}</Text>
+                  <Text style={styles.rating}>{item.worker?.average_rating || t('common.not_available')}</Text>
                 </View>
               </View>
               <View style={styles.detailsRightContainer}>
@@ -187,7 +188,7 @@ const UpcomingBooking = forwardRef((props, ref) => {
                 }]}>
                   {item.worker?.first_name && item.worker?.last_name
                     ? `${item.worker.first_name} ${item.worker.last_name}`
-                    : "Service Provider"}
+                    : t('chat.service_provider')}
                 </Text>
                 <Text style={[styles.address, {
                   color: dark ? COLORS.grayscale400 : COLORS.grayscale700,
@@ -197,7 +198,15 @@ const UpcomingBooking = forwardRef((props, ref) => {
                     <Text style={styles.totalPrice}>€{item.total_amount}</Text>
                   </View>
                   <View style={styles.statusContainer}>
-                    <Text style={styles.statusText}>{item.status}</Text>
+                    <Text style={styles.statusText}>
+                      {item.status === 'confirmed' 
+                        ? t('booking.status.confirmed') 
+                        : item.status === 'pending' 
+                        ? t('booking.status.pending') 
+                        : item.status === 'cancelled' 
+                        ? t('booking.status.cancelled') 
+                        : (item.status || t('common.not_available'))}
+                    </Text>
                   </View>
                 </View>
               </View>
@@ -210,12 +219,12 @@ const UpcomingBooking = forwardRef((props, ref) => {
               <TouchableOpacity
                 onPress={() => openCancelSheet(item)}
                 style={styles.cancelBtn}>
-                <Text style={styles.cancelBtnText}>Cancel Booking</Text>
+                <Text style={styles.cancelBtnText}>{t('booking.actions.cancel_booking')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => navigation.navigate("EReceipt", { bookingId: item.id })}
                 style={styles.receiptBtn}>
-                <Text style={styles.receiptBtnText}>View E-Receipt</Text>
+                <Text style={styles.receiptBtnText}>{t('booking.actions.view_e_receipt')}</Text>
               </TouchableOpacity>
             </View>
           </TouchableOpacity>
@@ -245,7 +254,8 @@ const UpcomingBooking = forwardRef((props, ref) => {
         {/* Bottom sheet content remains the same */}
         <Text style={[styles.bottomSubtitle, {
           color: dark ? COLORS.red : COLORS.red
-        }]}>Cancel Booking</Text>
+        }]}>{t('booking.actions.cancel_booking')}</Text>
+
         <View style={[styles.separateLine, {
           backgroundColor: dark ? COLORS.greyScale800 : COLORS.grayscale200,
         }]} />
@@ -253,15 +263,16 @@ const UpcomingBooking = forwardRef((props, ref) => {
         <View style={styles.selectedCancelContainer}>
           <Text style={[styles.cancelTitle, {
             color: dark ? COLORS.secondaryWhite : COLORS.greyscale900
-          }]}>Are you sure you want to cancel your booking?</Text>
+          }]}>{t('booking.alerts.cancel_confirm_title')}</Text>
           <Text style={[styles.cancelSubtitle, {
             color: dark ? COLORS.grayscale400 : COLORS.grayscale700
-          }]}>Only 80% of the money you can refund from your payment according to our policy.</Text>
+          }]}>{t('booking.alerts.cancel_policy_note')}</Text>
+
         </View>
 
         <View style={styles.bottomContainer}>
           <Button
-            title="Cancel"
+            title={t('common.cancel')}
             style={{
               width: (SIZES.width - 32) / 2 - 8,
               backgroundColor: dark ? COLORS.dark3 : COLORS.tansparentPrimary,
@@ -272,12 +283,13 @@ const UpcomingBooking = forwardRef((props, ref) => {
             onPress={() => refRBSheet.current.close()}
           />
           <Button
-            title={cancelling ? "Cancelling..." : "Yes, Cancel"}
+            title={cancelling ? t('booking.actions.cancelling') : t('booking.actions.yes_cancel')}
             filled
             style={styles.removeButton}
             disabled={cancelling}
             onPress={handleCancelBooking}
           />
+
         </View>
       </RBSheet>
     </View>

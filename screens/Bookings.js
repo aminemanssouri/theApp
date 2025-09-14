@@ -1,10 +1,11 @@
 import { View, Text, StyleSheet, TouchableOpacity, Image, useWindowDimensions,Platform } from 'react-native';
-import React, { useRef, useCallback } from 'react';
+import React, { useRef, useCallback, useMemo } from 'react';
 import { COLORS, SIZES, icons } from '../constants'
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeProvider';
 import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
 import { CancelledBooking, CompletedBooking, UpcomingBooking } from '../tabs';
+import { useI18n } from '../context/LanguageContext';
 
 const renderScene = SceneMap({
   first: UpcomingBooking,
@@ -12,17 +13,17 @@ const renderScene = SceneMap({
   third: CancelledBooking
 });
 
-
 const MyBooking = ({ navigation }) => {
   const layout = useWindowDimensions();
   const { dark, colors } = useTheme();
+  const { t, language } = useI18n();
 
   const [index, setIndex] = React.useState(0);
-  const [routes] = React.useState([
-    { key: 'first', title: 'Upcoming' },
-    { key: 'second', title: 'Completed' },
-    { key: 'third', title: 'Cancelled' }
-  ]);
+  const routes = useMemo(() => ([
+    { key: 'first', title: t('bookings.tab_upcoming') },
+    { key: 'second', title: t('bookings.tab_completed') },
+    { key: 'third', title: t('bookings.tab_cancelled') }
+  ]), [language]);
 
   // Refs to access child component methods
   const upcomingRef = useRef(null);
@@ -92,6 +93,7 @@ const MyBooking = ({ navigation }) => {
       )}
     />
   )
+
   /**
  * Render header
  */
@@ -112,7 +114,7 @@ const MyBooking = ({ navigation }) => {
           <Text style={[styles.headerTitle, {
             color: dark ? COLORS.white : COLORS.greyscale900
           }]}>
-            My Booking
+            {t('bookings.title')}
           </Text>
         </View>
         <TouchableOpacity>

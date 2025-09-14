@@ -9,6 +9,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import Rating from '../components/Rating';
 import Button from '../components/Button';
 import { reviews } from '../data';
+import { t } from '../context/LanguageContext';
 
 const ServiceDetailsReviews = ({ navigation }) => {
     const { colors, dark } = useTheme();
@@ -38,7 +39,7 @@ const ServiceDetailsReviews = ({ navigation }) => {
                     <Text style={[styles.headerTitle, {
                         color: dark ? COLORS.white : COLORS.greyscale900
                     }]}>
-                        4.8 (4,479 reviews)
+                        {t('reviews.summary', { rating: '4.8', count: '4,479' })}
                     </Text>
                 </View>
                 <TouchableOpacity>
@@ -83,20 +84,20 @@ const ServiceDetailsReviews = ({ navigation }) => {
                                     style={styles.editPencilIcon}
                                 />
                             </View>
-                            <Text style={styles.modalTitle}>Booking Completed!</Text>
+                            <Text style={styles.modalTitle}>{t('reviews.modal_congrats_title')}</Text>
                             <Text style={[styles.modalSubtitle, { color: dark ? COLORS.secondaryWhite : COLORS.greyscale900 }]}>
-                                Please leave a review  for others.
+                                {t('reviews.modal_congrats_msg')}
                             </Text>
                             <Rating
                                 color={COLORS.primary}
                             />
                             <TextInput
-                                placeholder="This service is so nice 🔥"
+                                placeholder={t('reviews.placeholder')}
                                 placeholderTextColor={dark ? COLORS.secondaryWhite : COLORS.black}
                                 style={styles.modalInput}
                             />
                             <Button
-                                title="Write Review"
+                                title={t('reviews.actions.write_review')}
                                 filled
                                 onPress={() => {
                                     setModalVisible(false)
@@ -108,7 +109,7 @@ const ServiceDetailsReviews = ({ navigation }) => {
                                 }}
                             />
                             <Button
-                                title="Cancel"
+                                title={t('common.cancel')}
                                 onPress={() => {
                                     setModalVisible(false)
                                 }}
@@ -131,7 +132,7 @@ const ServiceDetailsReviews = ({ navigation }) => {
     ** render content
     */
     const renderContent = () => {
-        const [selectedRating, setSelectedRating] = useState("All");
+        const [selectedRating, setSelectedRating] = useState("all");
 
         const renderRatingButton = (rating) => (
             <TouchableOpacity
@@ -140,11 +141,11 @@ const ServiceDetailsReviews = ({ navigation }) => {
                 onPress={() => setSelectedRating(rating)}
             >
                 <Fontisto name="star" size={12} color={selectedRating === rating ? COLORS.white : COLORS.primary} />
-                <Text style={[styles.ratingButtonText, selectedRating === rating && styles.selectedRatingButtonText]}>{rating}</Text>
+                <Text style={[styles.ratingButtonText, selectedRating === rating && styles.selectedRatingButtonText]}>{rating === 'all' ? t('reviews.filter_all') : rating}</Text>
             </TouchableOpacity>
         );
 
-        const filteredReviews = selectedRating === "All" ? reviews : reviews.filter(review => review.avgRating === selectedRating);
+        const filteredReviews = selectedRating === "all" ? reviews : reviews.filter(review => review.avgRating === selectedRating);
         return (
             <ScrollView
                 showsVerticalScrollIndicator={false}
@@ -152,8 +153,8 @@ const ServiceDetailsReviews = ({ navigation }) => {
                 {/* Horizontal FlatList for rating buttons */}
                 <FlatList
                     horizontal
-                    data={["All", 5, 4, "3", "2", "1"]}
-                    keyExtractor={(item) => item}
+                    data={["all", 5, 4, 3, 2, 1]}
+                    keyExtractor={(item) => String(item)}
                     renderItem={({ item }) => renderRatingButton(item)}
                     showsHorizontalScrollIndicator={false}
                     contentContainerStyle={styles.ratingButtonContainer}

@@ -1,6 +1,7 @@
 import React, { useState, useRef, forwardRef, useImperativeHandle } from 'react';
 import { View, TextInput, StyleSheet, TouchableOpacity, Image, Text } from 'react-native';
 import { COLORS, icons } from '../constants';
+import { t } from '../context/LanguageContext';
 
 /**
  * A standalone search input component that properly maintains focus
@@ -9,7 +10,7 @@ const SearchInputBar = forwardRef(({
   initialValue = '',
   onSearch,
   onChangeText,
-  placeholderText = 'Search services...',
+  placeholderText = t('search.search_services'),
   dark = false,
   showFilter = false,
   onFilterPress

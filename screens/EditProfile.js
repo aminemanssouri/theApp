@@ -16,6 +16,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useAuth } from '../context/AuthContext';
 import { updateUserProfile } from '../lib/services/auth';
 import { supabase } from '../lib/supabase';
+import { t } from '../context/LanguageContext';
 
 // Storage bucket name for profile avatars. Ensure this bucket exists in Supabase Storage.
 const AVATAR_BUCKET = 'profile-images';
@@ -100,7 +101,7 @@ const EditProfile = ({ navigation }) => {
 
       if (uploadError) {
         console.error('Upload error:', uploadError);
-        Alert.alert('Image Upload Failed', uploadError.message || 'Could not upload profile image.');
+        Alert.alert(t('profile.image_upload_failed'), uploadError.message || t('profile.image_upload_failed'));
         throw uploadError;
       }
 
@@ -111,7 +112,7 @@ const EditProfile = ({ navigation }) => {
       return publicUrlData?.publicUrl || null;
     } catch (e) {
       console.error('Failed to upload profile image:', e);
-      Alert.alert('Image Upload Error', e.message || 'Failed to upload profile image.');
+      Alert.alert(t('profile.image_upload_error'), e.message || t('profile.image_upload_error'));
       // Do not block profile update if image upload fails; return previous value
       return userProfile?.profile_picture || null;
     }
@@ -123,7 +124,7 @@ const EditProfile = ({ navigation }) => {
   const [startedDate, setStartedDate] = useState(
     userProfile?.date_of_birth 
       ? getFormatedDate(new Date(userProfile.date_of_birth), "DD/MM/YYYY")
-      : "Select Date of Birth"
+      : null
   );
 
   const handleOnPressStartDate = () => {
@@ -145,7 +146,7 @@ const EditProfile = ({ navigation }) => {
 
   useEffect(() => {
     if (error) {
-      Alert.alert('An error occurred', error)
+      Alert.alert(t('common.error'), error)
     }
   }, [error])
 
@@ -163,7 +164,7 @@ const EditProfile = ({ navigation }) => {
   // Handle profile update
   const handleUpdateProfile = async () => {
     if (!formState.formIsValid) {
-      Alert.alert('Validation Error', 'Please check your input fields');
+      Alert.alert(t('common.error'), t('profile.validation_check_inputs'));
       return;
     }
 
@@ -173,7 +174,7 @@ const EditProfile = ({ navigation }) => {
       const profilePictureUrl = await uploadProfileImageIfNeeded();
 
       // Parse date of birth
-      const dateOfBirth = startedDate !== "Select Date of Birth" 
+      const dateOfBirth = startedDate 
         ? new Date(startedDate.split('/').reverse().join('-')).toISOString()
         : null;
 
@@ -202,11 +203,11 @@ const EditProfile = ({ navigation }) => {
       await refreshUserProfile();
 
       Alert.alert(
-        'Success', 
-        'Profile updated successfully!',
+        t('common.success'), 
+        t('profile.updated_successfully'),
         [
           {
-            text: 'OK',
+            text: t('common.ok'),
             onPress: () => navigation.goBack()
           }
         ]
@@ -214,7 +215,7 @@ const EditProfile = ({ navigation }) => {
 
     } catch (error) {
       console.error('Error updating profile:', error);
-      Alert.alert('Update Failed', error.message || 'Failed to update profile');
+      Alert.alert(t('common.error'), error.message || t('profile.update_failed'));
     } finally {
       setLoading(false);
     }
@@ -327,7 +328,7 @@ const EditProfile = ({ navigation }) => {
   return (
     <SafeAreaView style={[styles.area, { backgroundColor: dark ? COLORS.dark1 : COLORS.white }]}>
       <View style={[styles.container, { backgroundColor: dark ? COLORS.dark1 : COLORS.white }]}>
-        <Header title="Edit Profile" />
+        <Header title={t('profile.edit_profile')} />
         <ScrollView 
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}>
@@ -362,7 +363,7 @@ const EditProfile = ({ navigation }) => {
               id="firstName"
               onInputChanged={inputChangedHandler}
               errorText={formState.inputValidities['firstName']}
-              placeholder="First Name"
+              placeholder={t('profile.fields.first_name')}
               placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
               initialValue={formState.inputValues.firstName}
               containerStyle={styles.inputWrapper}
@@ -372,7 +373,7 @@ const EditProfile = ({ navigation }) => {
               id="lastName"
               onInputChanged={inputChangedHandler}
               errorText={formState.inputValidities['lastName']}
-              placeholder="Last Name"
+              placeholder={t('profile.fields.last_name')}
               placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
               initialValue={formState.inputValues.lastName}
               containerStyle={styles.inputWrapper}
@@ -382,7 +383,7 @@ const EditProfile = ({ navigation }) => {
               id="email"
               onInputChanged={inputChangedHandler}
               errorText={formState.inputValidities['email']}
-              placeholder="Email"
+              placeholder={t('profile.fields.email')}
               placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
               keyboardType="email-address"
               initialValue={formState.inputValues.email}
@@ -399,11 +400,12 @@ const EditProfile = ({ navigation }) => {
               onPress={handleOnPressStartDate}
             >
               <Text style={[styles.datePickerText, { 
-                color: startedDate === "Select Date of Birth" 
+                color: !startedDate 
                   ? (dark ? COLORS.grayTie : COLORS.black)
                   : (dark ? COLORS.white : COLORS.black)
-              }]}>
-                {startedDate === "Select Date of Birth" ? "Date of Birth (Optional)" : startedDate}
+              }]}
+              >
+                {startedDate ? startedDate : t('profile.date_of_birth_optional')}
               </Text>
               <Feather name="calendar" size={20} color={dark ? COLORS.white : COLORS.grayscale400} />
             </TouchableOpacity>
@@ -413,7 +415,7 @@ const EditProfile = ({ navigation }) => {
               id="phoneNumber"
               onInputChanged={inputChangedHandler}
               errorText={formState.inputValidities['phoneNumber']}
-              placeholder="Phone Number (Optional)"
+              placeholder={t('profile.fields.phone_optional')}
               placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
               keyboardType="phone-pad"
               initialValue={formState.inputValues.phoneNumber}
@@ -425,7 +427,7 @@ const EditProfile = ({ navigation }) => {
               id="address"
               onInputChanged={inputChangedHandler}
               errorText={formState.inputValidities['address']}
-              placeholder="Address (Optional)"
+              placeholder={t('profile.fields.address_optional')}
               placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
               initialValue={formState.inputValues.address}
               containerStyle={styles.inputWrapper}
@@ -435,7 +437,7 @@ const EditProfile = ({ navigation }) => {
               id="city"
               onInputChanged={inputChangedHandler}
               errorText={formState.inputValidities['city']}
-              placeholder="City (Optional)"
+              placeholder={t('profile.fields.city_optional')}
               placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
               initialValue={formState.inputValues.city}
               containerStyle={styles.inputWrapper}
@@ -445,7 +447,7 @@ const EditProfile = ({ navigation }) => {
               id="zipCode"
               onInputChanged={inputChangedHandler}
               errorText={formState.inputValidities['zipCode']}
-              placeholder="ZIP Code (Optional)"
+              placeholder={t('profile.fields.zip_optional')}
               placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
               initialValue={formState.inputValues.zipCode}
               containerStyle={styles.inputWrapper}
@@ -455,7 +457,7 @@ const EditProfile = ({ navigation }) => {
               id="occupation"
               onInputChanged={inputChangedHandler}
               errorText={formState.inputValidities['occupation']}
-              placeholder="Occupation (Optional)"
+              placeholder={t('profile.fields.occupation_optional')}
               placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
               initialValue={formState.inputValues.occupation}
               containerStyle={styles.inputWrapper}
@@ -479,7 +481,7 @@ const EditProfile = ({ navigation }) => {
       
       <View style={styles.bottomContainer}>
         <Button
-          title="Update"
+          title={t('common.update')}
           filled
           style={styles.continueButton}
           onPress={handleUpdateProfile}

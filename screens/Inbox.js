@@ -9,6 +9,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { markMessagesRead } from '../lib/services/chat';
+import { t } from '../context/LanguageContext';
 
 const Inbox = ({ navigation }) => {
   const layout = useWindowDimensions();
@@ -18,7 +19,7 @@ const Inbox = ({ navigation }) => {
 
   const [index, setIndex] = React.useState(0);
   const [routes] = React.useState([
-    { key: 'first', title: 'Chats' }
+    { key: 'first', title: t('inbox.chats_tab') }
   ]);
 
   const [showSearch, setShowSearch] = React.useState(false);
@@ -47,10 +48,10 @@ const Inbox = ({ navigation }) => {
       
       // Refresh the conversations list
       // This will trigger a re-render in the Chats component
-      Alert.alert('Success', 'All conversations marked as read');
+      Alert.alert(t('inbox.success'), t('inbox.all_marked_read'));
     } catch (error) {
       console.error('Error marking all as read:', error);
-      Alert.alert('Error', 'Failed to mark all conversations as read');
+      Alert.alert(t('inbox.error'), t('inbox.failed_mark_all'));
     } finally {
       setIsMarkingAllRead(false);
     }
@@ -58,15 +59,15 @@ const Inbox = ({ navigation }) => {
 
   const handleDeleteAll = async () => {
     Alert.alert(
-      'Delete All Conversations',
-      'Are you sure you want to delete all conversations? This action cannot be undone.',
+      t('inbox.delete_all_title'),
+      t('inbox.delete_all_message'),
       [
         {
-          text: 'Cancel',
+          text: t('inbox.cancel'),
           style: 'cancel',
         },
         {
-          text: 'Delete',
+          text: t('inbox.delete'),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -102,10 +103,10 @@ const Inbox = ({ navigation }) => {
                 }
               }
               
-              Alert.alert('Success', 'All conversations deleted');
+              Alert.alert(t('inbox.success'), t('inbox.all_deleted'));
             } catch (error) {
               console.error('Error deleting all conversations:', error);
-              Alert.alert('Error', 'Failed to delete all conversations');
+              Alert.alert(t('inbox.error'), t('inbox.failed_delete_all'));
             } finally {
               setIsDeletingAll(false);
             }
@@ -169,7 +170,7 @@ const Inbox = ({ navigation }) => {
                     </TouchableOpacity>
           <Text style={[styles.headerTitle, {
             color: dark ? COLORS.white : COLORS.greyscale900
-          }]}>Inbox</Text>
+          }]}>{t('inbox.title')}</Text>
         </View>
         <View style={[styles.headerRight, { backgroundColor: colors.background }]}>
           <TouchableOpacity onPress={() => setShowSearch((prev) => !prev)}>
@@ -204,9 +205,9 @@ const Inbox = ({ navigation }) => {
     >
       <Pressable style={styles.modalOverlay} onPress={() => setShowOptions(false)}>
         <View style={[styles.optionsMenu, {
-          backgroundColor: colors.background, 
-          top: 60, 
-          right: 16, 
+          backgroundColor: colors.background,
+          top: 60,
+          right: 16,
           position: 'absolute',
         }]}> 
           <TouchableOpacity 
@@ -214,8 +215,8 @@ const Inbox = ({ navigation }) => {
             onPress={handleMarkAllAsRead}
             disabled={isMarkingAllRead}
           >
-            <Text style={[styles.optionText, {color: dark ? COLORS.white : COLORS.black}]}>
-              {isMarkingAllRead ? 'Marking...' : 'Mark all as read'}
+            <Text style={[styles.optionText, {color: dark ? COLORS.white : COLORS.black}]}> 
+              {isMarkingAllRead ? t('inbox.marking') : t('inbox.mark_all_as_read')}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity 
@@ -223,8 +224,8 @@ const Inbox = ({ navigation }) => {
             onPress={handleDeleteAll}
             disabled={isDeletingAll}
           >
-            <Text style={[styles.optionText, {color: dark ? COLORS.white : COLORS.black}]}>
-              {isDeletingAll ? 'Deleting...' : 'Delete all'}
+            <Text style={[styles.optionText, {color: dark ? COLORS.white : COLORS.black}]}> 
+              {isDeletingAll ? t('inbox.deleting') : t('inbox.delete_all')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -251,7 +252,7 @@ const Inbox = ({ navigation }) => {
               />
               <TextInput
                 style={[styles.searchInput, {color: dark ? COLORS.white : COLORS.black}]}
-                placeholder="Search by name..."
+                placeholder={t('inbox.search_placeholder')}
                 placeholderTextColor={dark ? COLORS.secondaryWhite : 'gray'}
                 value={searchQuery}
                 onChangeText={setSearchQuery}
