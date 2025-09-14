@@ -313,20 +313,41 @@ const Home = ({ navigation }) => {
   };
 
   const renderHeader = () => {
+    // Get user display name
+    const getDisplayName = () => {
+      if (userProfile?.first_name) {
+        return `Hi, ${userProfile.first_name}!`;
+      } else if (user?.email) {
+        return `Hi, ${user.email.split('@')[0]}!`;
+      }
+      return 'Hi, User!';
+    };
+
+    // Get profile image
+    const getProfileImage = () => {
+      if (userProfile?.profile_picture) {
+        return { uri: userProfile.profile_picture };
+      } else {
+        return images.user5; // Default fallback
+      }
+    };
+
     return (
       <View style={styles.headerContainer}>
         <View style={styles.headerLeft}>
           <TouchableOpacity
             onPress={() => navigation.navigate("PersonalProfile")}>
             <Image
-              source={images.user5}
+              source={getProfileImage()}
               resizeMode='cover'
               style={styles.avatar}
             />
           </TouchableOpacity>
           <Text style={[styles.username, { 
             color: dark? COLORS.white : COLORS.greyscale900
-          }]}>{t('home.hi_name', { name: 'Joanna' })}</Text>
+
+          }]}>{getDisplayName()}</Text>
+
         </View>
         <TouchableOpacity
           onPress={handleNotificationPress}

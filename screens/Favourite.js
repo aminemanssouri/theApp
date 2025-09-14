@@ -439,22 +439,18 @@ const Favourite = ({ navigation }) => {
 
 const styles = StyleSheet.create({
     area: {
-        flex: 1,
-        backgroundColor: COLORS.white,
-            paddingTop: Platform.OS === 'android' ? 25 : 0,
-
-    },
-container: {
     flex: 1,
-    backgroundColor: COLORS.white,
-    paddingHorizontal: 16, 
-     marginBottom: 32,
+    paddingTop: Platform.OS === 'android' ? 25 : 0,
+  },
+  container: {
+    flex: 1,
+    paddingHorizontal: 16,
     paddingVertical: 16,
 
   },
     headerContainer: {
         flexDirection: "row",
-            alignItems: "center",
+        alignItems: "center",
         justifyContent: "space-between",
         marginBottom: 14
     },
