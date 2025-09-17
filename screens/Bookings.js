@@ -168,4 +168,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default M
+export default MyBooking
