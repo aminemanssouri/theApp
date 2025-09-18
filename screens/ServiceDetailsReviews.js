@@ -10,6 +10,7 @@ import Rating from '../components/Rating';
 import Button from '../components/Button';
 import reviewsService from '../lib/services/reviews';
 import ReviewStars from '../components/ReviewStars';
+import { t } from '../context/LanguageContext';
 
 const ServiceDetailsReviews = ({ navigation, route }) => {
     const { colors, dark } = useTheme();
@@ -105,7 +106,7 @@ const ServiceDetailsReviews = ({ navigation, route }) => {
             });
 
             if (result.success) {
-                Alert.alert('Success', 'Thank you for your review!');
+                Alert.alert('Success', t('reviews.success_message') || 'Thank you for your review!');
                 setModalVisible(false);
                 setReviewComment('');
                 setReviewRating(5);
@@ -140,7 +141,10 @@ const ServiceDetailsReviews = ({ navigation, route }) => {
                     <Text style={[styles.headerTitle, {
                         color: dark ? COLORS.white : COLORS.greyscale900
                     }]}>
-                        {statistics.average} ({statistics.total} reviews)
+                        {statistics.average > 0 
+                            ? `${statistics.average} (${statistics.total} reviews)`
+                            : t('reviews.title') || 'Reviews'
+                        }
                     </Text>
                 </View>
                 <TouchableOpacity>
@@ -167,9 +171,9 @@ const ServiceDetailsReviews = ({ navigation, route }) => {
                 <View style={styles.statsLeft}>
                     <Text style={[styles.statsNumber, {
                         color: dark ? COLORS.white : COLORS.greyscale900
-                    }]}>{statistics.average}</Text>
+                    }]}>{statistics.average || '0.0'}</Text>
                     <ReviewStars 
-                        review={parseFloat(statistics.average)} 
+                        review={parseFloat(statistics.average) || 0} 
                         size={16}
                         color={COLORS.primary}
                     />
@@ -240,11 +244,13 @@ const ServiceDetailsReviews = ({ navigation, route }) => {
                                     style={styles.editPencilIcon}
                                 />
                             </View>
-                            <Text style={styles.modalTitle}>Booking Completed!</Text>
+                            <Text style={styles.modalTitle}>
+                                {t('reviews.modal_congrats_title') || 'Booking Completed!'}
+                            </Text>
                             <Text style={[styles.modalSubtitle, { 
                                 color: dark ? COLORS.secondaryWhite : COLORS.greyscale900 
                             }]}>
-                                Please leave a review for others.
+                                {t('reviews.modal_congrats_msg') || 'Please leave a review for others.'}
                             </Text>
                             
                             {/* Interactive Star Rating */}
@@ -259,7 +265,7 @@ const ServiceDetailsReviews = ({ navigation, route }) => {
                             </View>
                             
                             <TextInput
-                                placeholder="Share your experience..."
+                                placeholder={t('reviews.placeholder') || 'Share your experience...'}
                                 placeholderTextColor={dark ? COLORS.gray : COLORS.grayscale500}
                                 style={[styles.modalInput, {
                                     backgroundColor: dark ? COLORS.dark3 : COLORS.tansparentPrimary,
@@ -274,7 +280,10 @@ const ServiceDetailsReviews = ({ navigation, route }) => {
                             />
                             
                             <Button
-                                title={submitting ? "Submitting..." : "Write Review"}
+                                title={submitting 
+                                    ? (t('reviews.submitting') || 'Submitting...') 
+                                    : (t('reviews.actions.write_review') || 'Write Review')
+                                }
                                 filled
                                 disabled={submitting}
                                 onPress={handleSubmitReview}
@@ -284,7 +293,7 @@ const ServiceDetailsReviews = ({ navigation, route }) => {
                                 }}
                             />
                             <Button
-                                title="Cancel"
+                                title={t('common.cancel') || 'Cancel'}
                                 onPress={() => {
                                     setModalVisible(false);
                                     setReviewComment('');
@@ -327,7 +336,7 @@ const ServiceDetailsReviews = ({ navigation, route }) => {
                     styles.ratingButtonText, 
                     selectedRating === rating && styles.selectedRatingButtonText
                 ]}>
-                    {rating}
+                    {rating === 'All' ? (t('reviews.filter_all') || 'All') : rating}
                 </Text>
             </TouchableOpacity>
         );
@@ -343,7 +352,9 @@ const ServiceDetailsReviews = ({ navigation, route }) => {
                     <ActivityIndicator size="large" color={COLORS.primary} />
                     <Text style={[styles.loadingText, {
                         color: dark ? COLORS.white : COLORS.greyscale900
-                    }]}>Loading reviews...</Text>
+                    }]}>
+                        {t('reviews.loading') || 'Loading reviews...'}
+                    </Text>
                 </View>
             );
         }
@@ -370,7 +381,7 @@ const ServiceDetailsReviews = ({ navigation, route }) => {
                 {filteredReviews.length > 0 ? (
                     <FlatList
                         data={filteredReviews}
-                        keyExtractor={item => item.id}
+                        keyExtractor={item => item.id?.toString() || Math.random().toString()}
                         renderItem={({ item }) => {
                             // Format review data for ReviewCard
                             const reviewer = item.users || {};
@@ -385,7 +396,7 @@ const ServiceDetailsReviews = ({ navigation, route }) => {
                                     description={item.comment || 'No comment provided'}
                                     avgRating={item.rating}
                                     date={item.created_at}
-                                    numLikes={0} // You can add likes functionality later
+                                    numLikes={item.likes || 0}
                                 />
                             );
                         }}
@@ -396,8 +407,9 @@ const ServiceDetailsReviews = ({ navigation, route }) => {
                             color: dark ? COLORS.gray : COLORS.grayscale700
                         }]}>
                             {selectedRating === "All" 
-                                ? "No reviews yet" 
-                                : `No ${selectedRating}-star reviews`}
+                                ? (t('reviews.no_reviews') || 'No reviews yet')
+                                : (t('reviews.no_rating_reviews', { rating: selectedRating }) || `No ${selectedRating}-star reviews`)
+                            }
                         </Text>
                     </View>
                 )}
@@ -413,31 +425,18 @@ const ServiceDetailsReviews = ({ navigation, route }) => {
             </View>
             {renderModal()}
             
-            {/* Floating test button */}
-            <TouchableOpacity 
-                onPress={() => {
-                    console.log('Test modal triggered');
-                    setModalVisible(true);
-                }}
-                style={{
-                    position: 'absolute',
-                    bottom: 80,
-                    right: 20,
-                    backgroundColor: COLORS.primary,
-                    width: 60,
-                    height: 60,
-                    borderRadius: 30,
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    elevation: 5,
-                    shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: 0.25,
-                    shadowRadius: 3.84,
-                }}
-            >
-                <Text style={{ color: 'white', fontWeight: 'bold' }}>TEST</Text>
-            </TouchableOpacity>
+            {/* Floating test button - Remove in production */}
+            {__DEV__ && (
+                <TouchableOpacity 
+                    onPress={() => {
+                        console.log('Test modal triggered');
+                        setModalVisible(true);
+                    }}
+                    style={styles.testButton}
+                >
+                    <Text style={styles.testButtonText}>TEST</Text>
+                </TouchableOpacity>
+            )}
         </SafeAreaView>
     )
 };
@@ -653,7 +652,28 @@ const styles = StyleSheet.create({
     emptyText: {
         fontSize: 16,
         fontFamily: 'regular'
+    },
+    // Test button (development only)
+    testButton: {
+        position: 'absolute',
+        bottom: 80,
+        right: 20,
+        backgroundColor: COLORS.primary,
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+        justifyContent: 'center',
+        alignItems: 'center',
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+    },
+    testButtonText: {
+        color: 'white', 
+        fontWeight: 'bold'
     }
 })
 
-export default ServiceDetailsReviews
+export default ServiceDetailsReviews;

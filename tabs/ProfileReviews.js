@@ -7,10 +7,14 @@ import { Fontisto } from "@expo/vector-icons";
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../theme/ThemeProvider';
 import reviewsService from '../lib/services/reviews';
+import { t } from '../context/LanguageContext';
 
 const ProfileReviews = ({ worker }) => {
   const navigation = useNavigation();
-  const [selectedRating, setSelectedRating] = useState("All");
+  const { colors, dark } = useTheme();
+  
+  const FILTER_ALL = t('reviews.filter_all') || 'All';
+  const [selectedRating, setSelectedRating] = useState(FILTER_ALL);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [statistics, setStatistics] = useState({
@@ -18,7 +22,6 @@ const ProfileReviews = ({ worker }) => {
     total: 0,
     distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
   });
-  const { colors, dark } = useTheme();
 
   // Load reviews when component mounts or worker changes
   useEffect(() => {
@@ -40,12 +43,14 @@ const ProfileReviews = ({ worker }) => {
     try {
       const result = await reviewsService.getWorkerReviews(worker.id, {
         page: 1,
-        limit: 50
+        limit: 10 // Limit for preview in profile
       });
 
       if (result.success) {
         setReviews(result.data.reviews);
         setStatistics(result.data.statistics);
+      } else {
+        console.error('Failed to fetch reviews:', result.error);
       }
     } catch (error) {
       console.error('Error fetching reviews:', error);
@@ -57,36 +62,54 @@ const ProfileReviews = ({ worker }) => {
   const renderRatingButton = (rating) => (
     <TouchableOpacity
       key={rating.toString()}
-      style={[styles.ratingButton, selectedRating === rating && styles.selectedRatingButton]}
+      style={[
+        styles.ratingButton, 
+        selectedRating === rating && styles.selectedRatingButton
+      ]}
       onPress={() => setSelectedRating(rating)}
     >
-      <Fontisto name="star" size={12} color={selectedRating === rating ? COLORS.white : COLORS.primary} />
-      <Text style={[styles.ratingButtonText, selectedRating === rating && styles.selectedRatingButtonText]}>{rating}</Text>
+      <Fontisto 
+        name="star" 
+        size={12} 
+        color={selectedRating === rating ? COLORS.white : COLORS.primary} 
+      />
+      <Text style={[
+        styles.ratingButtonText, 
+        selectedRating === rating && styles.selectedRatingButtonText
+      ]}>
+        {rating === FILTER_ALL ? FILTER_ALL : rating}
+      </Text>
     </TouchableOpacity>
   );
 
   // Filter reviews based on selected rating
-  const filteredReviews = selectedRating === "All" 
+  const filteredReviews = selectedRating === FILTER_ALL 
     ? reviews 
     : reviews.filter(review => review.rating === parseInt(selectedRating));
 
+  // Show loading state
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={COLORS.primary} />
         <Text style={[styles.loadingText, {
           color: dark ? COLORS.white : COLORS.greyscale900
-        }]}>Loading reviews...</Text>
+        }]}>
+          {t('reviews.loading') || 'Loading reviews...'}
+        </Text>
       </View>
     );
   }
 
+  // Show message if no worker selected
   if (!worker?.id) {
     return (
       <View style={styles.emptyContainer}>
         <Text style={[styles.emptyText, {
           color: dark ? COLORS.gray : COLORS.grayscale700
-        }]}>No worker selected</Text>
+        }]}>
+          {t('reviews.no_worker') || 'No worker selected'}
+        </Text>
       </View>
     );
   }
@@ -95,6 +118,8 @@ const ProfileReviews = ({ worker }) => {
     <ScrollView
       showsVerticalScrollIndicator={false}
       style={[styles.container, { backgroundColor: colors.background }]}>
+      
+      {/* Header with rating summary and "See All" button */}
       <View style={styles.reviewHeaderContainer}>
         <View style={styles.reviewHeaderLeft}>
           <Image
@@ -103,24 +128,26 @@ const ProfileReviews = ({ worker }) => {
             style={styles.starIcon}
           />
           <Text style={[styles.starTitle, { 
-            color: dark? COLORS.white : COLORS.greyscale900
+            color: dark ? COLORS.white : COLORS.greyscale900
           }]}>
-            {"  "}{statistics.average || 0} ({statistics.total || 0} reviews)
+            {"  "}{statistics.average || '0.0'} ({statistics.total || 0} reviews)
           </Text>
         </View>
         <TouchableOpacity
           onPress={() => navigation.navigate("ServiceDetailsReviews", { 
             workerId: worker?.id 
           })}>
-          <Text style={styles.seeAll}>See All</Text>
+          <Text style={styles.seeAll}>
+            {t('common.see_all') || 'See All'}
+          </Text>
         </TouchableOpacity>
       </View>
       
       {/* Rating Filter Buttons */}
       <FlatList
         horizontal
-        data={["All", "5", "4", "3", "2", "1"]}
-        keyExtractor={(item) => item}
+        data={[FILTER_ALL, "5", "4", "3", "2", "1"]}
+        keyExtractor={(item) => item.toString()}
         renderItem={({ item }) => renderRatingButton(item)}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.ratingButtonContainer}
@@ -130,12 +157,13 @@ const ProfileReviews = ({ worker }) => {
       {filteredReviews.length > 0 ? (
         <FlatList
           data={filteredReviews}
-          keyExtractor={item => item.id}
+          keyExtractor={item => item.id?.toString() || Math.random().toString()}
           renderItem={({ item }) => {
+            // Format review data for ReviewCard
             const reviewer = item.users || {};
             const avatar = reviewer.profile_picture 
               ? { uri: reviewer.profile_picture }
-              : images.user1;
+              : images.user1; // fallback image
             
             return (
               <ReviewCard
@@ -144,21 +172,42 @@ const ProfileReviews = ({ worker }) => {
                 description={item.comment || 'No comment provided'}
                 avgRating={item.rating}
                 date={item.created_at}
-                numLikes={0}
+                numLikes={item.likes || 0}
               />
             );
           }}
+          scrollEnabled={false} // Disable scroll since it's inside a ScrollView
         />
       ) : (
         <View style={styles.emptyContainer}>
           <Text style={[styles.emptyText, {
             color: dark ? COLORS.gray : COLORS.grayscale700
           }]}>
-            {selectedRating === "All" 
-              ? "No reviews yet" 
-              : `No ${selectedRating}-star reviews`}
+            {selectedRating === FILTER_ALL 
+              ? (t('reviews.no_reviews') || 'No reviews yet')
+              : (t('reviews.no_rating_reviews', { rating: selectedRating }) || `No ${selectedRating}-star reviews`)
+            }
           </Text>
         </View>
+      )}
+      
+      {/* Show "View All Reviews" button if there are more reviews */}
+      {reviews.length >= 10 && (
+        <TouchableOpacity 
+          style={[styles.viewAllButton, {
+            backgroundColor: dark ? COLORS.dark2 : COLORS.white,
+            borderColor: COLORS.primary
+          }]}
+          onPress={() => navigation.navigate("ServiceDetailsReviews", { 
+            workerId: worker?.id 
+          })}
+        >
+          <Text style={[styles.viewAllButtonText, {
+            color: COLORS.primary
+          }]}>
+            {t('reviews.view_all') || 'View All Reviews'}
+          </Text>
+        </TouchableOpacity>
       )}
     </ScrollView>
   )
@@ -219,6 +268,7 @@ const styles = StyleSheet.create({
   selectedRatingButtonText: {
     color: COLORS.white,
   },
+  // Loading and empty states
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -239,6 +289,21 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 16,
     fontFamily: 'regular'
+  },
+  // View all button
+  viewAllButton: {
+    marginTop: 16,
+    marginBottom: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    borderWidth: 1,
+    alignItems: 'center',
+    alignSelf: 'center'
+  },
+  viewAllButtonText: {
+    fontSize: 16,
+    fontFamily: 'semiBold'
   }
 })
 

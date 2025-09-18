@@ -6,6 +6,7 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../theme/ThemeProvider';
 import { useAuth } from '../context/AuthContext';
 import { getCompletedBookings } from '../lib/services/booking';
+import { t } from '../context/LanguageContext';
 
 const MyBookingCompleted = () => {
   const navigation = useNavigation();
@@ -84,11 +85,11 @@ const MyBookingCompleted = () => {
           marginBottom: 8,
           fontSize: 18,
           fontFamily: 'bold'
-        }}>No Completed Bookings</Text>
+        }}>{t('booking.empty.completed_title')}</Text>
         <Text style={{
           color: dark ? COLORS.grayscale400 : COLORS.grayscale700,
           textAlign: 'center'
-        }}>You don't have any completed bookings yet.</Text>
+        }}>{t('booking.empty.completed_sub')}</Text>
       </View>
     );
   }
@@ -111,12 +112,12 @@ const MyBookingCompleted = () => {
             <View style={styles.statusContainer}>
               <Text style={[styles.typeText, { 
                 color: dark ? COLORS.white : COLORS.greyscale900
-              }]}>{item.service?.name || 'Service'}</Text>
+              }]}>{item.service?.name || t('payment.service')}</Text>
               <Text style={[styles.statusText, { 
                 color: COLORS.green, 
                 marginLeft: 12 
-              }]}>
-                Completed
+              }]}> 
+                {t('booking.status.completed')}
               </Text>
             </View>
             <View style={styles.infoContainer}>
@@ -137,8 +138,8 @@ const MyBookingCompleted = () => {
                     color: dark ? COLORS.white : COLORS.greyscale900
                   }]}>
                     {item.worker?.first_name && item.worker?.last_name
-                      ? `${item.worker.first_name} ${item.worker.last_name}`
-                      : "Service Provider"}
+                    ? `${item.worker.first_name} ${item.worker.last_name}`
+                    : t('chat.service_provider')}
                   </Text>
                   <View style={styles.itemSubDetails}>
                     <Text style={[styles.itemPrice, { 
@@ -154,7 +155,7 @@ const MyBookingCompleted = () => {
                   </View>
                 </View>
               </View>
-              <Text style={styles.receiptText}>Receipt</Text>
+              <Text style={styles.receiptText}>{t('booking.actions.receipt')}</Text>
             </View>
             <View style={styles.actionsContainer}>
               <TouchableOpacity
@@ -168,12 +169,12 @@ const MyBookingCompleted = () => {
                   workerRate: item.worker?.rate || item.worker?.hourly_rate
                 })}
                 style={styles.rateButton}>
-                <Text style={styles.rateButtonText}>Re-book</Text>
+                <Text style={styles.rateButtonText}>{t('booking.actions.rebook')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => navigation.navigate("EReceipt", { bookingId: item.id })}
                 style={styles.reorderButton}>
-                <Text style={styles.reorderButtonText}>View</Text>
+                <Text style={styles.reorderButtonText}>{t('booking.actions.view')}</Text>
               </TouchableOpacity>
             </View>
           </View>

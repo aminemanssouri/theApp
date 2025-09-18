@@ -10,6 +10,7 @@ import { useAuth } from '../context/AuthContext';
 import { getWorkerDetails } from '../lib/services/workers';
 import { createConversation, getUserConversations } from '../lib/services/chat';
 import { findOrCreateConversation } from '../lib/services/chat-helper';
+import { t } from '../context/LanguageContext';
 
 // We'll create a custom scene renderer instead of using SceneMap
 // This allows us to pass props to our tab components
@@ -36,8 +37,8 @@ const WorkerDetails = ({ route, navigation }) => {
 
   const [index, setIndex] = useState(0);
   const [routes] = useState([
-    { key: 'first', title: 'Services' },
-    { key: 'second', title: 'Reviews' }
+    { key: 'first', title: t('worker.services_tab') },
+    { key: 'second', title: t('worker.reviews_tab') }
   ]);
   
   const [worker, setWorker] = useState(null);
@@ -95,7 +96,7 @@ const WorkerDetails = ({ route, navigation }) => {
       });
     } catch (err) {
       console.error('Error starting conversation:', err);
-      Alert.alert('Error', 'Could not start conversation. Please try again.');
+      Alert.alert(t('common.error'), t('chat.could_not_start_try_again'));
     } finally {
       setLoading(false);
     }
@@ -159,7 +160,7 @@ const WorkerDetails = ({ route, navigation }) => {
       return (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={COLORS.primary} />
-          <Text style={styles.loadingText}>Loading worker details...</Text>
+          <Text style={styles.loadingText}>{t('worker.loading_details')}</Text>
         </View>
       );
     }
@@ -174,10 +175,10 @@ const WorkerDetails = ({ route, navigation }) => {
           />
           <Text style={[styles.fullName, { 
             color: dark ? COLORS.white : COLORS.greyscale900
-          }]}>{worker?.full_name || 'Professional'}</Text>
+          }]}>{worker?.full_name || t('worker.professional')}</Text>
           <Text style={[styles.yearExperience, {
             color: dark ? COLORS.secondaryWhite : COLORS.greyscale900
-          }]}>{worker?.years_experience || '5'} years experience</Text>
+          }]}>{t('worker.years_experience', { years: worker?.years_experience || '5' })}</Text>
           <View style={styles.reviewContainer}>
             <ReviewStars review={5} size={14} color="orange" />
             <Text style={[styles.ratingNum, { 
@@ -193,7 +194,7 @@ const WorkerDetails = ({ route, navigation }) => {
               }]}>{worker?.total_reviews || '100'}+</Text>
               <Text style={[styles.viewText, { 
                 color: dark ? COLORS.secondaryWhite : COLORS.greyscale900
-              }]}>Reviews</Text>
+              }]}>{t('worker.reviews_label')}</Text>
             </View>
             <View style={styles.view}>
               <Text style={[styles.viewNum, { 
@@ -201,7 +202,7 @@ const WorkerDetails = ({ route, navigation }) => {
               }]}>{worker?.ongoing_jobs || '50'}+</Text>
               <Text style={[styles.viewText, { 
                 color: dark ? COLORS.secondaryWhite : COLORS.greyscale900
-              }]}>Ongoing</Text>
+              }]}>{t('worker.ongoing_label')}</Text>
             </View>
             <View style={styles.viewLeft}>
               <Text style={[styles.viewNum, { 
@@ -209,7 +210,7 @@ const WorkerDetails = ({ route, navigation }) => {
               }]}>{worker?.total_clients || '200'}+</Text>
               <Text style={[styles.viewText, { 
                 color: dark ? COLORS.secondaryWhite : COLORS.greyscale900
-              }]}>Client</Text>
+              }]}>{t('worker.client_label')}</Text>
             </View>
           </View>
 
@@ -222,7 +223,7 @@ const WorkerDetails = ({ route, navigation }) => {
                 resizeMode='contain'
                 style={styles.buttonActionIcon}
               />
-              <Text style={styles.buttonActionText}>Message</Text>
+              <Text style={styles.buttonActionText}>{t('chat.message')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => navigation.navigate("BookingStep1", {
@@ -238,7 +239,7 @@ const WorkerDetails = ({ route, navigation }) => {
                 resizeMode='contain'
                 style={styles.buttonActionIconRight}
               />
-              <Text style={styles.buttonActionTextRight}>Book Now</Text>
+              <Text style={styles.buttonActionTextRight}>{t('booking.book_now')}</Text>
             </TouchableOpacity>
           </View>
 

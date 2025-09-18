@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet, ScrollView, Image, Alert, TouchableWithoutFeedback, Modal } from 'react-native';
+
 import React, { useCallback, useEffect, useReducer, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SIZES, icons, illustrations } from '../constants';
@@ -9,6 +10,7 @@ import Input from '../components/Input';
 import Checkbox from 'expo-checkbox';
 import Button from '../components/Button';
 import { useTheme } from '../theme/ThemeProvider';
+import { t } from '../context/LanguageContext';
 
 const isTestMode = true;
 
@@ -41,7 +43,7 @@ const ChangeEmail = ({ navigation }) => {
 
   useEffect(() => {
     if (error) {
-      Alert.alert('An error occured', error)
+      Alert.alert(t('common.error'), error)
     }
   }, [error])
 
@@ -61,10 +63,10 @@ const ChangeEmail = ({ navigation }) => {
                 resizeMode='contain'
                 style={styles.modalIllustration}
               />
-              <Text style={styles.modalTitle}>Congratulations!</Text>
-              <Text style={styles.modalSubtitle}>Your account is ready to use. You will be redirected to the Home page in a few seconds..</Text>
+              <Text style={styles.modalTitle}>{t('auth.congratulations')}</Text>
+              <Text style={styles.modalSubtitle}>{t('auth.account_ready_redirect')}</Text>
               <Button
-                title="Continue"
+                title={t('common.continue')}
                 filled
                 onPress={() => {
                   setModalVisible(false)
@@ -85,7 +87,8 @@ const ChangeEmail = ({ navigation }) => {
   return (
     <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <Header title="Change Email"/>
+        <Header title={t('settings.security.change_email')}/>
+
         <ScrollView showsVerticalScrollIndicator={false}>
           <View style={styles.logoContainer}>
             <Image
@@ -94,12 +97,12 @@ const ChangeEmail = ({ navigation }) => {
               style={styles.success}
             />
           </View>
-          <Text style={[styles.title, { color: dark ? COLORS.white : COLORS.black }]}>Reset Email</Text>
+          <Text style={[styles.title, { color: dark ? COLORS.white : COLORS.black }]}>{t('settings.security.reset_email')}</Text>
           <Input
             id="email"
             onInputChanged={inputChangedHandler}
             errorText={formState.inputValidities['email']}
-            placeholder="Old Email"
+            placeholder={t('settings.security.old_email')}
             placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
             icon={icons.email}
             keyboardType="email-address"
@@ -108,7 +111,7 @@ const ChangeEmail = ({ navigation }) => {
             id="newEmail"
             onInputChanged={inputChangedHandler}
             errorText={formState.inputValidities['newEmail']}
-            placeholder="New Email"
+            placeholder={t('settings.security.new_email')}
             placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
             icon={icons.email}
             keyboardType="email-address"
@@ -123,7 +126,7 @@ const ChangeEmail = ({ navigation }) => {
                 onValueChange={setChecked}
               />
               <View style={{ flex: 1 }}>
-                <Text style={[styles.privacy, { color: dark ? COLORS.white : COLORS.black }]}>Remenber me</Text>
+                <Text style={[styles.privacy, { color: dark ? COLORS.white : COLORS.black }]}>{t('settings.security.remember_me')}</Text>
               </View>
             </View>
           </View>
@@ -131,11 +134,12 @@ const ChangeEmail = ({ navigation }) => {
           </View>
         </ScrollView>
         <Button
-          title="Continue"
+          title={t('common.continue')}
           filled
           onPress={() => setModalVisible(true)}
           style={styles.button}
         />
+
         {renderModal()}
       </View>
     </SafeAreaView>

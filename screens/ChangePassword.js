@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet, ScrollView, Image, Alert, TouchableWithoutFeedback, Modal } from 'react-native';
+
 import React, { useCallback, useEffect, useReducer, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SIZES, icons, illustrations } from '../constants';
@@ -9,6 +10,7 @@ import Input from '../components/Input';
 import Checkbox from 'expo-checkbox';
 import Button from '../components/Button';
 import { useTheme } from '../theme/ThemeProvider';
+import { t } from '../context/LanguageContext';
 
 const isTestMode = true;
 
@@ -25,7 +27,6 @@ const initialState = {
   },
   formIsValid: false,
 }
-
 
 const ChangePassword = ({ navigation }) => {
   const [formState, dispatchFormState] = useReducer(reducer, initialState);
@@ -45,7 +46,7 @@ const ChangePassword = ({ navigation }) => {
 
   useEffect(() => {
     if (error) {
-      Alert.alert('An error occured', error)
+      Alert.alert(t('common.error'), error)
     }
   }, [error])
 
@@ -65,10 +66,10 @@ const ChangePassword = ({ navigation }) => {
                 resizeMode='contain'
                 style={styles.modalIllustration}
               />
-              <Text style={styles.modalTitle}>Congratulations!</Text>
-              <Text style={styles.modalSubtitle}>Your account is ready to use. You will be redirected to the Home page in a few seconds..</Text>
+              <Text style={styles.modalTitle}>{t('auth.congratulations')}</Text>
+              <Text style={styles.modalSubtitle}>{t('auth.account_ready_redirect')}</Text>
               <Button
-                title="Continue"
+                title={t('common.continue')}
                 filled
                 onPress={() => {
                   setModalVisible(false)
@@ -89,7 +90,7 @@ const ChangePassword = ({ navigation }) => {
   return (
     <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <Header title="Change Password"/>
+        <Header title={t('settings.security.change_password')}/>
         <ScrollView showsVerticalScrollIndicator={false}>
           <View style={styles.logoContainer}>
             <Image
@@ -98,13 +99,13 @@ const ChangePassword = ({ navigation }) => {
               style={styles.success}
             />
           </View>
-          <Text style={[styles.title, { color: dark ? COLORS.white : COLORS.black }]}>Reset Password</Text>
+          <Text style={[styles.title, { color: dark ? COLORS.white : COLORS.black }]}>{t('auth.reset_password')}</Text>
           <Input
             onInputChanged={inputChangedHandler}
             errorText={formState.inputValidities['password']}
             autoCapitalize="none"
             id="password"
-            placeholder="Old Password"
+            placeholder={t('settings.security.old_password')}
             placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
             icon={icons.padlock}
             secureTextEntry={true}
@@ -114,7 +115,7 @@ const ChangePassword = ({ navigation }) => {
             errorText={formState.inputValidities['newPassword']}
             autoCapitalize="none"
             id="newPassword"
-            placeholder="New Password"
+            placeholder={t('settings.security.new_password')}
             placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
             icon={icons.padlock}
             secureTextEntry={true}
@@ -124,7 +125,7 @@ const ChangePassword = ({ navigation }) => {
             errorText={formState.inputValidities['confirmNewPassword']}
             autoCapitalize="none"
             id="confirmNewPassword"
-            placeholder="Confirm New Password"
+            placeholder={t('settings.security.confirm_new_password')}
             placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
             icon={icons.padlock}
             secureTextEntry={true}
@@ -138,7 +139,7 @@ const ChangePassword = ({ navigation }) => {
                 onValueChange={setChecked}
               />
               <View style={{ flex: 1 }}>
-                <Text style={[styles.privacy, { color: dark ? COLORS.white : COLORS.black }]}>Remenber me</Text>
+                <Text style={[styles.privacy, { color: dark ? COLORS.white : COLORS.black }]}>{t('settings.security.remember_me')}</Text>
               </View>
             </View>
           </View>
@@ -146,7 +147,7 @@ const ChangePassword = ({ navigation }) => {
           </View>
         </ScrollView>
         <Button
-          title="Continue"
+          title={t('common.continue')}
           filled
           onPress={() => setModalVisible(true)}
           style={styles.button}

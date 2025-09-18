@@ -8,6 +8,7 @@ import Header from '../components/Header';
 import GlobalSettingsItem from '../components/GlobalSettingsItem';
 import { useTheme } from '../theme/ThemeProvider';
 import { useAuth } from '../context/AuthContext';
+import { t } from '../context/LanguageContext';
 import { 
   getNotificationSettings, 
   updateNotificationSettings,
@@ -33,7 +34,7 @@ const SettingsNotifications = () => {
       setSettings(userSettings);
     } catch (error) {
       console.error('Error loading notification settings:', error);
-      Alert.alert('Error', 'Failed to load notification settings');
+      Alert.alert(t('common.error'), t('settings.notifications.failed_load'));
     } finally {
       setLoading(false);
     }
@@ -48,7 +49,7 @@ const SettingsNotifications = () => {
       await updateNotificationSettings(user.id, newSettings);
     } catch (error) {
       console.error('Error updating notification setting:', error);
-      Alert.alert('Error', 'Failed to update notification setting');
+      Alert.alert(t('common.error'), t('settings.notifications.failed_update'));
       // Revert the change
       setSettings(settings);
     }
@@ -110,31 +111,31 @@ const SettingsNotifications = () => {
     <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <StatusBar hidden/>
-        <Header title="Notifications"/>
+        <Header title={t('settings.notifications.title')}/>
         <ScrollView
           style={styles.settingsContainer}
           showsVerticalScrollIndicator={false}>
           
           {/* General Settings */}
           <GlobalSettingsItem
-            title="General Notifications"
-            subtitle="Enable all notifications"
+            title={t('settings.notifications.general_notifications')}
+            subtitle={t('settings.notifications.general_notifications_sub')}
             isNotificationEnabled={settings.general_enabled}
             toggleNotificationEnabled={toggleGeneralNotifications}
             disabled={loading}
           />
           
           <GlobalSettingsItem
-            title="Sound"
-            subtitle="Play sound for notifications"
+            title={t('settings.notifications.sound')}
+            subtitle={t('settings.notifications.sound_sub')}
             isNotificationEnabled={settings.sound_enabled}
             toggleNotificationEnabled={toggleSound}
             disabled={loading || !settings.general_enabled}
           />
           
           <GlobalSettingsItem
-            title="Vibrate"
-            subtitle="Vibrate for notifications"
+            title={t('settings.notifications.vibrate')}
+            subtitle={t('settings.notifications.vibrate_sub')}
             isNotificationEnabled={settings.vibrate_enabled}
             toggleNotificationEnabled={toggleVibrate}
             disabled={loading || !settings.general_enabled}
@@ -142,8 +143,8 @@ const SettingsNotifications = () => {
 
           {/* Message Notifications */}
           <GlobalSettingsItem
-            title="Message Notifications"
-            subtitle="New messages from providers"
+            title={t('settings.notifications.message_notifications')}
+            subtitle={t('settings.notifications.message_notifications_sub')}
             isNotificationEnabled={settings.message_notifications}
             toggleNotificationEnabled={toggleMessageNotifications}
             disabled={loading || !settings.general_enabled}
@@ -151,8 +152,8 @@ const SettingsNotifications = () => {
 
           {/* Booking Notifications */}
           <GlobalSettingsItem
-            title="Booking Notifications"
-            subtitle="Booking updates and reminders"
+            title={t('settings.notifications.booking_notifications')}
+            subtitle={t('settings.notifications.booking_notifications_sub')}
             isNotificationEnabled={settings.booking_notifications}
             toggleNotificationEnabled={toggleBookingNotifications}
             disabled={loading || !settings.general_enabled}
@@ -160,8 +161,8 @@ const SettingsNotifications = () => {
 
           {/* Payment Notifications */}
           <GlobalSettingsItem
-            title="Payment Notifications"
-            subtitle="Payment confirmations and updates"
+            title={t('settings.notifications.payment_notifications')}
+            subtitle={t('settings.notifications.payment_notifications_sub')}
             isNotificationEnabled={settings.payment_enabled}
             toggleNotificationEnabled={togglePayments}
             disabled={loading || !settings.general_enabled}
@@ -169,24 +170,24 @@ const SettingsNotifications = () => {
 
           {/* Promotional Notifications */}
           <GlobalSettingsItem
-            title="Promo & Discount"
-            subtitle="Special offers and discounts"
+            title={t('settings.notifications.promo_discount')}
+            subtitle={t('settings.notifications.promo_discount_sub')}
             isNotificationEnabled={settings.promo_discount_enabled}
             toggleNotificationEnabled={toggleDiscountEnabled}
             disabled={loading || !settings.general_enabled}
           />
 
           <GlobalSettingsItem
-            title="Special Offers"
-            subtitle="Exclusive deals and promotions"
+            title={t('settings.notifications.special_offers')}
+            subtitle={t('settings.notifications.special_offers_sub')}
             isNotificationEnabled={settings.special_offers_enabled}
             toggleNotificationEnabled={toggleSpecialOffers}
             disabled={loading || !settings.general_enabled}
           />
 
           <GlobalSettingsItem
-            title="Cashback"
-            subtitle="Cashback rewards and updates"
+            title={t('settings.notifications.cashback')}
+            subtitle={t('settings.notifications.cashback_sub')}
             isNotificationEnabled={settings.cashback_enabled}
             toggleNotificationEnabled={toggleCashback}
             disabled={loading || !settings.general_enabled}
@@ -194,32 +195,32 @@ const SettingsNotifications = () => {
 
           {/* System Notifications */}
           <GlobalSettingsItem
-            title="System Notifications"
-            subtitle="App updates and system messages"
+            title={t('settings.notifications.system_notifications')}
+            subtitle={t('settings.notifications.system_notifications_sub')}
             isNotificationEnabled={settings.system_notifications}
             toggleNotificationEnabled={toggleSystemNotifications}
             disabled={loading || !settings.general_enabled}
           />
 
           <GlobalSettingsItem
-            title="App Updates"
-            subtitle="New app versions and features"
+            title={t('settings.notifications.app_updates')}
+            subtitle={t('settings.notifications.app_updates_sub')}
             isNotificationEnabled={settings.app_updates_enabled}
             toggleNotificationEnabled={toggleAppUpdates}
             disabled={loading || !settings.general_enabled || !settings.system_notifications}
           />
 
           <GlobalSettingsItem
-            title="New Service Available"
-            subtitle="New services in your area"
+            title={t('settings.notifications.new_service')}
+            subtitle={t('settings.notifications.new_service_sub')}
             isNotificationEnabled={settings.new_service_enabled}
             toggleNotificationEnabled={toggleNewServiceAvailable}
             disabled={loading || !settings.general_enabled}
           />
 
           <GlobalSettingsItem
-            title="New Tips Available"
-            subtitle="Helpful tips and guides"
+            title={t('settings.notifications.new_tips')}
+            subtitle={t('settings.notifications.new_tips_sub')}
             isNotificationEnabled={settings.new_tips_enabled}
             toggleNotificationEnabled={toggleNewTipsAvailable}
             disabled={loading || !settings.general_enabled}

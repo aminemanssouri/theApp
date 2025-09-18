@@ -20,6 +20,7 @@ import { STRIPE_PUBLISHABLE_KEY } from '../config/stripe.config';
 import { processStripePayment } from '../lib/services/payment';
 import { createBooking } from '../lib/services/booking';
 import { supabase } from '../lib/supabase';
+import { t } from '../context/LanguageContext';
 
 const CreditCardPayment = ({ navigation, route }) => {
   const { dark, colors } = useTheme();
@@ -33,7 +34,7 @@ const CreditCardPayment = ({ navigation, route }) => {
 
   const handlePayment = async () => {
     if (!cardDetails?.complete || !name || !email) {
-      Alert.alert('Error', 'Please fill in all fields');
+      Alert.alert(t('common.error'), t('auth.please_fill_all_fields'));
       return;
     }
 
@@ -64,17 +65,17 @@ const CreditCardPayment = ({ navigation, route }) => {
 
         if (!bookingError) {
           Alert.alert(
-            'Success!', 
-            'Payment processed and booking confirmed!',
-            [{ text: 'OK', onPress: () => navigation.navigate('Main') }]
+            t('common.success'), 
+            t('payment.payment_processed_booking_confirmed'),
+            [{ text: t('common.ok', 'OK'), onPress: () => navigation.navigate('Main') }]
           );
         }
       } else {
-        Alert.alert('Payment Failed', paymentResult.error || 'Please try again');
+        Alert.alert(t('payment.payment_failed'), paymentResult.error || t('payment.please_try_again'));
       }
     } catch (error) {
       console.error('Payment error:', error);
-      Alert.alert('Error', 'Failed to process payment');
+      Alert.alert(t('common.error'), t('payment.failed_to_process'));
     } finally {
       setLoading(false);
     }
@@ -92,7 +93,7 @@ const CreditCardPayment = ({ navigation, route }) => {
               <Ionicons name="arrow-back" size={24} color={dark ? COLORS.white : COLORS.black} />
             </TouchableOpacity>
             <Text style={[styles.headerTitle, { color: dark ? COLORS.white : COLORS.black }]}>
-              Card Payment
+              {t('payment.card_payment')}
             </Text>
             <View style={{ width: 24 }} />
           </View>
@@ -108,7 +109,7 @@ const CreditCardPayment = ({ navigation, route }) => {
               <Text style={[styles.amountLabel, { 
                 color: dark ? COLORS.gray : COLORS.grayscale700 
               }]}>
-                Total Amount
+                {t('payment.total_amount')}
               </Text>
               <Text style={[styles.amount, { 
                 color: COLORS.primary 
@@ -131,14 +132,14 @@ const CreditCardPayment = ({ navigation, route }) => {
                 <Text style={[styles.label, { 
                   color: dark ? COLORS.white : COLORS.black 
                 }]}>
-                  Cardholder Name
+                  {t('payment.cardholder_name')}
                 </Text>
                 <TextInput
                   style={[styles.input, { 
                     backgroundColor: dark ? COLORS.dark2 : COLORS.tertiaryWhite,
                     color: dark ? COLORS.white : COLORS.black
                   }]}
-                  placeholder="John Doe"
+                  placeholder={t('payment.cardholder_name_placeholder')}
                   placeholderTextColor={COLORS.gray}
                   value={name}
                   onChangeText={setName}
@@ -152,14 +153,14 @@ const CreditCardPayment = ({ navigation, route }) => {
                 }]}
                 testID="emailLabel"
                 >
-                  Email Address
+                  {t('payment.email_address')}
                 </Text>
                 <TextInput
                   style={[styles.input, { 
                     backgroundColor: dark ? COLORS.dark2 : COLORS.tertiaryWhite,
                     color: dark ? COLORS.white : COLORS.black
                   }]}
-                  placeholder="john@example.com"
+                  placeholder={t('payment.email_placeholder')}
                   placeholderTextColor={COLORS.gray}
                   value={email}
                   onChangeText={setEmail}
@@ -175,7 +176,7 @@ const CreditCardPayment = ({ navigation, route }) => {
                 }]}
                 testID="cardDetailsLabel"
                 >
-                  Card Details
+                  {t('payment.card_details')}
                 </Text>
                 
                 {/* Card Number - Full Width */}
@@ -209,7 +210,7 @@ const CreditCardPayment = ({ navigation, route }) => {
                 }]}
                 testID="cardDetailsInfoText"
                 >
-                  Enter your card number, expiry date, CVC and postal code
+                  {t('payment.card_details_help')}
                 </Text>
               </View>
 
@@ -233,7 +234,7 @@ const CreditCardPayment = ({ navigation, route }) => {
                 <Text style={[styles.securityText, {
                   color: dark ? COLORS.grayscale200 : COLORS.grayscale700
                 }]}>
-                  Your payment info is stored securely using Stripe
+                  {t('payment.secure_note_stripe')}
                 </Text>
               </View>
             </View>
@@ -250,7 +251,7 @@ const CreditCardPayment = ({ navigation, route }) => {
                 <ActivityIndicator color={COLORS.white} />
               ) : (
                 <Text style={styles.payButtonText}>
-                  Pay €{price || 0}
+                  {t('payment.pay_amount', { amount: price || 0 })}
                 </Text>
               )}
             </TouchableOpacity>

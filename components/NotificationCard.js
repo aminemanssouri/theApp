@@ -3,6 +3,7 @@ import React from 'react';
 import { COLORS, SIZES, icons } from '../constants';
 import { getTimeAgo } from '../utils/date';
 import { useTheme } from '../theme/ThemeProvider';
+import { t } from '../context/LanguageContext';
 
 const NotificationCard = ({ 
   notification, 
@@ -33,6 +34,17 @@ const NotificationCard = ({
     }
   };
 
+  const localizeAction = (code) => {
+    if (!code) return '';
+    const key = `notifications.actions.${code}`;
+    const localized = t(key);
+    // If t() falls back to the key path string, use prettified code instead
+    if (typeof localized === 'string' && localized.startsWith('notifications.actions.')) {
+      return code.replace(/_/g, ' ');
+    }
+    return localized;
+  };
+
   const getNotificationColor = () => {
     switch (type) {
       case 'message':
@@ -57,6 +69,45 @@ const NotificationCard = ({
       return sender.display_name || `${sender.first_name} ${sender.last_name}`;
     }
     return null;
+  };
+
+  const getLocalizedTitle = () => {
+    switch (type) {
+      case 'message':
+        return t('notifications.generic_titles.message');
+      case 'booking':
+        return t('notifications.generic_titles.booking');
+      case 'payment':
+        return t('notifications.generic_titles.payment');
+      case 'promo':
+        return t('notifications.generic_titles.promo');
+      case 'system':
+        return t('notifications.generic_titles.system');
+      case 'reminder':
+        return t('notifications.generic_titles.reminder');
+      default:
+        return title;
+    }
+  };
+
+  const getLocalizedMessage = () => {
+    const name = getSenderName();
+    switch (type) {
+      case 'message':
+        return t('notifications.generic_messages.message', { name: name || t('chat.service_provider') });
+      case 'booking':
+        return t('notifications.generic_messages.booking');
+      case 'payment':
+        return t('notifications.generic_messages.payment');
+      case 'promo':
+        return t('notifications.generic_messages.promo');
+      case 'system':
+        return t('notifications.generic_messages.system');
+      case 'reminder':
+        return t('notifications.generic_messages.reminder');
+      default:
+        return message;
+    }
   };
 
   return (
@@ -112,7 +163,7 @@ const NotificationCard = ({
                 fontFamily: is_read ? "regular" : "bold"
               }
             ]}>
-              {title}
+              {getLocalizedTitle()}
             </Text>
           </View>
           
@@ -129,7 +180,7 @@ const NotificationCard = ({
             styles.message,
             { color: dark ? COLORS.gray3 : COLORS.gray3 }
           ]}>
-            {message}
+            {getLocalizedMessage()}
           </Text>
           
           {data?.action && (
@@ -137,7 +188,7 @@ const NotificationCard = ({
               styles.actionHint,
               { color: dark ? COLORS.primary : COLORS.primary }
             ]}>
-              Tap to {data.action.replace('_', ' ')}
+              {t('notifications.tap_to_action', { action: localizeAction(data.action) })}
             </Text>
           )}
         </View>

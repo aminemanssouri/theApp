@@ -7,6 +7,7 @@ import { COLORS } from '../constants';
 import { OtpInput } from "react-native-otp-entry";
 import Button from "../components/Button";
 import { useTheme } from '../theme/ThemeProvider';
+import { t } from '../context/LanguageContext';
 
 const CreateNewPIN = ({ navigation }) => {
     const { colors, dark } = useTheme();
@@ -14,12 +15,12 @@ const CreateNewPIN = ({ navigation }) => {
     return (
         <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
             <View style={[styles.container, { backgroundColor: colors.background }]}>
-                <Header title="Create New PIN" />
+                <Header title={t('settings.security.create_new_pin')} />
+
                 <ScrollView contentContainerStyle={styles.center}>
                     <Text style={[styles.title, {
                         color: dark ? COLORS.white : COLORS.greyscale900
-                    }]}>Add a PIN number to make your account
-                        more secure.</Text>
+                    }]}>{t('settings.security.pin_description')}</Text>
                     <OtpInput
                         numberOfDigits={4}
                         onTextChange={(text) => console.log(text)}
@@ -41,7 +42,7 @@ const CreateNewPIN = ({ navigation }) => {
                         }}
                     />
                     <Button
-                        title="Continue"
+                        title={t('common.continue')}
                         filled
                         style={styles.button}
                         onPress={() => { navigation.navigate("Fingerprint") }}/>

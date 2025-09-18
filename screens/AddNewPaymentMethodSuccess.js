@@ -5,6 +5,7 @@ import { COLORS, FONTS, SIZES, illustrations } from '../constants';
 import Button from '../components/Button';
 import { StatusBar } from 'expo-status-bar';
 import { useTheme } from '../theme/ThemeProvider';
+import { t } from '../context/LanguageContext';
 
 const AddNewPaymentMethodSuccess = ({ navigation }) => {
   const { colors, dark } = useTheme();
@@ -20,18 +21,21 @@ const AddNewPaymentMethodSuccess = ({ navigation }) => {
         />
         <Text style={[styles.heading, { 
           color: dark? COLORS.white : COLORS.greyscale900
-        }]}>Congratulations!</Text>
+        }]}>{t('auth.congratulations')}</Text>
+
         <Text style={[styles.description, { 
           color: dark? COLORS.white : COLORS.greyscale900
         }]}>
-          You successfully added a new card, enjoy our service!
+          {t('payment.add_card_success_message')}
         </Text>
+
         <View style={styles.buttonContainer}>
           <Button
             filled
-            title="CONTINUE"
+            title={t('common.continue')}
             onPress={() => navigation.goBack()}
           />
+
         </View>
       </View>
     </SafeAreaView>

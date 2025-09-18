@@ -14,6 +14,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { signUp } from '../lib/services/auth';
 import { signInWithGoogle } from '../lib/services/auth';
 import { supabase } from '../lib/supabase';
+import { t } from '../context/LanguageContext';
 
 const isTestMode = true;
 
@@ -50,7 +51,7 @@ const Signup = ({ navigation }) => {
         if (inputValue !== passwordValue) {
           dispatchFormState({ 
             inputId: 'confirmPassword', 
-            validationResult: 'Passwords do not match', 
+            validationResult: t('auth.passwords_do_not_match'), 
             inputValue 
           })
         }
@@ -79,7 +80,7 @@ const Signup = ({ navigation }) => {
 
   useEffect(() => {
     if (error) {
-      Alert.alert('An error occured', error)
+      Alert.alert(t('common.error'), error)
     }
   }, [error])
 
@@ -128,11 +129,11 @@ const googleAuthHandler = async () => {
       }
     } else {
       console.log('Authentication completed but no session found');
-      Alert.alert('Error', 'Failed to create account. Please try again.');
+      Alert.alert(t('common.error'), t('auth.authentication_no_session'));
     }
   } catch (error) {
     console.error('Google auth error:', error);
-    Alert.alert('Error', error.message);
+    Alert.alert(t('common.error'), error.message);
   } finally {
     setIsLoading(false);
   }
@@ -145,22 +146,22 @@ const googleAuthHandler = async () => {
     const { email: emailError, password: passwordError, confirmPassword: confirmPasswordError } = formState.inputValidities
     
     if (!email || !password || !confirmPassword) {
-      Alert.alert('Error', 'Please fill in all fields')
+      Alert.alert(t('common.error'), t('auth.please_fill_all_fields'))
       return
     }
     
     if (emailError || passwordError || confirmPasswordError) {
-      Alert.alert('Error', 'Please correct the errors in the form')
+      Alert.alert(t('common.error'), t('auth.correct_errors_in_form'))
       return
     }
 
     if (!isChecked) {
-      Alert.alert('Error', 'Please accept the Privacy Policy')
+      Alert.alert(t('common.error'), t('auth.accept_privacy_policy'))
       return
     }
 
     if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match')
+      Alert.alert(t('common.error'), t('auth.passwords_do_not_match'))
       return
     }
 
@@ -178,14 +179,14 @@ const googleAuthHandler = async () => {
 
       if (error) {
         setError(error.message)
-        Alert.alert('Sign Up Failed', error.message)
+        Alert.alert(t('auth.sign_up_failed'), error.message)
       } else {
-        Alert.alert('Success', 'Account created successfully!')
+        Alert.alert(t('common.success'), t('auth.account_created_successfully'))
         navigation.navigate("FillYourProfile")
       }
     } catch (err) {
       setError(err.message)
-      Alert.alert('Error', err.message)
+      Alert.alert(t('common.error'), err.message)
     } finally {
       setIsLoading(false)
     }
@@ -205,12 +206,12 @@ const googleAuthHandler = async () => {
           </View>
           <Text style={[styles.title, {
             color: dark ? COLORS.white : COLORS.black
-          }]}>Create Your Account</Text>
+          }]}>{t('auth.create_account_title')}</Text>
           <Input
             id="email"
             onInputChanged={inputChangedHandler}
             errorText={formState.inputValidities['email']}
-            placeholder="Email"
+            placeholder={t('auth.email')}
             placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
             icon={icons.email}
             keyboardType="email-address"
@@ -220,7 +221,7 @@ const googleAuthHandler = async () => {
             errorText={formState.inputValidities['password']}
             autoCapitalize="none"
             id="password"
-            placeholder="Password"
+            placeholder={t('auth.password')}
             placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
             icon={icons.padlock}
             secureTextEntry={true}
@@ -231,7 +232,7 @@ const googleAuthHandler = async () => {
             errorText={formState.inputValidities['confirmPassword']}
             autoCapitalize="none"
             id="confirmPassword"
-            placeholder="Confirm Password"
+            placeholder={t('auth.confirm_password')}
             placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
             icon={icons.padlock}
             secureTextEntry={true}
@@ -247,19 +248,19 @@ const googleAuthHandler = async () => {
               <View style={{ flex: 1 }}>
                 <Text style={[styles.privacy, {
                   color: dark ? COLORS.white : COLORS.black
-                }]}>By continuing you accept our Privacy Policy</Text>
+                }]}>{t('auth.accept_privacy_policy_label')}</Text>
               </View>
             </View>
           </View>
           <Button
-            title="Sign Up"
+            title={t('auth.sign_up')}
             filled
             onPress={handleSignUp}
             style={styles.button}
             isLoading={isLoading}
           />
           <View>
-            <OrSeparator text="or continue with" />
+            <OrSeparator text={t('common.or_continue_with')} />
             <View style={styles.socialBtnContainer}>
               <SocialButton
                 icon={icons.appleLogo}
@@ -280,10 +281,10 @@ const googleAuthHandler = async () => {
         <View style={styles.bottomContainer}>
           <Text style={[styles.bottomLeft, {
             color: dark ? COLORS.white : COLORS.black
-          }]}>Already have an account ?</Text>
+          }]}>{t('auth.already_have_account')}</Text>
           <TouchableOpacity
             onPress={() => navigation.navigate("Login")}>
-            <Text style={styles.bottomRight}>{" "}Sign In</Text>
+            <Text style={styles.bottomRight}>{" "}{t('auth.sign_in')}</Text>
           </TouchableOpacity>
         </View>
       </View>

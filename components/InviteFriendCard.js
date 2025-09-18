@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import React, { useState } from 'react';
 import { COLORS, SIZES } from '../constants';
 import { useTheme } from '../theme/ThemeProvider';
+import { t } from '../context/LanguageContext';
 
 const InviteFriendCard = ({ name, phoneNumber, avatar }) => {
     const [isInvite, setIsInvite] = useState(false);
@@ -33,7 +34,7 @@ const InviteFriendCard = ({ name, phoneNumber, avatar }) => {
                         }]}>
                         <Text style={[styles.btnText, {
                             color: isInvite ? COLORS.primary : COLORS.white
-                        }]}>Invite</Text>
+                        }]}>{t('common.invite')}</Text>
                     </TouchableOpacity>
                 ) : (
                     <TouchableOpacity
@@ -45,7 +46,7 @@ const InviteFriendCard = ({ name, phoneNumber, avatar }) => {
                         }]}>
                         <Text style={[styles.btnText, {
                             color: isInvite ? COLORS.primary : COLORS.white
-                        }]}>Invite</Text>
+                        }]}>{t('common.invite')}</Text>
                     </TouchableOpacity>
                 )
             }

@@ -11,6 +11,7 @@ import { ThemeProvider } from './theme/ThemeProvider'
 import { AuthProvider } from './context/AuthContext'
 import { NotificationProvider } from './context/NotificationContext'
 import { StatusBar } from 'react-native';
+import { LanguageProvider } from './context/LanguageContext'
 
 //Ignore all log notifications
 LogBox.ignoreAllLogs();
@@ -40,19 +41,21 @@ export default function App() {
   }
 
   return (
-    <AuthProvider>
-      <ThemeProvider>
-        <NotificationProvider>
-          <StatusBar 
+    <LanguageProvider>
+      <AuthProvider>
+        <ThemeProvider>
+          <NotificationProvider>
+            <StatusBar 
     backgroundColor="transparent" 
     translucent={true}
     
   />
-          <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
-            <AppNavigation />
-          </View>
-        </NotificationProvider>
-      </ThemeProvider>
-    </AuthProvider>
+            <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
+              <AppNavigation />
+            </View>
+          </NotificationProvider>
+        </ThemeProvider>
+      </AuthProvider>
+    </LanguageProvider>
   );
 }

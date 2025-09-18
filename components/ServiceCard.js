@@ -10,6 +10,7 @@ import {
     isWorkerServiceFavorited,
     toggleWorkerServiceFavorite
 } from '../lib/services/favorites';
+import { t } from '../context/LanguageContext';
 
 const ServiceCard = ({
     name,
@@ -97,12 +98,12 @@ const ServiceCard = ({
     // Handle bookmark toggle
     const handleBookmarkPress = async () => {
         if (!user?.id) {
-            Alert.alert('Login Required', 'Please login to add favorites');
+            Alert.alert(t('favorites.login_required_title'), t('favorites.login_required_message'));
             return;
         }
 
         if (!serviceId && !workerId) {
-            Alert.alert('Error', 'Cannot add to favorites - missing ID');
+            Alert.alert(t('common.error'), t('favorites.missing_id'));
             return;
         }
 
@@ -143,7 +144,7 @@ const ServiceCard = ({
             }
         } catch (error) {
             console.error('Error toggling favorite:', error);
-            Alert.alert('Error', 'Failed to update favorites');
+            Alert.alert(t('common.error'), t('favorites.failed_update'));
         } finally {
             setLoading(false);
         }
@@ -214,7 +215,7 @@ const ServiceCard = ({
                     <View style={styles.ratingContainer}>
                         <FontAwesome name="star-half-empty" size={16} color="orange" />
                         <Text style={[styles.rating, { color: dark ? COLORS.greyscale300 : COLORS.grayscale700 }]}> {" "}{rating}</Text>
-                        <Text style={[styles.numReviews, { color: dark ? COLORS.greyscale300 : COLORS.grayscale700 }]}> |  {numReviews} reviews</Text>
+                        <Text style={[styles.numReviews, { color: dark ? COLORS.greyscale300 : COLORS.grayscale700 }]}> |  {t('service.reviews_count', { count: numReviews })}</Text>
                     </View>
                 </View>
             </TouchableOpacity>

@@ -9,6 +9,7 @@ import { AntDesign } from '@expo/vector-icons';
 import { hoursData } from '../data';
 import Button from '../components/Button';
 import { useTheme } from '../theme/ThemeProvider';
+import { useI18n } from '../context/LanguageContext';
 
 const BookingDetails = ({ navigation, route }) => {
   const { 
@@ -21,6 +22,7 @@ const BookingDetails = ({ navigation, route }) => {
     addons      // Get the addons array
   } = route.params || {};
   const { colors, dark } = useTheme();
+  const { t } = useI18n();
 
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedHour, setSelectedHour] = useState(null);
@@ -114,11 +116,11 @@ const BookingDetails = ({ navigation, route }) => {
   return (
     <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <Header title="Booking Details" />
+        <Header title={t('booking.details_title')} />
         <ScrollView showsVerticalScrollIndicator={false}>
           <Text style={[styles.title, { 
             color: dark ? COLORS.white : COLORS.greyscale900 
-          }]}>Select Date</Text>
+          }]}>{t('booking.select_date')}</Text>
           
           <View style={styles.calendarContainer}>
             <Calendar
@@ -144,10 +146,10 @@ const BookingDetails = ({ navigation, route }) => {
             <View>
               <Text style={[styles.hourTitle, { 
                 color: dark? COLORS.white : COLORS.greyscale900
-              }]}>Working Hours</Text>
+              }]}>{t('booking.working_hours')}</Text>
               <Text style={[styles.hourSubtitle, { 
                 color: dark ? COLORS.grayscale200 : COLORS.grayscale700 
-              }]}>Cost increase after 2 hrs of work</Text>
+              }]}>{t('booking.cost_increase_after_hours', { hours: 2 })}</Text>
             </View>
             <View style={styles.viewContainer}>
               <TouchableOpacity style={styles.iconContainer} onPress={handleDecrease}>
@@ -164,7 +166,7 @@ const BookingDetails = ({ navigation, route }) => {
           
           <Text style={[styles.title, { 
             color: dark? COLORS.white : COLORS.greyscale900
-          }]}>Choose Start Time</Text>
+          }]}>{t('booking.choose_start_time')}</Text>
           <View style={{ marginVertical: 12 }}>
             <FlatList
               data={hoursData}
@@ -182,16 +184,16 @@ const BookingDetails = ({ navigation, route }) => {
         backgroundColor: colors.background
       }]}>
         <Button
-          title={`Continue - $${calculatePrice(count)}`}
+          title={t('booking.continue_with_price', { price: calculatePrice(count) })}
           filled
           style={styles.button}
           onPress={() => {
             if (!selectedDate) {
-              alert('Please select a date');
+              alert(t('booking.please_select_date'));
               return;
             }
             if (!selectedHour) {
-              alert('Please select a start time');
+              alert(t('booking.please_select_start_time'));
               return;
             }
             
