@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, Image, Alert, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, Alert, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
 import React, { useCallback, useEffect, useReducer, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SIZES, icons, images } from '../constants';
@@ -16,7 +16,7 @@ import { signInWithGoogle } from '../lib/services/auth';
 import { supabase } from '../lib/supabase';
 import { t } from '../context/LanguageContext';
 
-const isTestMode = true;
+const isTestMode = false;
 
 const initialState = {
   inputValues: {
@@ -194,100 +194,108 @@ const googleAuthHandler = async () => {
 
   return (
     <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <Header />
-        <ScrollView showsVerticalScrollIndicator={false}>
-          <View style={styles.logoContainer}>
-            <Image
-              source={images.logo}
-              resizeMode='contain'
-              style={styles.logo}
-            />
-          </View>
-          <Text style={[styles.title, {
-            color: dark ? COLORS.white : COLORS.black
-          }]}>{t('auth.create_account_title')}</Text>
-          <Input
-            id="email"
-            onInputChanged={inputChangedHandler}
-            errorText={formState.inputValidities['email']}
-            placeholder={t('auth.email')}
-            placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
-            icon={icons.email}
-            keyboardType="email-address"
-          />
-          <Input
-            onInputChanged={inputChangedHandler}
-            errorText={formState.inputValidities['password']}
-            autoCapitalize="none"
-            id="password"
-            placeholder={t('auth.password')}
-            placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
-            icon={icons.padlock}
-            secureTextEntry={true}
-          />
-
-          <Input
-            onInputChanged={inputChangedHandler}
-            errorText={formState.inputValidities['confirmPassword']}
-            autoCapitalize="none"
-            id="confirmPassword"
-            placeholder={t('auth.confirm_password')}
-            placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
-            icon={icons.padlock}
-            secureTextEntry={true}
-          />
-          <View style={styles.checkBoxContainer}>
-            <View style={{ flexDirection: 'row' }}>
-              <Checkbox
-                style={styles.checkbox}
-                value={isChecked}
-                color={isChecked ? COLORS.primary : dark ? COLORS.primary : "gray"}
-                onValueChange={setChecked}
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{ flex: 1 }}
+      >
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
+          <Header />
+          <ScrollView 
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
+          >
+            <View style={styles.logoContainer}>
+              <Image
+                source={images.logo}
+                resizeMode='contain'
+                style={styles.logo}
               />
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.privacy, {
-                  color: dark ? COLORS.white : COLORS.black
-                }]}>{t('auth.accept_privacy_policy_label')}</Text>
+            </View>
+            <Text style={[styles.title, {
+              color: dark ? COLORS.white : COLORS.black
+            }]}>{t('auth.create_account_title')}</Text>
+            <Input
+              id="email"
+              onInputChanged={inputChangedHandler}
+              errorText={formState.inputValidities['email']}
+              placeholder={t('auth.email')}
+              placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
+              icon={icons.email}
+              keyboardType="email-address"
+            />
+            <Input
+              onInputChanged={inputChangedHandler}
+              errorText={formState.inputValidities['password']}
+              autoCapitalize="none"
+              id="password"
+              placeholder={t('auth.password')}
+              placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
+              icon={icons.padlock}
+              secureTextEntry={true}
+            />
+
+            <Input
+              onInputChanged={inputChangedHandler}
+              errorText={formState.inputValidities['confirmPassword']}
+              autoCapitalize="none"
+              id="confirmPassword"
+              placeholder={t('auth.confirm_password')}
+              placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
+              icon={icons.padlock}
+              secureTextEntry={true}
+            />
+            <View style={styles.checkBoxContainer}>
+              <View style={{ flexDirection: 'row' }}>
+                <Checkbox
+                  style={styles.checkbox}
+                  value={isChecked}
+                  color={isChecked ? COLORS.primary : dark ? COLORS.primary : "gray"}
+                  onValueChange={setChecked}
+                />
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.privacy, {
+                    color: dark ? COLORS.white : COLORS.black
+                  }]}>{t('auth.accept_privacy_policy_label')}</Text>
+                </View>
               </View>
             </View>
-          </View>
-          <Button
-            title={t('auth.sign_up')}
-            filled
-            onPress={handleSignUp}
-            style={styles.button}
-            isLoading={isLoading}
-          />
-          <View>
-            <OrSeparator text={t('common.or_continue_with')} />
-            <View style={styles.socialBtnContainer}>
-              <SocialButton
-                icon={icons.appleLogo}
-                onPress={appleAuthHandler}
-                tintColor={dark ? COLORS.white : COLORS.black}
-              />
-              <SocialButton
-                icon={icons.facebook}
-                onPress={facebookAuthHandler}
-              />
-              <SocialButton
-                icon={icons.google}
-                onPress={googleAuthHandler}
-              />
+            <Button
+              title={t('auth.sign_up')}
+              filled
+              onPress={handleSignUp}
+              style={styles.button}
+              isLoading={isLoading}
+            />
+            <View>
+              <OrSeparator text={t('common.or_continue_with')} />
+              <View style={styles.socialBtnContainer}>
+                <SocialButton
+                  icon={icons.appleLogo}
+                  onPress={appleAuthHandler}
+                  tintColor={dark ? COLORS.white : COLORS.black}
+                />
+                <SocialButton
+                  icon={icons.facebook}
+                  onPress={facebookAuthHandler}
+                />
+                <SocialButton
+                  icon={icons.google}
+                  onPress={googleAuthHandler}
+                />
+              </View>
             </View>
+          </ScrollView>
+          <View style={styles.bottomContainer}>
+            <Text style={[styles.bottomLeft, {
+              color: dark ? COLORS.white : COLORS.black
+            }]}>{t('auth.already_have_account')}</Text>
+            <TouchableOpacity
+              onPress={() => navigation.navigate("Login")}>
+              <Text style={styles.bottomRight}>{" "}{t('auth.sign_in')}</Text>
+            </TouchableOpacity>
           </View>
-        </ScrollView>
-        <View style={styles.bottomContainer}>
-          <Text style={[styles.bottomLeft, {
-            color: dark ? COLORS.white : COLORS.black
-          }]}>{t('auth.already_have_account')}</Text>
-          <TouchableOpacity
-            onPress={() => navigation.navigate("Login")}>
-            <Text style={styles.bottomRight}>{" "}{t('auth.sign_in')}</Text>
-          </TouchableOpacity>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   )
 };
@@ -301,6 +309,10 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
     backgroundColor: COLORS.white
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 100 // Add space at bottom for the fixed bottom container
   },
   logo: {
     width: 100,
@@ -360,16 +372,19 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    marginTop: 0,
   },
   bottomContainer: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginVertical: 18,
+    paddingVertical: 17,
+    paddingHorizontal: 16,
+    backgroundColor: 'transparent',
     position: "absolute",
-    bottom: 12,
-    right: 0,
+    bottom: 0,
     left: 0,
+    right: 0,
   },
   bottomLeft: {
     fontSize: 14,

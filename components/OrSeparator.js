@@ -19,11 +19,11 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 32,
+    marginVertical: 22,
   },
   line: {
     flex: 1,
-    height: .4,
+    height: 0.4,
     backgroundColor: COLORS.grayscale200,
   },
   orText: {
