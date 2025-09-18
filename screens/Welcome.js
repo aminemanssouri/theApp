@@ -1,12 +1,59 @@
-import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
-import React from "react";
+import { View, Text, StyleSheet, Image, TouchableOpacity, Alert } from "react-native";
+import React, { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, SIZES, icons, images } from "../constants";
 import SocialButtonV2 from "../components/SocialButtonV2";
 import { useTheme } from "../theme/ThemeProvider";
+import { signInWithGoogle } from '../lib/services/auth';
+import { supabase } from '../lib/supabase';
+import { t } from '../context/LanguageContext';
 
 const Welcome = ({ navigation }) => {
   const { colors, dark } = useTheme();
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Google authentication handler (same logic as Signup.js)
+  const googleAuthHandler = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await signInWithGoogle();
+      if (error) throw error;
+      
+      console.log('Google Sign In Data:', data);
+      
+      // Check if we have a valid session
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (sessionData?.session) {
+        console.log('Google authentication successful');
+        
+        // Check if this is a first-time login (new user)
+        const isNewUser = sessionData.session.user?.app_metadata?.provider === 'google' && 
+                         !sessionData.session.user?.user_metadata?.profile_completed;
+        
+        if (isNewUser) {
+          // New user - send to profile completion
+          navigation.navigate("FillYourProfile", { 
+            userId: sessionData.session.user.id,
+            email: sessionData.session.user.email
+          });
+        } else {
+          // Existing user - go to main screen
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'Main' }],
+          });
+        }
+      } else {
+        console.log('Authentication completed but no session found');
+        Alert.alert(t('common.error'), t('auth.authentication_no_session'));
+      }
+    } catch (error) {
+      console.error('Google auth error:', error);
+      Alert.alert(t('common.error'), error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
@@ -17,10 +64,23 @@ const Welcome = ({ navigation }) => {
           Hello there, continue with and search the services from around the world.
         </Text>
         <View style={{ marginVertical: 32 }}>
-          <SocialButtonV2 title="Continue with Apple" icon={icons.appleLogo} onPress={() => navigation.navigate("Signup")}
-            iconStyles={{ tintColor: dark ? COLORS.white : COLORS.black }} />
-          <SocialButtonV2 title="Continue with Google" icon={icons.google} onPress={() => navigation.navigate("Signup")} />
-          <SocialButtonV2 title="Continue with Email" icon={icons.email2} onPress={() => navigation.navigate("Signup")} />
+          <SocialButtonV2 
+            title="Continue with Apple" 
+            icon={icons.appleLogo} 
+            onPress={() => navigation.navigate("Signup")}
+            iconStyles={{ tintColor: dark ? COLORS.white : COLORS.black }} 
+          />
+          <SocialButtonV2 
+            title="Continue with Google" 
+            icon={icons.google} 
+            onPress={googleAuthHandler}
+            isLoading={isLoading}
+          />
+          <SocialButtonV2 
+            title="Continue with Email" 
+            icon={icons.email2} 
+            onPress={() => navigation.navigate("Signup")} 
+          />
         </View>
         <View style={{ flexDirection: "row" }}>
           <Text style={[styles.loginTitle, {
