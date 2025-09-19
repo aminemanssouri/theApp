@@ -5,15 +5,19 @@ import { COLORS, FONTS, icons } from '../constants';
 import { Bookings, Favourite, Home, Inbox, Profile } from '../screens';
 import { useTheme } from '../theme/ThemeProvider';
 import { useNotifications } from '../context/NotificationContext';
+import { useChat } from '../context/ChatContext';
 import NotificationBadge from '../components/NotificationBadge';
-import { t } from '../context/LanguageContext';
+import { useI18n } from '../context/LanguageContext';
+
 // Removed safe area context dependency
 
 const Tab = createBottomTabNavigator();
 
 const BottomTabNavigation = () => {
+    const { t } = useI18n();
     const { dark } = useTheme();
     const { unreadCount } = useNotifications();
+    const { chatUnreadCount } = useChat();
     // Manual safe area calculation
     const getSafeAreaBottom = () => Platform.OS === 'ios' ? 34 : 0;
     const { width } = Dimensions.get('window');
@@ -206,7 +210,7 @@ const BottomTabNavigation = () => {
                                     {t('navigation.inbox')}
                                 </Text>
                             </View>
-                            <NotificationBadge count={unreadCount} />
+                            <NotificationBadge count={chatUnreadCount} />
                         </View>
                     ),
                 }}

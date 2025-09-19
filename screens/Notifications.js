@@ -114,6 +114,8 @@ const Notifications = ({ navigation }) => {
               console.log('🧭 Navigating to Chat screen with conversationId:', conversationId);
               navigation.navigate('Chat', { 
                 conversationId: conversationId,
+                // pass workerId like Inbox does for consistent header/user context
+                workerId: related_id,
                 notificationData: {
                   title,
                   message,
@@ -223,7 +225,7 @@ const Notifications = ({ navigation }) => {
           onPress={() => navigation.goBack()}
           style={[styles.headerIconContainer, {
             borderColor: dark ? COLORS.dark3 : COLORS.grayscale200
-          }]}>
+          }]}> 
           <Image
             source={icons.back}
             resizeMode='contain'
@@ -232,39 +234,25 @@ const Notifications = ({ navigation }) => {
             }]}
           />
         </TouchableOpacity>
-        <View style={styles.headerTitleContainer}>
-          <Text style={[styles.headerTitle, {
-            color: dark ? COLORS.white : COLORS.greyscale900
-          }]}>{t('notifications.title')}</Text>
-
-          {unreadCount > 0 && (
-            <View style={styles.unreadBadge}>
-              <Text style={styles.unreadBadgeText}>{unreadCount}</Text>
-            </View>
-          )}
-        </View>
-        <View style={styles.headerActions}>
-          {notifications.length > 0 && (
-            <>
-              <TouchableOpacity
-                onPress={handleMarkAllAsRead}
-                style={styles.headerActionButton}>
-                <Text style={[styles.markAllRead, {
-                  color: COLORS.primary
-                }]}>{t('notifications.mark_all_read')}</Text>
-
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={handleClearAll}
-                style={styles.headerActionButton}>
-                <Text style={[styles.clearAll, {
-                  color: COLORS.error
-                }]}>{t('notifications.clear_all')}</Text>
-
-              </TouchableOpacity>
-            </>
-          )}
-        </View>
+        <View style={styles.headerCenter} />
+        {notifications.length > 0 ? (
+          <TouchableOpacity
+            onPress={handleClearAll}
+            style={styles.headerRightButton}
+            accessibilityRole="button"
+            accessibilityLabel={t('notifications.clear_all')}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            activeOpacity={0.8}
+          >
+            <Image
+              source={icons.trash}
+              resizeMode='contain'
+              style={styles.headerRightIcon}
+            />
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.headerRightSpacer} />
+        )}
       </View>
     )
   };
@@ -327,7 +315,7 @@ const Notifications = ({ navigation }) => {
 
         <FlatList
           data={notifications}
-          keyExtractor={item => item.id}
+          keyExtractor={item => String(item.id)}
           renderItem={renderNotificationItem}
           refreshControl={
             <RefreshControl
@@ -385,6 +373,11 @@ const styles = StyleSheet.create({
     fontFamily: "bold",
     color: COLORS.black
   },
+  headerCenter: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   unreadBadge: {
     backgroundColor: COLORS.primary,
     borderRadius: 10,
@@ -395,24 +388,38 @@ const styles = StyleSheet.create({
     marginLeft: 8
   },
   unreadBadgeText: {
-    color: COLORS.white,
-    fontSize: 12,
-    fontFamily: 'bold',
-    paddingHorizontal: 4
-  },
-  headerAction: {
-    fontSize: 14,
-    fontFamily: "medium",
-    color: COLORS.primary
   },
   headerActionButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-    backgroundColor: COLORS.secondaryWhite,
-    marginLeft: 8
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 20,
+    marginLeft: 12,
+    maxWidth: '65%',
+    // shadow for iOS
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    // elevation for Android
+    elevation: 1,
   },
-
+  headerActionButtonLight: {
+    backgroundColor: 'transparent',
+  },
+  headerActionButtonDark: {
+    backgroundColor: 'transparent',
+  },
+  headerActionLabel: {
+    fontSize: 14,
+    color: COLORS.error,
+    fontFamily: 'medium',
+    lineHeight: 18,
+    textAlign: 'center',
+    flexShrink: 1,
+    maxWidth: '100%'
+  },
   headerNoti: {
     flexDirection: "row",
     alignItems: "center",
@@ -442,12 +449,24 @@ const styles = StyleSheet.create({
     fontFamily: "bold",
     color: COLORS.white
   },
+  headerRightSpacer: {
+    width: 46, // matches headerIconContainer width for perfect centering
+  },
+  headerRightButton: {
+    height: 46,
+    width: 46,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 999,
+  },
+  headerRightIcon: {
+    width: 22,
+    height: 22,
+    tintColor: COLORS.error,
+  },
   headerActions: {
     flexDirection: 'row',
     alignItems: 'center'
-  },
-  headerActionButton: {
-    marginLeft: 12
   },
   markAllRead: {
     fontSize: 14,
@@ -455,9 +474,14 @@ const styles = StyleSheet.create({
     fontFamily: "medium"
   },
   clearAll: {
+    // deprecated by headerActionLabel; kept for backward compatibility
     fontSize: 14,
     color: COLORS.error,
-    fontFamily: "medium"
+    fontFamily: "medium",
+    lineHeight: 18,
+    textAlign: 'center',
+    flexShrink: 1,
+    flexWrap: 'wrap'
   },
   emptyListContainer: {
     flex: 1,

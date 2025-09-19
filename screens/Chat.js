@@ -16,9 +16,10 @@ import {
   Alert
 } from 'react-native';
 import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
-import { getConversationMessages, sendMessage, subscribeToNewMessages } from '../lib/services/chat';
+import { getConversationMessages, sendMessage, subscribeToNewMessages, autoMarkMessageAsRead } from '../lib/services/chat';
 import { getWorkerByConversation } from '../lib/services/workers';
 import { useAuth } from '../context/AuthContext';
+import { useChat } from '../context/ChatContext';
 import { useTheme } from '../theme/ThemeProvider';
 import { COLORS, SIZES, icons } from '../constants';
 import { Ionicons } from '@expo/vector-icons';
@@ -26,12 +27,14 @@ import MessageBubble from '../components/MessageBubble';
 import ChatInput from '../components/ChatInput';
 import defaultAvatar from '../assets/images/avatar.jpeg';
 import { getSafeAreaBottom, getSafeAreaTop } from '../utils/safeAreaUtils';
-import { t } from '../context/LanguageContext';
+import { useI18n } from '../context/LanguageContext';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 const Chat = () => {
+  const { t } = useI18n();
   const { user } = useAuth();
+  const { markConversationAsRead } = useChat();
   const { colors, dark } = useTheme();
   const route = useRoute();
   const navigation = useNavigation();
@@ -129,39 +132,63 @@ const Chat = () => {
           setLoading(false);
         }
       });
-      
-    // If we don't have worker info already, try to fetch it from conversation
-    if (!chatPartner && user) {
-      getWorkerByConversation(conversationId, user.id)
-        .then(({ data }) => {
-          if (data) {
-            setChatPartner({
-              id: data.id,
-              name: data.full_name || t('chat.professional'), 
-              avatar_url: data.Image
-            });
-            console.log('Set chat partner:', data.full_name);
-          }
-        })
-        .catch(err => console.error('Error loading worker info:', err));
-    }
+  }, [conversationId]);
+
+  // Separate effect for loading worker info to avoid double loading messages
+  useEffect(() => {
+    if (!conversationId || !user || chatPartner) return;
+    
+    getWorkerByConversation(conversationId, user.id)
+      .then(({ data }) => {
+        if (data) {
+          setChatPartner({
+            id: data.id,
+            // store only actual data-driven name; use i18n fallback at render time
+            name: data.full_name || undefined, 
+            avatar_url: data.Image
+          });
+          console.log('Set chat partner:', data.full_name);
+        }
+      })
+      .catch(err => console.error('Error loading worker info:', err));
   }, [conversationId, user, chatPartner]);
+
+  // Mark messages as read when screen gains focus
+  useFocusEffect(
+    React.useCallback(() => {
+      if (conversationId) {
+        markConversationAsRead(conversationId);
+        
+        // If opened from notification, mark the specific message as read
+        if (notificationData?.message_id && user) {
+          console.log('📖 Marking notification message as read:', notificationData.message_id);
+          autoMarkMessageAsRead(notificationData.message_id, user.id);
+        }
+      }
+    }, [conversationId, markConversationAsRead, notificationData, user])
+  );
 
   // Real-time subscription
   useEffect(() => {
-    if (!conversationId) return;
-    const channel = subscribeToNewMessages(conversationId, (newMsg) => {
+    if (!conversationId || !user) return;
+    const channel = subscribeToNewMessages(conversationId, async (newMsg) => {
       setMessages((prev) => {
         const filtered = prev.filter(
           (msg) => !(msg.pending && msg.content === newMsg.content && msg.sender_id === newMsg.sender_id)
         );
         return [...filtered, newMsg];
       });
+      
+      // Auto-mark message as read if it's not from the current user and the chat is active
+      if (newMsg.sender_id !== user.id) {
+        console.log('📖 Auto-marking message as read:', newMsg.id);
+        await autoMarkMessageAsRead(newMsg.id, user.id);
+      }
     });
     return () => {
       if (channel) channel.unsubscribe();
     };
-  }, [conversationId]);
+  }, [conversationId, user]);
 
   useEffect(() => {
     const onKeyboardShow = (e) => {
@@ -353,7 +380,21 @@ const Chat = () => {
         </Text>
         <TouchableOpacity 
           style={styles.retryButton}
-          onPress={() => window.location.reload()}
+          onPress={() => {
+            setError(null);
+            setLoading(true);
+            setMessagesReady(false);
+            getConversationMessages(conversationId)
+              .then((msgs) => {
+                setMessages(msgs);
+                setTimeout(() => {
+                  setMessagesReady(true);
+                  setLoading(false);
+                  animateIn();
+                }, 100);
+              })
+              .catch(setError);
+          }}
         >
           <Text style={styles.retryButtonText}>{t('chat.retry')}</Text>
         </TouchableOpacity>

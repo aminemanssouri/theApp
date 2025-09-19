@@ -1,6 +1,8 @@
 import * as SplashScreen from 'expo-splash-screen'
 import * as Notifications from 'expo-notifications'
+import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import * as Linking from 'expo-linking'
+
 
 import { View } from 'react-native'
 import { useFonts } from 'expo-font'
@@ -13,6 +15,7 @@ import { AuthProvider } from './context/AuthContext'
 import { NotificationProvider } from './context/NotificationContext'
 import { StatusBar } from 'react-native';
 import { LanguageProvider } from './context/LanguageContext'
+import { ChatProvider } from './context/ChatContext'
 
 //Ignore all log notifications
 LogBox.ignoreAllLogs();
@@ -67,21 +70,24 @@ export default function App() {
   }
 
   return (
-    <LanguageProvider>
-      <AuthProvider>
-        <ThemeProvider>
-          <NotificationProvider>
-            <StatusBar 
-    backgroundColor="transparent" 
-    translucent={true}
-    
-  />
-            <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
-              <AppNavigation />
-            </View>
-          </NotificationProvider>
-        </ThemeProvider>
-      </AuthProvider>
-    </LanguageProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <LanguageProvider>
+        <AuthProvider>
+          <ThemeProvider>
+            <ChatProvider>
+              <NotificationProvider>
+                <StatusBar 
+                  backgroundColor="transparent" 
+                  translucent={true}
+                />
+                <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
+                  <AppNavigation />
+                </View>
+              </NotificationProvider>
+            </ChatProvider>
+          </ThemeProvider>
+        </AuthProvider>
+      </LanguageProvider>
+    </GestureHandlerRootView>
   );
 }

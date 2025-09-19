@@ -13,7 +13,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../constants';
 import { useTheme } from '../theme/ThemeProvider';
-import { t } from '../context/LanguageContext';
+import { useI18n } from '../context/LanguageContext';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -33,6 +33,7 @@ const ChatInput = ({
   onChangeText
 }) => {
   const { dark } = useTheme();
+  const { t } = useI18n();
 
   const [isFocused, setIsFocused] = useState(false);
   const [isTyping, setIsTyping] = useState(false);

@@ -9,18 +9,24 @@ import { useTheme } from '../theme/ThemeProvider';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { markMessagesRead } from '../lib/services/chat';
-import { t } from '../context/LanguageContext';
+import { useI18n } from '../context/LanguageContext';
 
 const Inbox = ({ navigation }) => {
+  const { t, language } = useI18n();
   const layout = useWindowDimensions();
   const { colors, dark } = useTheme();
   const insets = getSafeAreaInsets();
   const { user } = useAuth();
 
   const [index, setIndex] = React.useState(0);
-  const [routes] = React.useState([
+  const [routes, setRoutes] = React.useState([
     { key: 'first', title: t('inbox.chats_tab') }
   ]);
+
+  // Update tabs when language changes
+  React.useEffect(() => {
+    setRoutes([{ key: 'first', title: t('inbox.chats_tab') }]);
+  }, [language, t]);
 
   const [showSearch, setShowSearch] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState('');
