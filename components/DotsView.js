@@ -3,7 +3,7 @@ import React from 'react';
 import { COLORS } from '../constants';
 
 const DotsView = ({
-    progress,
+    progress, // This should be the current screen index (0, 1, 2, 3)
     dotSize = 10,
     dotSpacing = 5,
     dotColor = 'gray',
@@ -13,6 +13,8 @@ const DotsView = ({
     const dots = []
 
     for (let i = 0; i < numDots; i++) {
+        const isActive = i <= progress; // Current screen and previous screens are active
+        
         dots.push(
             <View
                 key={i}
@@ -27,7 +29,7 @@ const DotsView = ({
                         borderRadius: dotSize / 2,
                         marginHorizontal: dotSpacing / 2,
                     },
-                    progress >= i / (numDots - 1)
+                    isActive
                         ? {
                             backgroundColor: activeDotColor,
                         }

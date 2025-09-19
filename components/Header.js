@@ -4,14 +4,14 @@ import { SIZES, COLORS, icons } from '../constants';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../theme/ThemeProvider';
 
-const Header = ({ title }) => {
+const Header = ({ title,showBackButton = true }) => {
   const navigation = useNavigation();
   const { colors, dark } = useTheme();
 
   return (
     <View style={[styles.container, {
       backgroundColor: dark ? COLORS.dark1 : COLORS.white
-    }]}>
+    }]}>{showBackButton && (
       <TouchableOpacity
         onPress={() => navigation.goBack()}>
         <Image
@@ -20,7 +20,7 @@ const Header = ({ title }) => {
           style={[styles.backIcon, {
             tintColor: colors.text
           }]} />
-      </TouchableOpacity>
+      </TouchableOpacity>)}
       <Text style={[styles.title, {
         color: colors.text
       }]}>{title}</Text>

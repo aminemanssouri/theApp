@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, Image, Alert, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, Alert,TouchableOpacity} from 'react-native';
 import React, { useCallback, useEffect, useReducer, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SIZES, icons, images } from '../constants';
@@ -6,16 +6,16 @@ import Header from '../components/Header';
 import { reducer } from '../utils/reducers/formReducers';
 import { validateInput } from '../utils/actions/formActions';
 import Input from '../components/Input';
-import Checkbox from 'expo-checkbox';
 import Button from '../components/Button';
 import { useTheme } from '../theme/ThemeProvider';
 import { t } from '../context/LanguageContext';
+import { sendPasswordResetEmail } from '../lib/services/auth';
 
-const isTestMode = true;
+const isTestMode = false;
 
 const initialState = {
     inputValues: {
-        email: isTestMode ? 'user@gmail.com' : '',
+        email: '',
     },
     inputValidities: {
         email: false
@@ -26,7 +26,7 @@ const initialState = {
 const ForgotPasswordEmail = ({ navigation }) => {
     const [formState, dispatchFormState] = useReducer(reducer, initialState);
     const [error, setError] = useState(null);
-    const [isChecked, setChecked] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
     const { colors, dark } = useTheme();
 
     const inputChangedHandler = useCallback(
@@ -42,6 +42,49 @@ const ForgotPasswordEmail = ({ navigation }) => {
             Alert.alert(t('common.error'), error)
         }
     }, [error])
+
+    const handleSendResetEmail = async () => {
+        const { email } = formState.inputValues;
+        const { email: emailError } = formState.inputValidities;
+        
+        if (!email) {
+            Alert.alert(t('common.error'), t('auth.please_enter_email'));
+            return;
+        }
+        
+        if (emailError) {
+            Alert.alert(t('common.error'), t('auth.please_enter_valid_email'));
+            return;
+        }
+        
+        setIsLoading(true);
+        setError(null);
+        
+        try {
+            const { data, error } = await sendPasswordResetEmail(email);
+            
+            if (error) {
+                setError(error.message);
+                Alert.alert(t('common.error'), error.message);
+            } else {
+                Alert.alert(
+                    t('auth.email_sent'), 
+                    t('auth.check_email_for_reset_code'),
+                    [
+                        {
+                            text: t('common.ok'),
+                            onPress: () => navigation.navigate('OTPVerification', { email })
+                        }
+                    ]
+                );
+            }
+        } catch (err) {
+            setError(err.message);
+            Alert.alert(t('common.error'), err.message);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     return (
         <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
@@ -65,41 +108,26 @@ const ForgotPasswordEmail = ({ navigation }) => {
                         onInputChanged={inputChangedHandler}
                         errorText={formState.inputValidities['email']}
                         placeholder={t('auth.email')}
-
                         placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
                         icon={icons.email}
                         keyboardType="email-address"
+                        value={formState.inputValues.email}
                     />
-                    <View style={styles.checkBoxContainer}>
-                        <View style={{ flexDirection: 'row' }}>
-                            <Checkbox
-                                style={styles.checkbox}
-                                value={isChecked}
-                                color={isChecked ? COLORS.primary : dark ? COLORS.primary : "gray"}
-                                onValueChange={setChecked}
-                            />
-                            <View style={{ flex: 1 }}>
-                                <Text style={[styles.privacy, {
-                                    color: dark ? COLORS.white : COLORS.black
-                                }]}>{t('auth.remember_me')}</Text>
-
-                            </View>
-                        </View>
-                    </View>
+                    
                     <Button
-                        title={t('auth.reset_password')}
-
+                        title={t('auth.send_reset_code')}
                         filled
-                        onPress={() => navigation.navigate("OTPVerification")}
+                        onPress={handleSendResetEmail}
                         style={styles.button}
+                        isLoading={isLoading}
                     />
-                    <TouchableOpacity
-                        onPress={() => navigation.navigate("Login")}>
-                        <Text style={styles.forgotPasswordBtnText}>{t('auth.remember_password')}</Text>
-
-                    </TouchableOpacity>
-                    <View>
-                    </View>
+                    
+                    <Button
+                        title={t('auth.back_to_login')}
+                        onPress={() => navigation.navigate("Login")}
+                        style={[styles.button, styles.backButton]}
+                        textColor={COLORS.primary}
+                    />
                 </ScrollView>
                 <View style={styles.bottomContainer}>
                     <Text style={[styles.bottomLeft, {
@@ -155,68 +183,15 @@ const styles = StyleSheet.create({
         textAlign: "center",
         marginBottom: 22
     },
-    checkBoxContainer: {
-        flexDirection: "row",
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginVertical: 18,
-    },
-    checkbox: {
-        marginRight: 8,
-        height: 16,
-        width: 16,
-        borderRadius: 4,
-        borderColor: COLORS.primary,
-        borderWidth: 2,
-    },
-    privacy: {
-        fontSize: 12,
-        fontFamily: "regular",
-        color: COLORS.black,
-    },
-    socialTitle: {
-        fontSize: 19.25,
-        fontFamily: "medium",
-        color: COLORS.black,
-        textAlign: "center",
-        marginVertical: 26
-    },
-    socialBtnContainer: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "center",
-    },
-    bottomContainer: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "center",
-        marginVertical: 18,
-        position: "absolute",
-        bottom: 12,
-        right: 0,
-        left: 0,
-    },
-    bottomLeft: {
-        fontSize: 14,
-        fontFamily: "regular",
-        color: "black"
-    },
-    bottomRight: {
-        fontSize: 16,
-        fontFamily: "medium",
-        color: COLORS.primary
-    },
     button: {
         marginVertical: 6,
         width: SIZES.width - 32,
         borderRadius: 30
     },
-    forgotPasswordBtnText: {
-        fontSize: 16,
-        fontFamily: "semiBold",
-        color: COLORS.primary,
-        textAlign: "center",
-        marginTop: 12
+    backButton: {
+        backgroundColor: 'transparent',
+        borderWidth: 1,
+        borderColor: COLORS.primary
     }
 })
 

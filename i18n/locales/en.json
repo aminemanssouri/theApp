@@ -77,7 +77,10 @@
     "create_new_password_title": "Create New Password",
     "create_your_new_password": "Create Your New Password",
     "new_password": "New Password",
+    "send_reset_code": "Send Reset Code",
+    "back_to_login": "Back to Login",
     "confirm_new_password": "Confirm New Password",
+    "reset_via_email_desc": "Reset via Email",
     "congratulations": "Congratulations!",
     "account_ready_redirect": "Your account is ready to use. You will be redirected to the Home page in a few seconds."
   },

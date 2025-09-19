@@ -1,610 +1,400 @@
 <div align="center">
-	<h1>ProvidaPro (Brico App)</h1>
-	<p>A cross‑platform (iOS / Android / Web) on‑demand home & professional services marketplace built with Expo (React Native 0.79 / React 19) + Supabase + Stripe + Coinbase Commerce.</p>
+  <h1>🔧 BRICOLLANO</h1>
+  <p>A modern on-demand home services marketplace built with React Native & Expo</p>
+  
+  ![React Native](https://img.shields.io/badge/React_Native-0.79.5-61DAFB?style=flat-square&logo=react)
+  ![Expo](https://img.shields.io/badge/Expo-SDK_53-000020?style=flat-square&logo=expo)
+  ![Supabase](https://img.shields.io/badge/Supabase-Backend-3ECF8E?style=flat-square&logo=supabase)
+  ![TypeScript](https://img.shields.io/badge/JavaScript-ES2022-F7DF1E?style=flat-square&logo=javascript)
 </div>
 
 ---
 
-## 📌 Table of Contents
-- Overview
-- Core Features
-- Architecture
-- Data & Backend (Supabase)
-- Authentication Flow
-- Navigation Structure
-- State & Context Layer
-- Services / Data Fetching Pattern
-- Payments (Stripe & Crypto)
-- Push Notifications
-- Theming & UI System
-- Project Structure
-- Environment Configuration
-- Running the Project
-- Quality / Lint / Formatting
-- Extending the App (How-To Guides)
-- Security Considerations
-- Troubleshooting
-- Roadmap / Suggested Improvements
+## 📱 About BRICOLLANO
 
----
-## 🔍 Overview
-ProvidaPro is a service marketplace application where users can discover categories, view services, pick workers, chat, book appointments, and pay using traditional cards (Stripe) or cryptocurrency (Coinbase Commerce). It leverages Supabase for authentication, real-time data access, and custom RPC functions (e.g. `get_service_workers`). The UX uses modular reusable components and animated, categorized flows with tailored navigation transitions.
+BRICOLLANO is a comprehensive service marketplace application that connects users with verified professionals for various home and personal services. From cleaning and plumbing to painting and repairs, users can discover services, book appointments, track bookings, and make secure payments through multiple payment methods including cryptocurrency.
 
----
-## ✨ Core Features
-- Onboarding (4-step flow + profile creation + biometric PIN/Fingerprint)
-- Email / (future: phone) based auth with Supabase sessions & persisted storage
-- Category discovery & dynamic service listing with worker expansion
-- Worker details, reviews (structure prepared), booking steps, cancellations
-- Search with server filtering (`ilike`) + debuggable service transformations
-- Multi-payment options:
-	- Stripe (card entry, saved methods, success/decline flows)
-	- Crypto (Coinbase Commerce charges / checkouts)
-- Notifications center (unread badge + stats) & push token registration
-- Chat / Call placeholders for real-time comms integration
-- Settings: Notifications, Payment, Security, Language, Privacy Policy
-- Invite friends / Help Center / Customer Service
-- E-Receipt, bookings history & cancellation flows
-- Theming / Dark mode readiness via custom ThemeProvider
+### ✨ Key Features
 
----
-## 🏗 Architecture
-Layered, modular architecture:
-
-UI Layer:
-- `components/` – Reusable atomic + composite UI (inputs, cards, badges, etc.)
-- `screens/` – Feature-level screens exported through `screens/index.js` and used in navigators
-
-Navigation:
-- Stack: `navigations/AppNavigation.js` (entry + conditional first-launch logic)
-- Bottom tabs: `BottomTabNavigation.js` (not shown here, assumed Home / Inbox / Favourites / Profile, etc.)
-- Custom transition orchestration: `utils/navigationTransitions.js` with semantic groups (auth, service, payment, modal, onboarding)
-
-State / Context:
-- `context/AuthContext.js` – Auth + user profile + session + push token registration
-- `context/NotificationContext.js` – (Manages notification arrays, counts, stats) – referenced in Home
-
-Data / Service Layer:
-- `lib/supabase.js` – Configured Supabase client (storage with AsyncStorage, auto refresh on foreground)
-- `lib/services/*` – Each domain (e.g., `home.js`) exposes fetch + transform utilities
-- RPC usage: `supabase.rpc('get_service_workers', { service_id_param })`
-
-Utilities:
-- `utils/registerPushToken.js` – Dynamic import for notifications + token persistence
-- `utils/navigationTransitions.js` – Centralized animation logic
-
-Configuration:
-- `config/stripe.config.js` (publishable key – secret must NOT stay client-side)
-- `config/coinbase.config.js` (Currently commits LIVE/TEST keys – SHOULD be secured)
-
-Assets & Constants:
-- `constants/` – `icons`, `images`, `illustrations`, `theme` (COLORS, SIZES, FONTS), `socials`
-
----
-## 🗄 Data & Backend (Supabase)
-Tables implied from code:
-- `service_categories` – id, name, description, created_at
-- `services` – id, name, description, base_price, is_active, category_id, icon, created_at
-- `worker_services` (in debug logs) – mapping workers to services with perhaps custom price
-- `notifications` (inferred from notification context usage – id, type, title, message, is_read, related_id, related_type, channel, created_at)
-- `profiles` (inferred for user profile fetch)
-
-RPC / SQL Functions:
-- `get_service_workers(service_id_param uuid)` – returns workers with fields: `worker_id`, `worker_service_id`, `first_name`, `last_name`, `custom_price`, `average_rating`, `total_jobs`, plus derived `worker_full_name`.
-
-Transform Patterns:
-- Raw Supabase results → UI-ready objects (adds image mapping, worker expansion, fallback values).
-
-Performance Notes:
-- Parallel worker fetch loops; consider batching or a single SQL join in future.
-- Client-side filtering of services by category; scalable if service count moderate (< few hundred). For larger sets, move filtering to server queries.
-
----
-## 🔐 Authentication Flow
-1. `supabase.auth.getSession()` with an 8s timeout failsafe in `AuthContext`.
-2. Session + user set; profile fetched via `getUserProfile(userId)` (service not shown; presumably selects from `profiles`).
-3. Push token registered post-auth (silent failure safe).
-4. Listener `onAuthStateChange` keeps session synchronized; auto refresh toggled with AppState.
-
-Edge Handling:
-- Timeout fallback ensures `loading` isn't stuck.
-- Defensive null checks for user/profile.
-
----
-## 🧭 Navigation Structure (Stack Extract)
-Auth / Onboarding: Onboarding1–4, Welcome, Login, Signup, ForgotPassword*, OTP, CreateNewPassword, FillYourProfile, CreateNewPIN, Fingerprint.
-Main: `Main` (bottom tabs). Core flows: Home, Search, PopularServices, ServiceDetails(+Reviews), BookingStep1, BookingDetails, MyBookings, Cancel flows.
-Payments: PaymentMethods, AddNewPaymentMethod*, AddNewCard, PaymentMethod, CreditCardPayment, CryptoPayment.
-Settings & Profile: EditProfile, Settings* screens, ChangePIN/Password/Email.
-Support / Misc: HelpCenter, InviteFriends, CustomerService, Chat, Call, EReceipt, Notifications.
-
-Transitions: Determined by `getTransitionConfig(screenName)` mapping groups to animation presets (slide, fade, modal slideUp, etc.).
-
----
-## 🧠 State & Context Layer
-- AuthContext: user, session, profile, `signOut()`, `refreshUserProfile()`.
-- NotificationContext (referenced but not included in snippet): expected to provide `notifications`, `unreadCount`, `userNotificationStats`, `isUserAuthenticated`.
-
-Potential Addition: Global query caching (React Query / TanStack Query) for consistent data invalidation.
-
----
-## 🔄 Data Fetching Pattern (`home.js` example)
-Contract:
-- fetchServiceCategories(limit)
-- fetchAllCategories()
-- fetchActiveServices(limit) → includes worker expansion via RPC
-- searchServices(query)
-- transformCategories(raw)
-- transformServices(rawWithWorkers)
-- getWorkersForService(serviceId)
-
-Key Transform Behavior:
-- Adds synthetic "All" category (ensures uniqueness if one already present).
-- Expands one service into multiple cards (one per worker) when workers exist.
-- Maps service name keywords → themed image assets.
-
-Edge Cases Covered:
-- Empty lists return `[]` not null.
-- Errors return `{ data: [], error }` patterns.
-- Query guard for empty search strings.
-
----
-## 💳 Payments
-Stripe:
-- Configured publishable key in `stripe.config.js`.
-- Secret key MUST live on backend only (remove from repo / env!).
-- Screens: AddNewCard, PaymentMethod, CreditCardPayment, success/decline variants.
-
-Crypto (Coinbase Commerce):
-- `coinbase.config.js` holds API key + webhook secret (currently exposed – MUST be moved to secure backend proxy).
-- Supported currencies list + environment flag (sandbox vs prod).
-
-Security Actions Needed Immediately:
-1. Remove real keys from client bundle.
-2. Use backend proxy to create charges / verify webhooks.
-3. Provide `.env` template.
-
----
-## 🔔 Push Notifications
-Dynamic, safe registration (`registerPushTokenForUser`):
-- Lazy loads `expo-notifications`, `expo-device`, `expo-constants`.
-- Requests permissions; sets Android channel.
-- Extracts projectId from `app.json` / EAS metadata if present.
-- Upserts token via `upsertUserPushToken(userId, token, deviceInfo)` service (not shown; expected to write to Supabase table `user_push_tokens`).
-- Silent failures logged; won't crash UI.
-
----
-## 🎨 Theming & UI
-- Color, spacing, typography via `constants/theme.js` (COLORS, SIZES, FONTS).
-- Likely a `ThemeProvider` (seen `useTheme()` in `Home` screen) enabling dark mode toggles.
-- Component patterns: Data-driven props, minimal inline logic, styling in StyleSheet blocks.
-
----
-## 📁 Project Structure (Key Folders)
-components/      Reusable UI widgets & composites
-config/          Payment provider config (must be secured)
-constants/       Assets & theme tokens
-context/         React Context providers (Auth, Notifications)
-data/            Static seed data (e.g., banners)
-lib/             Supabase client + domain service modules
-navigations/     Stack & Tab navigation
-screens/         Feature screens (auth, booking, payment, profile, etc.)
-utils/           Cross-cutting helpers (navigation transitions, push)
-db/ / database/  SQL migrations / raw SQL (for schema + functions)
-
----
-## ⚙ Environment Configuration
-Create a `.env` (or `.env.local`) file:
-```
-REACT_APP_SUPABASE_URL=YOUR_SUPABASE_URL
-REACT_APP_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
-STRIPE_PUBLISHABLE_KEY=pk_test_xxx
-COINBASE_API_KEY=your_key   # (REMOVE keys from repo!)
-COINBASE_WEBHOOK_SECRET=whsec_xxx
-```
-Add to `.gitignore`:
-```
-.env*
-```
-
-Replace any hardcoded secrets in `config/` with environment reads (e.g. via `react-native-dotenv`).
-
----
-## ▶ Running the Project
-1. Install dependencies:
-	 `npm install`
-2. Start Metro / Expo:
-	 `npm start`
-3. Choose platform (press `a` for Android, `i` for iOS if on macOS, `w` for web).
-# ProvidaPro (Brico App)
-
-A cross-platform (iOS / Android / Web) on-demand home & professional services marketplace built with Expo (React Native 0.79 / React 19) + Supabase + Stripe + Coinbase Commerce.
+- 🔐 **Complete Authentication Flow**: Email-based auth with OTP verification, biometric login support
+- 🏠 **Service Discovery**: Browse categories, search services, view detailed worker profiles
+- 📅 **Multi-Step Booking System**: Service selection, worker choice, scheduling, and address management
+- 💳 **Dual Payment Processing**: Traditional cards via Stripe + cryptocurrency via Coinbase Commerce
+- 💬 **Real-time Chat**: In-app messaging with GiftedChat integration
+- ⭐ **Reviews & Ratings**: Interactive star ratings and detailed reviews
+- 🔔 **Push Notifications**: Real-time updates for bookings, messages, and system notifications
+- 🌍 **Multi-language Support**: Dynamic language switching with i18n
+- 🌙 **Dark Mode**: Complete theme support with automatic/manual toggle
+- 📊 **Comprehensive Booking Management**: Track upcoming, completed, and cancelled bookings
 
 ---
 
-## Table of Contents
-
-- Overview
-- Core Features
-- Architecture
-- Data & Backend (Supabase)
-- Authentication Flow
-- Navigation Structure
-- State & Context Layer
-- Services / Data Fetching Pattern
-- Payments (Stripe & Crypto)
-- Push Notifications
-- Theming & UI System
-- Project Structure
-- Environment Configuration
-- Running the Project
-- Quality / Lint / Formatting
-- Extending the App (How-To Guides)
-- Security Considerations
-- Troubleshooting
-- Roadmap / Suggested Improvements
-
----
-
-## Overview
-
-ProvidaPro is a service marketplace application where users can discover categories, view services, pick workers, chat, book appointments, and pay using traditional cards (Stripe) or cryptocurrency (Coinbase Commerce). It leverages Supabase for authentication, real-time data access, and custom RPC functions (e.g. `get_service_workers`). The UX uses modular reusable components and animated, categorized flows with tailored navigation transitions.
-
----
-
-## Core Features
-
-- Onboarding (4-step flow + profile creation + biometric PIN/Fingerprint)
-- Email / (future: phone) based auth with Supabase sessions & persisted storage
-- Category discovery & dynamic service listing with worker expansion
-- Worker details, reviews (structure prepared), booking steps, cancellations
-- Search with server filtering (`ilike`) + debuggable service transformations
-- Multi-payment options:
-	- Stripe (card entry, saved methods, success/decline flows)
-	- Crypto (Coinbase Commerce charges / checkouts)
-- Notifications center (unread badge + stats) & push token registration
-- Chat / Call placeholders for real-time comms integration
-- Settings: Notifications, Payment, Security, Language, Privacy Policy
-- Invite friends / Help Center / Customer Service
-- E-Receipt, bookings history & cancellation flows
-- Theming / Dark mode readiness via custom ThemeProvider
-
----
-
-## Architecture
-
-Layered, modular architecture:
-
-UI Layer:
-
-- `components/` – Reusable atomic + composite UI (inputs, cards, badges, etc.)
-- `screens/` – Feature-level screens exported through `screens/index.js` and used in navigators
-
-Navigation:
-
-- Stack: `navigations/AppNavigation.js` (entry + conditional first-launch logic)
-- Bottom tabs: `BottomTabNavigation.js` (not shown here, assumed Home / Inbox / Favourites / Profile, etc.)
-- Custom transition orchestration: `utils/navigationTransitions.js` with semantic groups (auth, service, payment, modal, onboarding)
-
-State / Context:
-
-- `context/AuthContext.js` – Auth + user profile + session + push token registration
-- `context/NotificationContext.js` – (Manages notification arrays, counts, stats) – referenced in Home
-
-Data / Service Layer:
-
-- `lib/supabase.js` – Configured Supabase client (storage with AsyncStorage, auto refresh on foreground)
-- `lib/services/*` – Each domain (e.g., `home.js`) exposes fetch + transform utilities
-- RPC usage: `supabase.rpc('get_service_workers', { service_id_param })`
-
-Utilities:
-
-- `utils/registerPushToken.js` – Dynamic import for notifications + token persistence
-- `utils/navigationTransitions.js` – Centralized animation logic
-
-Configuration:
-
-- `config/stripe.config.js` (publishable key – secret must NOT stay client-side)
-- `config/coinbase.config.js` (currently commits keys – SHOULD be secured)
-
-Assets & Constants:
-
-- `constants/` – `icons`, `images`, `illustrations`, `theme` (COLORS, SIZES, FONTS), `socials`
-
----
-
-## Data & Backend (Supabase)
-
-Tables implied from code:
-
-- `service_categories` – id, name, description, created_at
-- `services` – id, name, description, base_price, is_active, category_id, icon, created_at
-- `worker_services` (in debug logs) – mapping workers to services (custom price, etc.)
-- `notifications` (inferred) – id, type, title, message, is_read, related_id, related_type, channel, created_at
-- `profiles` (inferred for user profile fetch)
-
-RPC / SQL Functions:
-
-- `get_service_workers(service_id_param uuid)` – returns workers with fields: ids, names, pricing, rating, job counts.
-
-Transform Patterns:
-
-- Raw Supabase results → UI-ready objects (adds image mapping, worker expansion, fallback values).
-
-Performance Notes:
-
-- Parallel worker fetch loops; consider batching or a single SQL join later.
-- Client-side filtering of services by category; fine for moderate volume.
-
----
-
-## Authentication Flow
-
-1. `supabase.auth.getSession()` with an 8s timeout failsafe in `AuthContext`.
-2. Session + user set; profile fetched via `getUserProfile(userId)`.
-3. Push token registered post-auth (silent failure safe).
-4. Listener `onAuthStateChange` keeps session synchronized; auto refresh toggled with AppState.
-
-Edge Handling:
-
-- Timeout fallback ensures `loading` isn't stuck.
-- Defensive null checks for user/profile.
-
----
-
-## Navigation Structure (Stack Extract)
-
-- Auth / Onboarding: Onboarding1–4, Welcome, Login, Signup, ForgotPassword*, OTP, CreateNewPassword, FillYourProfile, CreateNewPIN, Fingerprint
-- Main: `Main` (bottom tabs). Core flows: Home, Search, PopularServices, ServiceDetails(+Reviews), BookingStep1, BookingDetails, MyBookings, Cancel flows
-- Payments: PaymentMethods, AddNewPaymentMethod*, AddNewCard, PaymentMethod, CreditCardPayment, CryptoPayment
-- Settings & Profile: EditProfile, Settings* screens, ChangePIN/Password/Email
-- Support / Misc: HelpCenter, InviteFriends, CustomerService, Chat, Call, EReceipt, Notifications
-
-Transitions: Determined by `getTransitionConfig(screenName)` mapping groups to animation presets.
-
----
-
-## State & Context Layer
-
-- AuthContext: user, session, profile, `signOut()`, `refreshUserProfile()`
-- NotificationContext (referenced): provides `notifications`, `unreadCount`, `userNotificationStats`, `isUserAuthenticated`
-
-Potential Addition: Global query caching (React Query / TanStack Query) for consistent data invalidation.
-
----
-
-## Data Fetching Pattern (`home.js` example)
-
-Contract:
-
-- `fetchServiceCategories(limit)`
-- `fetchAllCategories()`
-- `fetchActiveServices(limit)` → includes worker expansion via RPC
-- `searchServices(query)`
-- `transformCategories(raw)`
-- `transformServices(rawWithWorkers)`
-- `getWorkersForService(serviceId)`
-
-Key Transform Behavior:
-
-- Adds synthetic "All" category (unique id handling)
-- Expands one service into multiple cards (one per worker) when workers exist
-- Maps service name keywords → image assets
-
-Edge Cases Covered:
-
-- Empty lists return `[]`
-- Errors return `{ data: [], error }` patterns
-- Query guard for empty search strings
-
----
-
-## Payments
-
-Stripe:
-
-- Configured publishable key in `stripe.config.js`
-- Secret key MUST live on backend only (remove from repo / env!)
-- Screens: AddNewCard, PaymentMethod, CreditCardPayment, success/decline variants
-
-Crypto (Coinbase Commerce):
-
-- `coinbase.config.js` holds API key + webhook secret (exposed – move to backend)
-- Supported currencies list + environment flag (sandbox vs prod)
-
-Security Actions Needed Immediately:
-
-1. Remove real keys from client bundle
-2. Use backend proxy to create charges / verify webhooks
-3. Provide `.env` template
-
----
-
-## Push Notifications
-
-Dynamic, safe registration (`registerPushTokenForUser`):
-
-- Lazy loads `expo-notifications`, `expo-device`, `expo-constants`
-- Requests permissions; sets Android channel
-- Extracts projectId from `app.json` / EAS metadata if present
-- Upserts token via `upsertUserPushToken` service (expected Supabase table `user_push_tokens`)
-- Silent failures logged; no crashes
-
----
-
-## Theming & UI
-
-- Color, spacing, typography via `constants/theme.js` (COLORS, SIZES, FONTS)
-- `useTheme()` in screens for dark/light adaptation
-- Component patterns: Data-driven props, StyleSheet usage
-
----
-
-## Project Structure (Key Folders)
+## 🏗 Architecture Overview
+
+### Tech Stack
+
+| Layer | Technology | Version | Purpose |
+|-------|------------|---------|---------|
+| **Frontend** | React Native | 0.79.5 | Cross-platform mobile framework |
+| **Framework** | Expo | SDK 53 | Development and deployment platform |
+| **Backend** | Supabase | 2.51.0 | Authentication, database, real-time features |
+| **Navigation** | React Navigation | 6.x | Screen routing and navigation |
+| **Payments** | Stripe React Native | 0.45.0 | Credit card processing |
+| **Crypto Payments** | Coinbase Commerce | Custom | Cryptocurrency payments |
+| **Chat** | React Native Gifted Chat | 2.4.0 | Real-time messaging |
+| **State Management** | React Context API | - | Global state management |
+| **Maps** | React Native Maps | 1.20.1 | Location services |
+
+### Project Structure
 
 ```
-components/      Reusable UI widgets & composites
-config/          Payment provider config (must be secured)
-constants/       Assets & theme tokens
-context/         React Context providers (Auth, Notifications)
-data/            Static seed data (e.g., banners)
-lib/             Supabase client + domain service modules
-navigations/     Stack & Tab navigation
-screens/         Feature screens (auth, booking, payment, profile, etc.)
-utils/           Cross-cutting helpers (navigation transitions, push)
-db/ / database/  SQL migrations / raw SQL (for schema + functions)
+bricollano/
+├── 📱 App.js                   # App entry point with providers
+├── 📱 screens/                 # 50+ feature screens
+│   ├── auth/                   # Login, Signup, OTP flows
+│   ├── onboarding/             # 4-step onboarding (Onboarding1-4)
+│   ├── booking/                # BookingStep1, BookingDetails, etc.
+│   ├── payment/                # CreditCardPayment, CryptoPayment
+│   ├── profile/                # EditProfile, Settings screens
+│   └── main/                   # Home, Search, Notifications
+├── 🧩 components/              # 25+ reusable UI components
+│   ├── cards/                  # ServiceCard, BookingItem, ReviewCard
+│   ├── inputs/                 # Input, SearchInputBar, DatePicker
+│   ├── modals/                 # DatePickerModal, bottomsheets
+│   └── navigation/             # Header, TabView components
+├── 🧭 navigations/             # Navigation configuration
+│   ├── AppNavigation.js        # Main stack navigator (60+ screens)
+│   └── BottomTabNavigation.js  # Tab navigation (Home, Search, etc.)
+├── 🌐 context/                 # React Context providers
+│   ├── AuthContext.js          # Authentication state & user profile
+│   ├── NotificationContext.js  # Push notifications management
+│   └── LanguageContext.js      # Internationalization
+├── 📡 lib/                     # External integrations
+│   ├── supabase.js            # Supabase client with AsyncStorage
+│   └── services/              # API service modules
+├── ⚙️ config/                  # Configuration files
+│   ├── stripe.config.js       # Stripe payment configuration
+│   └── coinbase.config.js     # Coinbase Commerce setup
+├── 🎨 constants/               # Design system
+│   ├── theme.js               # Colors, typography
+│   ├── fonts.js               # Font definitions
+│   └── icons.js               # Icon mappings
+├── 🗄️ database/               # SQL migrations
+│   └── notification_settings.sql # Database schema
+└── 🛠️ utils/                  # Helper functions
 ```
 
 ---
 
-## Environment Configuration
+## 🔧 Core Features Deep Dive
 
-Create a `.env` (or `.env.local`) file:
+### Authentication System
+- **Multi-step Onboarding**: 4-screen flow (Onboarding1-4) for first-time users
+- **Email Authentication**: Supabase Auth with OTP verification
+- **Biometric Support**: Touch ID/Face ID via expo-local-authentication
+- **Profile Management**: Extended user profiles with image upload
+- **Session Persistence**: AsyncStorage integration for offline auth
 
+### Booking Flow
+1. **Service Discovery** (Home.js, AllServices.js)
+2. **Service Selection** (ServiceDetails.js, WorkerDetails.js)
+3. **Booking Configuration** (BookingStep1.js with addons)
+4. **Address & Scheduling** (YourAddress.js with calendar integration)
+5. **Payment Processing** (PaymentMethods.js → CreditCard/CryptoPayment.js)
+6. **Confirmation** (BookingDetails.js, EReceipt.js)
+
+### Payment Integration
+- **Stripe**: Full card processing with react-native-credit-card-input
+- **Coinbase Commerce**: 6 supported cryptocurrencies (BTC, ETH, USDC, etc.)
+- **Payment Methods**: Add/manage multiple payment options
+- **Receipt System**: Digital receipts with booking details
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+```bash
+Node.js 18+
+npm or yarn
+Expo CLI
+iOS Simulator (Mac) / Android Emulator
+Supabase account
+Stripe account (for payments)
+Coinbase Commerce account (for crypto)
 ```
-REACT_APP_SUPABASE_URL=YOUR_SUPABASE_URL
-REACT_APP_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
-STRIPE_PUBLISHABLE_KEY=pk_test_xxx
-COINBASE_API_KEY=your_key   # (REMOVE keys from repo!)
-COINBASE_WEBHOOK_SECRET=whsec_xxx
+
+### Installation
+
+1. **Clone and Install**
+   ```bash
+   git clone <your-repo>
+   cd theApp
+   npm install
+   ```
+
+2. **Environment Setup**
+   Create `.env` file:
+   ```env
+   REACT_APP_SUPABASE_URL=your_supabase_url
+   REACT_APP_SUPABASE_ANON_KEY=your_supabase_anon_key
+   STRIPE_PUBLISHABLE_KEY=pk_test_...
+   COINBASE_API_KEY=your_coinbase_key
+   ```
+
+3. **Supabase Configuration**
+   - Create new Supabase project
+   - Run migrations from `database/` folder
+   - Enable Row Level Security (RLS)
+   - Configure authentication providers
+
+4. **Payment Setup**
+   - Update `config/stripe.config.js` with your keys
+   - Update `config/coinbase.config.js` with your API credentials
+   - Configure webhook endpoints for production
+
+5. **Start Development**
+   ```bash
+   npm start
+   # Press 'a' for Android, 'i' for iOS, 'w' for web
+   ```
+
+---
+
+## 📱 App Configuration
+
+### Expo Configuration (`app.json`)
+- **App Name**: BRICOLLANO
+- **Package**: bricollano.info.com
+- **Platforms**: iOS, Android, Web
+- **Plugins**: Stripe, Push Notifications, Fonts
+- **EAS Project ID**: Configured for deployment
+
+### Navigation Flow
+```
+Initial → (First Launch?) → Onboarding1-4 → Welcome → Login/Signup
+                       ↓
+Auth Success → Main (BottomTabs) → Home/Search/Bookings/Inbox/Profile
+                       ↓
+Service Flow → ServiceDetails → BookingStep1 → Payment → Confirmation
 ```
 
-Add to `.gitignore`:
+---
 
+## 🔔 Notifications & Real-time Features
+
+### Push Notifications
+- **Expo Notifications**: Cross-platform push notifications
+- **Real-time Updates**: Booking status, payment confirmations
+- **Chat Notifications**: New message alerts
+- **Customizable Settings**: Per-user notification preferences via `notification_settings` table
+
+### Real-time Chat
+- **GiftedChat Integration**: Full-featured chat with React Native Gifted Chat
+- **Message States**: Sent, delivered, read receipts
+- **File Support**: Image sharing capabilities
+- **Conversation Management**: Persistent chat history
+
+---
+
+## 🌍 Internationalization
+
+Multi-language support with dynamic switching:
+- **Languages**: English, French, Spanish, Arabic
+- **RTL Support**: Right-to-left layout for Arabic
+- **Context-based**: `LanguageContext.js` for app-wide language state
+- **Screen Coverage**: All major screens translated
+
+---
+
+## 🛠️ Development Scripts
+
+```bash
+# Development
+npm start                # Start Expo development server
+npm run android         # Run on Android device/emulator
+npm run ios            # Run on iOS device/simulator
+npm run web            # Run in web browser
+
+# Code Quality
+npm run format:check    # Check code formatting with Prettier
+npm run format:write    # Auto-format code with Prettier
+npm run lint:check     # Check for ESLint issues
+npm run lint:fix       # Auto-fix ESLint issues
 ```
-.env*
+
+---
+
+## 🗄️ Database Schema (Supabase)
+
+### Core Tables
+
+#### User Management
+- **auth.users**: Supabase authentication (managed)
+- **users**: Extended user profiles with personal information
+- **user_roles**: Role-based access control system
+- **user_devices**: Device management for push notifications
+- **user_push_tokens**: Expo push notification tokens
+
+#### Service Management
+- **service_categories**: Service categorization with icons
+- **services**: Available services catalog with pricing
+- **service_addons**: Additional service options
+- **service_translations**: Multi-language support (EN/IT)
+- **service_category_translations**: Translated category names
+
+#### Worker System
+- **workers**: Service provider profiles with ratings
+- **worker_services**: Worker-service mappings with custom pricing
+- **worker_statistics**: Performance metrics and earnings
+
+#### Booking & Payment Flow
+- **bookings**: Complete booking lifecycle management
+- **booking_addons**: Selected add-ons per booking
+- **payments**: Payment processing (Stripe, Crypto, PayPal)
+- **crypto_payments**: Cryptocurrency transaction details
+- **paypal_payments**: PayPal-specific payment data
+
+#### Communication System
+- **conversations**: Chat conversations linked to bookings
+- **conversation_participants**: User participation in chats
+- **messages**: Chat message history with file support
+- **message_status**: Read receipts and delivery status
+
+#### Engagement & Feedback
+- **reviews**: Booking reviews with 1-5 star ratings
+- **favorites**: User favorites (services/workers)
+- **notifications**: System notifications with channel support
+- **notification_preferences**: Per-user notification settings
+
+#### System Administration
+- **roles**: Permission-based role definitions
+- **system_settings**: Application configuration
+- **reports**: Administrative reporting system
+
+### Advanced Features
+
+#### Multi-language Support
+- Supports English and Italian translations
+- Separate translation tables for services and categories
+- Language-specific content delivery
+
+#### Payment Processing
+- **Multiple Payment Methods**: Credit cards, cryptocurrency, PayPal
+- **Transaction Tracking**: Complete payment lifecycle
+- **Currency Support**: EUR default with multi-currency capability
+
+#### Real-time Features
+- **Pusher Integration**: Real-time chat with channel management
+- **Message Status**: Delivery and read receipts
+- **Live Notifications**: Instant booking updates
+
+### Database Relationships & Business Logic
+
+#### Key Relationships
+```
+Users (auth.users) ←→ Users (public.users) [1:1]
+Users → Bookings [1:many] (as clients)
+Workers → Bookings [1:many] (as service providers)  
+Workers → Reviews [1:many]
+Bookings → Payments [1:1]
+Bookings → Conversations [1:1]
+Services → Service Addons [1:many]
 ```
 
-Replace hardcoded secrets in `config/` with environment reads (e.g. `react-native-dotenv`).
+#### Business Rules Implemented
+- **Rating System**: 1-5 star ratings with decimal averages
+- **Booking Status Flow**: pending → confirmed → in_progress → completed/cancelled
+- **Payment Status**: pending → processing → completed/failed
+- **Message Types**: text, image, file support
+- **Multi-currency**: EUR default, extensible to other currencies
+- **Role-based Access**: Admin, Worker, Client roles with permissions
+
+#### Data Integrity Features
+- **UUID Primary Keys**: All tables use UUID for distributed systems
+- **Timestamps**: Automatic created_at/updated_at tracking
+- **Soft Deletes**: Maintained through is_active flags
+- **Constraints**: Rating bounds (1-5), email validation, enum types
+- **Indexes**: Performance optimization on frequently queried fields
+
+### Row Level Security (RLS)
+All tables implement comprehensive RLS policies:
+- Users can only access their own data
+- Workers can manage their profiles and bookings
+- Public data (services, categories) accessible to authenticated users
+- Admin-only access for system settings and reports
 
 ---
 
-## Running the Project
+## 🔒 Security Considerations
 
-1. Install dependencies: `npm install`
-2. Start Metro / Expo: `npm start`
-3. Choose platform (press `a` for Android, `i` for iOS (macOS), `w` for web)
-4. Ensure Supabase env vars are set; otherwise auth/service fetch will fail silently
-
-Optional tooling:
-
-- Format: `npm run format:write`
-- Lint: `npm run lint:fix`
+- ⚠️ **Environment Variables**: Never commit API keys - use `.env` files
+- 🔐 **RLS Policies**: All Supabase tables protected with Row Level Security
+- 🛡️ **Input Validation**: Client and server-side validation with `validate.js`
+- 🔑 **Authentication**: Secure session management with Supabase Auth
+- 💳 **Payment Security**: PCI-compliant payment processing (no card data stored)
+- 🔒 **Biometric Auth**: Optional enhanced security for sensitive operations
 
 ---
 
-## Quality Tooling
+## 📦 Deployment
 
-- ESLint + Prettier configured
-- Expo SDK 53 + React Native 0.79 + React 19
-- Reanimated / Gesture Handler for advanced UI
+### EAS Build (Recommended)
+```bash
+# Install EAS CLI
+npm install -g eas-cli
 
-Recommended Additions:
+# Configure for your project
+eas build:configure
 
-- Jest or Detox tests
-- TypeScript migration
+# Build for app stores
+eas build --platform all --profile production
 
----
+# Submit to stores
+eas submit --platform ios
+eas submit --platform android
+```
 
-## Extending the App (How-To)
-
-Add a New Service Domain:
-
-1. Create `lib/services/<domain>.js`
-2. Add pure transform helpers
-3. Add screen in `screens/` and export in `screens/index.js`
-4. Register in `AppNavigation.js` + choose transition
-
-Add Push Handling (Foreground):
-
-1. Initialize `expo-notifications` listener in a root provider
-2. Insert notifications into table → subscribe via Realtime
-
-Implement Booking Flow Enhancements:
-
-1. Add `booking` table + `booking_items` + statuses
-2. Extend `ReviewSummary` to POST a review
-3. Use RLS policies in Supabase
+### Environment-Specific Builds
+- **Development**: Local development with Expo Go
+- **Preview**: Internal testing builds
+- **Production**: App store distribution
 
 ---
 
-## Security Considerations
+## 🤝 Contributing
 
-- Remove Stripe secret + Coinbase API key + webhook secret from client bundle
-- Enable Row Level Security (RLS) in Supabase for all tables
-- Validate all RPC inputs server-side
-- Rate limit auth + search endpoints
-- Sanitize chat inputs (if rendered on web)
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Follow the existing code style (Prettier + ESLint configured)
+4. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+5. Push to the branch (`git push origin feature/AmazingFeature`)
+6. Open a Pull Request
 
----
-
-## Troubleshooting
-
-Blank Screen after Launch:
-
-- Check `AuthContext` timeout logs; validate Supabase URL/key
-
-No Services Appear:
-
-- Confirm `services.is_active = true`
-- Test RPC: `select * from get_service_workers('<service_uuid>');`
-
-Push Token Missing:
-
-- Ensure EAS project ID in `app.json` (extra.eas.projectId)
-
-Crypto Payment Not Creating Charge:
-
-- Implement backend relay; avoid calling Coinbase directly from client
+### Code Style Guidelines
+- Use Prettier for formatting
+- Follow ESLint rules
+- Use meaningful component and variable names
+- Add comments for complex business logic
+- Maintain consistent file structure
 
 ---
 
-## Roadmap / Suggested Improvements
+## 📄 License
 
-- [ ] Secure secrets (env + backend proxy endpoints)
-- [ ] Migrate to TypeScript
-- [ ] Introduce React Query + optimistic updates
-- [ ] Add testing (Jest + React Native Testing Library)
-- [ ] Implement booking availability calendar + time slots
-- [ ] Add review creation & rating aggregation table
-- [ ] Real-time chat (Supabase Realtime / external provider)
-- [ ] Offline caching for categories/services
-- [ ] Accessibility pass (voiceover labels, larger hit boxes)
-- [ ] Performance audit: virtualized lists for large service sets
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
-## License
+## 📞 Support & Contact
 
-Proprietary (update with your chosen license). Remove sensitive keys before any public release.
-
----
-
-## Contributing
-
-1. Fork & branch: `feat/<feature-name>`
-2. Ensure lint passes: `npm run lint:check`
-3. Open PR with summary + screenshots / logs
+- 📧 **Email**: support@bricollano.com
+- 🐛 **Issues**: [GitHub Issues](https://github.com/aminemanssouri/theApp/issues)
+- 📖 **Documentation**: This README + inline code comments
 
 ---
 
-## Quick Health Checklist
-
-- Auth: Supabase session persisted via AsyncStorage ✔
-- Navigation: Grouped transition strategy ✔
-- Payments: Stripe & Coinbase integrated (needs secret handling hardening) ⚠
-- Push: Dynamic registration + upsert path ✔ (backend function required)
-- Data Layer: Transform abstraction for UI consumption ✔
-- Secrets: Currently exposed in repo ❌ (fix required)
-
----
-
-## Notes
-
-This README was generated via automated static analysis of the repository structure and representative files (`AuthContext`, navigation, service layer, payments config, transforms, Home screen). Update sections as backend schemas evolve.
-
-Feel free to edit / trim for distribution builds.
-
----
-
-Happy building! 🚀
+<div align="center">
+  <p>Built with ❤️ by the BRICOLLANO Team</p>
+  <p>© 2024 BRICOLLANO. All rights reserved.</p>
+</div>

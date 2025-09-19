@@ -1,13 +1,14 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { NavigationContainer } from '@react-navigation/native';
+import * as Linking from 'expo-linking';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useState, useEffect } from 'react';
 import { Platform } from 'react-native';
 import { COLORS } from '../constants';
-import { AddNewCard, AddNewPaymentMethod, AddNewPaymentMethodDeclined, AddNewPaymentMethodSuccess, AllServices, BookingDetails, BookingStep1, Call, CancelBooking, CancelBookingPaymentMethods, ChangeEmail, ChangePIN, ChangePassword, Chat, CreateNewPIN, CreateNewPassword, CustomerService, EReceipt, EditProfile, FillYourProfile, Fingerprint, ForgotPasswordEmail, ForgotPasswordMethods, ForgotPasswordPhoneNumber, HelpCenter, InviteFriends, Login, MyBookings, Notifications, OTPVerification, Onboarding1, Onboarding2, Onboarding3, Onboarding4, PaymentMethod, PaymentMethods, PopularServices, ReviewSummary, Search, ServiceDetails, ServiceDetailsReviews, SettingsLanguage, SettingsNotifications, SettingsPayment, SettingsPrivacyPolicy, SettingsSecurity, Signup, Welcome, WorkerDetails, YourAddress,CryptoPayment,CreditCardPayment} from '../screens';
+import { useAuth } from '../context/AuthContext';
+import { AddNewCard, AddNewPaymentMethod, AddNewPaymentMethodDeclined, AddNewPaymentMethodSuccess, AllServices, BookingDetails, BookingStep1, Call, CancelBooking, CancelBookingPaymentMethods, ChangeEmail, ChangePIN, ChangePassword, Chat, CreateNewPIN, CreateNewPassword, CustomerService, EReceipt, EditProfile, FillYourProfile, Fingerprint, ForgotPasswordEmail, ForgotPasswordMethods, ForgotPasswordPhoneNumber, HelpCenter, InviteFriends, Login, MyBookings, Notifications, OTPVerification, Onboarding1, Onboarding2, Onboarding3, Onboarding4, PaymentMethod, PaymentMethods, PopularServices, ReviewSummary, Search, ServiceDetails, ServiceDetailsReviews, SettingsLanguage, SettingsNotifications, SettingsPayment, SettingsPrivacyPolicy, SettingsSecurity, Signup, Welcome, WorkerDetails, YourAddress, CryptoPayment, CreditCardPayment } from '../screens';
 import BottomTabNavigation from './BottomTabNavigation';
 import { getTransitionConfig } from '../utils/navigationTransitions';
-import { useAuth } from '../context/AuthContext';
 
 const Stack = createNativeStackNavigator();
 
@@ -25,35 +26,55 @@ const defaultScreenOptions = {
 };
 
 const AppNavigation = () => {
-  const [isFirstLaunch, setIsFirstLaunch] = useState(null)
-    const [isLoading, setIsLoading] = useState(true)
-    const { user, loading: authLoading } = useAuth();
+  const [isFirstLaunch, setIsFirstLaunch] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const { user, loading: authLoading } = useAuth();
 
-    useEffect(() => {
-        const checkIfFirstLaunch = async () => {
-            try {
-                const value = await AsyncStorage.getItem('alreadyLaunched')
-                if (value === null) {
-                    await AsyncStorage.setItem('alreadyLaunched', 'true')
-                    setIsFirstLaunch(true)
-                } else {
-                    setIsFirstLaunch(false)
-                }
-            } catch (error) {
-                setIsFirstLaunch(false)
-            }
-            setIsLoading(false) // Set loading state to false once the check is complete
+  useEffect(() => {
+    const checkIfFirstLaunch = async () => {
+      try {
+        const value = await AsyncStorage.getItem('alreadyLaunched');
+        if (value === null) {
+          await AsyncStorage.setItem('alreadyLaunched', 'true');
+          setIsFirstLaunch(true);
+        } else {
+          setIsFirstLaunch(false);
         }
+      } catch (error) {
+        setIsFirstLaunch(false);
+      }
+      setIsLoading(false); // Set loading state to false once the check is complete
+    };
 
-        checkIfFirstLaunch()
-    }, [])
+    checkIfFirstLaunch();
+  }, []);
 
-    if (isLoading || authLoading) {
-        return null // Render a loader or any other loading state component
-    }
+  // Wait for both async storage check and auth check to complete
+  if (isLoading || authLoading) {
+    return null; // Render a loader or any other loading state component
+  }
+
+  // Deep link configuration
+  const linking = {
+    prefixes: [
+      'bricollano://',           // Production deep links
+      'exp+bricollano://',       // Expo development client
+    ],
+    config: {
+      screens: {
+        // Auth flow deep links
+        'OTPVerification': 'auth/reset-password',
+        'CreateNewPassword': 'auth/new-password',
+        // Add other deep links as needed
+        'Main': 'main',
+        'Login': 'login',
+      },
+    },
+  };
 
   return (
     <NavigationContainer
+      linking={linking}
       theme={{
         colors: {
           background: 'transparent',
@@ -67,7 +88,7 @@ const AppNavigation = () => {
     >
       <Stack.Navigator 
         screenOptions={defaultScreenOptions}
-        >
+      >
         {
           // Unauthenticated stack: onboarding/auth screens only
           !user ? (
@@ -145,7 +166,7 @@ const AppNavigation = () => {
         }
       </Stack.Navigator> 
     </NavigationContainer>
-  )
-}
+  );
+};
 
-export default AppNavigation
+export default AppNavigation;
