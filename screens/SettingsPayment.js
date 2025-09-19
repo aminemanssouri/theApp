@@ -6,9 +6,10 @@ import { ScrollView } from 'react-native-virtualized-view';
 import PaymentMethodItemConnected from '../components/PaymentMethodItemConnected';
 import Button from '../components/Button';
 import { useTheme } from '../theme/ThemeProvider';
-import { t } from '../context/LanguageContext';
+import { useI18n } from '../context/LanguageContext';
 
 const SettingsPayment = ({ navigation }) => {
+    const { t } = useI18n();
     const { colors, dark } = useTheme();
     /**
      * Render header

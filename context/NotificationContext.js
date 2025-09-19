@@ -79,8 +79,12 @@ export const NotificationProvider = ({ children }) => {
         count: data?.length || 0,
         notifications: data?.slice(0, 3) || [] // Log first 3 for debugging
       });
-      setNotifications(data);
-      calculateUserStats(data);
+
+      const deduped = dedupeNotifications(data);
+      setNotifications(deduped);
+      calculateUserStats(deduped);
+      // Keep unreadCount in sync with what we actually render
+      setUnreadCount(deduped.filter(n => !n.is_read).length);
     } catch (error) {
       console.error('❌ Error loading notifications:', error);
       setNotifications([]);
@@ -146,8 +150,8 @@ export const NotificationProvider = ({ children }) => {
       // Calculate stats with the updated notifications
       calculateUserStats(updatedNotifications);
       
-      // Reload unread count
-      await loadUnreadCount();
+      // Derive unread count locally to stay consistent with rendered list
+      setUnreadCount(updatedNotifications.filter(n => !n.is_read).length);
     } catch (error) {
       console.error('❌ Error marking as read:', error);
       throw error;
@@ -186,7 +190,7 @@ export const NotificationProvider = ({ children }) => {
       const updatedNotifications = notifications.filter(n => n.id !== notificationId);
       setNotifications(updatedNotifications);
       calculateUserStats(updatedNotifications);
-      await loadUnreadCount();
+      setUnreadCount(updatedNotifications.filter(n => !n.is_read).length);
     } catch (error) {
       console.error('Error deleting notification:', error);
       throw error;
@@ -309,43 +313,15 @@ export const NotificationProvider = ({ children }) => {
           eventType: eventType,
           isRead: newNotification.is_read
         });
-        
+
         setNotifications(prev => {
-          // Enhanced duplicate detection - check by ID and also by content similarity
-          const existingById = prev.find(n => n.id === newNotification.id);
-          if (existingById) {
-            console.log('🔄 Duplicate notification detected by ID, updating existing:', newNotification.id);
-            // Update existing notification with new data
-            const updated = prev.map(n => n.id === newNotification.id ? newNotification : n);
-            calculateUserStats(updated);
-            return updated;
-          }
-          
-          // Additional check for similar notifications (same type, title, and recent timestamp)
-          const similarNotification = prev.find(n => 
-            n.type === newNotification.type &&
-            n.title === newNotification.title &&
-            Math.abs(new Date(n.created_at) - new Date(newNotification.created_at)) < 5000 // Within 5 seconds
-          );
-          
-          if (similarNotification) {
-            console.log('🔄 Similar notification detected, skipping duplicate:', newNotification.id);
-            return prev;
-          }
-          
-          console.log('✅ Adding new notification to list:', newNotification.id);
-          const updated = [newNotification, ...prev];
+          // Enhanced duplicate detection
+          const updated = dedupeNotifications([newNotification, ...prev]);
           calculateUserStats(updated);
+          // Derive unread count from the updated, deduped list to avoid double counting
+          setUnreadCount(updated.filter(n => !n.is_read).length);
           return updated;
         });
-        
-        // Update unread count only for new unread notifications
-        if (!newNotification.is_read && eventType === 'INSERT') {
-          setUnreadCount(prev => prev + 1);
-        } else if (newNotification.is_read && eventType === 'UPDATE') {
-          // Recalculate unread count when a notification is marked as read
-          loadUnreadCount();
-        }
       });
 
       return () => {
@@ -368,6 +344,45 @@ export const NotificationProvider = ({ children }) => {
       });
     }
   }, [user?.id]);
+
+  // --- Helpers: Deduplication ---
+  const normalize = (str) => {
+    if (!str || typeof str !== 'string') return '';
+    return str.trim().toLowerCase();
+  };
+
+  // Consider items duplicates if:
+  // - same id OR
+  // - same type AND (same related_id or same normalized title/message) AND timestamps within a short window
+  const isDuplicateOf = (a, b) => {
+    if (!a || !b) return false;
+    if (a.id && b.id && a.id === b.id) return true;
+    if (a.type !== b.type) return false;
+
+    const aTitle = normalize(a.title);
+    const bTitle = normalize(b.title);
+    const aMsg = normalize(a.message);
+    const bMsg = normalize(b.message);
+    const sameRel = a.related_id && b.related_id && a.related_id === b.related_id;
+    const sameText = (aTitle && aTitle === bTitle) || (aMsg && aMsg === bMsg);
+
+    // within 30 seconds window
+    const tA = new Date(a.created_at).getTime();
+    const tB = new Date(b.created_at).getTime();
+    const closeInTime = isFinite(tA) && isFinite(tB) && Math.abs(tA - tB) < 30 * 1000;
+
+    return (sameRel || sameText) && closeInTime;
+  };
+
+  const dedupeNotifications = (list) => {
+    if (!Array.isArray(list) || list.length === 0) return [];
+    const out = [];
+    for (const item of list) {
+      const exists = out.some((x) => isDuplicateOf(x, item));
+      if (!exists) out.push(item);
+    }
+    return out;
+  };
 
   const value = {
     notifications,

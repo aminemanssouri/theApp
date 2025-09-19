@@ -2,15 +2,18 @@ import { View, Text, Image, TouchableOpacity, StyleSheet, ActivityIndicator, Fla
 import React, { useEffect, useState, useRef } from 'react';
 import { getUserConversations, getConversationMessages, subscribeToUserMessages, markMessagesRead } from '../lib/services/chat';
 import { useAuth } from '../context/AuthContext';
+import { useChat } from '../context/ChatContext';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../theme/ThemeProvider';
 import { COLORS, SIZES } from '../constants';
 import { Ionicons } from '@expo/vector-icons';
-import { t } from '../context/LanguageContext';
+import { useI18n } from '../context/LanguageContext';
 
 const Chats = ({ searchQuery = '' }) => {
+  const { t } = useI18n();
   const navigation = useNavigation();
   const { user } = useAuth();
+  const { markConversationAsRead, refreshUnreadCount } = useChat();
   const { colors, dark } = useTheme();
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -101,7 +104,8 @@ const Chats = ({ searchQuery = '' }) => {
 
   const handleConversationPress = async (conversationId, participantId) => {
     try {
-      await markMessagesRead(conversationId, user.id);
+      // Mark as read using the chat context
+      await markConversationAsRead(conversationId);
       
       setConversations(prev => 
         prev.map(conv => 

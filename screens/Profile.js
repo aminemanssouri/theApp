@@ -11,12 +11,13 @@ import RBSheet from "react-native-raw-bottom-sheet";
 import Button from '../components/Button';
 import { useAuth } from '../context/AuthContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { t } from '../context/LanguageContext';
+import { useI18n } from '../context/LanguageContext';
 
 const Profile = ({ navigation }) => {
+  const { t } = useI18n();
   const refRBSheet = useRef();
   const { dark, colors, setScheme } = useTheme();
-  const { user, userProfile, loading: authLoading } = useAuth();
+  const { user, userProfile, loading: authLoading, signOut } = useAuth();
   const insets = useSafeAreaInsets();
 
   
@@ -312,12 +313,21 @@ const Profile = ({ navigation }) => {
             textColor={dark ? COLORS.white : COLORS.primary}
             onPress={() => refRBSheet.current.close()}
           />
-            <Button
-      title={t('profile.yes_logout')}
-      filled
-      style={styles.logoutButton}
-      
-    />
+          <Button
+            title={t('profile.yes_logout')}
+            filled
+            style={styles.logoutButton}
+            onPress={async () => {
+              try {
+                await signOut();
+              } catch (e) {
+                // noop; errors already logged in context
+              } finally {
+                refRBSheet.current.close();
+                navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+              }
+            }}
+          />
         </View>
       </RBSheet>
     </View>
