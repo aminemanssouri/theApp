@@ -6,18 +6,14 @@ import { images, COLORS, SIZES, icons } from "../constants";
 import { banners } from '../data'; // Keep banners as static for now
 import { 
   fetchHomepageData,
-  fetchServiceCategories,
   fetchAllCategories,
-  fetchActiveServices,
   transformCategories, 
-  transformServices,
   getWorkersForService
 } from '../lib/services/home';
 import { supabase } from '../lib/supabase';
 import SubHeaderItem from '../components/SubHeaderItem';
 import Category from '../components/Category';
 import ServiceCard from '../components/ServiceCard';
-// import ServiceDebugger from '../components/ServiceDebugger'; // Import the service debugger
 import { useTheme } from '../theme/ThemeProvider';
 import { useNotifications } from '../context/NotificationContext';
 import { useAuth } from '../context/AuthContext';

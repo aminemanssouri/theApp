@@ -1,4 +1,4 @@
-import  { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, useWindowDimensions, ActivityIndicator, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SIZES, icons, images } from '../constants';
@@ -180,10 +180,10 @@ const WorkerDetails = ({ route, navigation }) => {
             color: dark ? COLORS.secondaryWhite : COLORS.greyscale900
           }]}>{t('worker.years_experience', { years: worker?.years_experience || '5' })}</Text>
           <View style={styles.reviewContainer}>
-            <ReviewStars review={5} size={14} color="orange" />
+            <ReviewStars review={worker?.average_rating || worker?.rating || 0} size={14} color="orange" />
             <Text style={[styles.ratingNum, { 
               color: dark ? COLORS.grayscale200 : "gray"
-            }]}>({worker?.rating || '4.7'})</Text>
+            }]}>({worker?.average_rating || worker?.rating || '0.0'})</Text>
           </View>
           <Text style={styles.price}>${worker?.custom_price || worker?.hourly_rate || '30.00'}/h</Text>
 
@@ -191,7 +191,7 @@ const WorkerDetails = ({ route, navigation }) => {
             <View style={styles.view}>
               <Text style={[styles.viewNum, { 
                 color: dark ? COLORS.white : COLORS.greyscale900
-              }]}>{worker?.total_reviews || '100'}+</Text>
+              }]}>{worker?.total_reviews || 0}+</Text>
               <Text style={[styles.viewText, { 
                 color: dark ? COLORS.secondaryWhite : COLORS.greyscale900
               }]}>{t('worker.reviews_label')}</Text>
