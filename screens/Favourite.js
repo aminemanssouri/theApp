@@ -75,7 +75,7 @@ const Favourite = ({ navigation }) => {
                         createdAt: fav.created_at,
                         // Mock data for compatibility with existing card
                         providerName: t('chat.service_provider'),
-                        rating: 4.5,
+                        rating: 0,
                         numReviews: 0,
                         isOnDiscount: false,
                         oldPrice: null

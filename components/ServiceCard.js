@@ -11,6 +11,7 @@ import {
     toggleWorkerServiceFavorite
 } from '../lib/services/favorites';
 import { t } from '../context/LanguageContext';
+import ReviewStars from './ReviewStars';
 
 const ServiceCard = ({
     name,
@@ -213,9 +214,13 @@ const ServiceCard = ({
                         }
                     </View>
                     <View style={styles.ratingContainer}>
-                        <FontAwesome name="star-half-empty" size={16} color="orange" />
-                        <Text style={[styles.rating, { color: dark ? COLORS.greyscale300 : COLORS.grayscale700 }]}> {" "}{rating}</Text>
-                        <Text style={[styles.numReviews, { color: dark ? COLORS.greyscale300 : COLORS.grayscale700 }]}> |  {t('service.reviews_count', { count: numReviews })}</Text>
+                        <ReviewStars 
+                            review={rating || 0} 
+                            size={14}
+                            color="orange"
+                        />
+                        <Text style={[styles.rating, { color: dark ? COLORS.greyscale300 : COLORS.grayscale700 }]}> {" "}{rating || '0.0'}</Text>
+                        <Text style={[styles.numReviews, { color: dark ? COLORS.greyscale300 : COLORS.grayscale700 }]}> |  {t('service.reviews_count', { count: numReviews || 0 })}</Text>
                     </View>
                 </View>
             </TouchableOpacity>
