@@ -47,7 +47,9 @@ export async function registerPushTokenForUser(userId) {
       try {
         const cfg = Constants?.default?.expoConfig || Constants?.expoConfig || {};
         projectId = cfg?.extra?.eas?.projectId || cfg?.extra?.projectId;
-      } catch (_) {}
+      } catch (_) {
+        // Ignore configuration errors
+      }
 
       const tokenResult = projectId
         ? await Notifications.getExpoPushTokenAsync({ projectId })
