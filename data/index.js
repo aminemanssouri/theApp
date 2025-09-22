@@ -136,7 +136,7 @@ export const faqs = [
 
  
 
- 
+
 
 export const banners = [
     {
