@@ -12,27 +12,34 @@ import { getFormatedDate } from "react-native-modern-datepicker";
 import DatePickerModal from '../components/DatePickerModal';
 import Button from '../components/Button';
 import { useTheme } from '../theme/ThemeProvider';
+import { useAuth } from '../context/AuthContext';
+import { supabase } from '../lib/supabase';
 
-const isTestMode = true;
+const isTestMode = false;
 
 const initialState = {
   inputValues: {
     fullName: isTestMode ? 'John Doe' : '',
-    email: isTestMode ? 'example@gmail.com' : '',
-    nickname: isTestMode ? "" : "",
-    phoneNumber: ''
+    nickname: isTestMode ? 'John' : '',
+    email: isTestMode ? 'john@example.com' : '',
+    phoneNumber: isTestMode ? '1234567890' : '',
+    address: isTestMode ? '123 Main St' : '',
+    city: isTestMode ? 'New York' : '',
+    zipCode: isTestMode ? '10001' : '',
   },
   inputValidities: {
     fullName: false,
-    email: false,
     nickname: false,
+    email: false,
     phoneNumber: false,
+    address: false,
+    city: false,
+    zipCode: false,
   },
   formIsValid: false,
 }
 
-
-const FillYourProfile = ({ navigation }) => {
+const FillYourProfile = ({ navigation, route }) => {
   const [image, setImage] = useState(null);
   const [error, setError] = useState();
   const [formState, dispatchFormState] = useReducer(reducer, initialState);
@@ -40,7 +47,18 @@ const FillYourProfile = ({ navigation }) => {
   const [selectedArea, setSelectedArea] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [openStartDatePicker, setOpenStartDatePicker] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [address, setAddress] = useState('');
+  const [city, setCity] = useState('');
+  const [zipCode, setZipCode] = useState('');
+  const [email, setEmail] = useState(''); // Add this state
+  const [isLoading, setIsLoading] = useState(false);
   const { colors, dark } = useTheme();
+  const { user, setProfileComplete, refreshUserProfile } = useAuth();
+
+  // Get user data from route params (if coming from Google OAuth)
+  const userId = route?.params?.userId || user?.id;
+  const userEmail = route?.params?.email || user?.email;
 
   const today = new Date();
   const startDate = getFormatedDate(
@@ -68,6 +86,64 @@ const FillYourProfile = ({ navigation }) => {
     }
   }, [error])
 
+  // Initialize email state with userEmail
+  useEffect(() => {
+    if (userEmail) {
+      setEmail(userEmail);
+      // Also update the form state
+      inputChangedHandler('email', userEmail);
+    }
+  }, [userEmail]);
+
+  // Load existing user data if available
+  useEffect(() => {
+    const loadUserData = async () => {
+      if (!userId) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', userId)
+          .single();
+        
+        if (data) {
+          // Pre-fill form with existing data
+          if (data.first_name || data.last_name) {
+            inputChangedHandler('fullName', `${data.first_name || ''} ${data.last_name || ''}`.trim());
+          }
+          if (data.email) {
+            setEmail(data.email); // Set email state
+            inputChangedHandler('email', data.email);
+          }
+          if (data.phone) {
+            setPhoneNumber(data.phone);
+          }
+          if (data.address) {
+            setAddress(data.address);
+          }
+          if (data.city) {
+            setCity(data.city);
+          }
+          if (data.zip_code) {
+            setZipCode(data.zip_code);
+          }
+          if (data.profile_picture) {
+            setImage({ uri: data.profile_picture });
+          }
+          if (data.date_of_birth) {
+            const date = new Date(data.date_of_birth);
+            setStartedDate(getFormatedDate(date, "MM/DD/YYYY"));
+          }
+        }
+      } catch (error) {
+        console.error('Error loading user data:', error);
+      }
+    };
+    
+    loadUserData();
+  }, [userId]);
+
   const pickImage = async () => {
     try {
       const tempUri = await launchImagePicker()
@@ -77,6 +153,182 @@ const FillYourProfile = ({ navigation }) => {
       // set the image
       setImage({ uri: tempUri })
     } catch (error) { }
+  };
+
+  // Upload image to Supabase Storage
+  const uploadImage = async (imageUri) => {
+    try {
+      const response = await fetch(imageUri);
+      const blob = await response.blob();
+      const fileExt = imageUri.split('.').pop();
+      const fileName = `${userId}_${Date.now()}.${fileExt}`;
+      const filePath = `profile-images/profiles/${fileName}`;
+
+      const { data, error } = await supabase.storage
+        .from('profiles') // Your bucket name
+        .upload(filePath, blob, {
+          contentType: `image/${fileExt}`,
+          upsert: true
+        });
+
+      if (error) throw error;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('profiles')
+        .getPublicUrl(filePath);
+
+      return publicUrl;
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      return null;
+    }
+  };
+
+  // Save profile data to database
+  const handleSaveProfile = async () => {
+    if (!userId) {
+      Alert.alert('Error', 'User ID not found');
+      return;
+    }
+
+    // Extract first and last name from full name
+    const fullName = formState.inputValues.fullName || '';
+    const nameParts = fullName.trim().split(' ');
+    const firstName = nameParts[0] || '';
+    const lastName = nameParts.slice(1).join(' ') || '';
+
+    // Validate required fields
+    if (!firstName || !phoneNumber) {
+      Alert.alert('Required Fields', 'Please fill in your name and phone number');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // Upload image if selected
+      let profilePictureUrl = null;
+      if (image && image.uri && !image.uri.startsWith('http')) {
+        profilePictureUrl = await uploadImage(image.uri);
+      } else if (image && image.uri && image.uri.startsWith('http')) {
+        profilePictureUrl = image.uri;
+      }
+
+      // Format phone number with country code
+      const formattedPhone = selectedArea ? 
+        `${selectedArea.callingCode}${phoneNumber}` : 
+        phoneNumber;
+
+      // Format date of birth
+      const dateOfBirth = startedDate !== "12/12/2023" ? 
+        new Date(startedDate.replace(/(\d{2})\/(\d{2})\/(\d{4})/, '$3-$1-$2')) : 
+        null;
+
+      // Prepare user data matching the database schema
+      const userData = {
+        id: userId, // Important: use the auth user ID
+        first_name: firstName,
+        last_name: lastName,
+        email: email || userEmail || formState.inputValues.email, // Use email state
+        phone: formattedPhone,
+        address: address || null,
+        city: city || null,
+        zip_code: zipCode || null,
+        profile_picture: profilePictureUrl,
+        date_of_birth: dateOfBirth,
+        updated_at: new Date().toISOString()
+      };
+
+      console.log('Saving user profile:', userData);
+
+      // Check if user record exists
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', userId)
+        .single();
+
+      let result;
+      if (existingUser) {
+        // Update existing record
+        result = await supabase
+          .from('users')
+          .update(userData)
+          .eq('id', userId);
+      } else {
+        // Insert new record
+        result = await supabase
+          .from('users')
+          .insert([userData]);
+      }
+
+      if (result.error) throw result.error;
+
+      console.log('Profile saved successfully');
+      
+      // Refresh user profile in context
+      if (refreshUserProfile) {
+        await refreshUserProfile();
+      }
+      
+      // Mark profile as complete
+      setProfileComplete(true);
+      
+      Alert.alert(
+        'Success',
+        'Your profile has been updated successfully!',
+        [
+          {
+            text: 'Continue',
+            onPress: () => {
+              // Navigation will happen automatically due to AppNavigation logic
+              // but we can force it if needed
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'Main' }],
+              });
+            }
+          }
+        ]
+      );
+    } catch (error) {
+      console.error('Error saving profile:', error);
+      Alert.alert('Error', 'Failed to save profile. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle Skip button
+  const handleSkip = async () => {
+    // Save minimal profile data (just mark as skipped)
+    if (userId) {
+      try {
+        // Create minimal user record
+        const { error } = await supabase
+          .from('users')
+          .upsert([{
+            id: userId,
+            email: userEmail,
+            updated_at: new Date().toISOString()
+          }]);
+        
+        if (!error) {
+          setProfileComplete(true);
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'Main' }],
+          });
+        }
+      } catch (error) {
+        console.error('Error skipping profile:', error);
+        // Navigate anyway
+        navigation.navigate("Main");
+      }
+    } else {
+      navigation.navigate("Main");
+    }
   };
 
   // fectch codes from rescountries api
@@ -95,7 +347,7 @@ const FillYourProfile = ({ navigation }) => {
 
         setAreas(areaData);
         if (areaData.length > 0) {
-          let defaultData = areaData.filter((a) => a.code == "US");
+          let defaultData = areaData.filter((a) => a.code == "IT"); // Default to Italy for your app
 
           if (defaultData.length > 0) {
             setSelectedArea(defaultData[0])
@@ -194,21 +446,29 @@ const FillYourProfile = ({ navigation }) => {
               id="fullName"
               onInputChanged={inputChangedHandler}
               errorText={formState.inputValidities['fullName']}
-              placeholder="Full Name"
+              placeholder="Full Name *"
               placeholderTextColor={COLORS.gray} />
-            <Input
-              id="nickname"
-              onInputChanged={inputChangedHandler}
-              errorText={formState.inputValidities['nickname']}
-              placeholder="Nickname"
-              placeholderTextColor={COLORS.gray} />
-            <Input
-              id="email"
-              onInputChanged={inputChangedHandler}
-              errorText={formState.inputValidities['email']}
+            
+            {/* Replace the Input component with TextInput for email */}
+            <TextInput
+              style={[styles.emailInput, {
+                backgroundColor: dark ? COLORS.dark2 : COLORS.greyscale500,
+                borderColor: dark ? COLORS.dark2 : COLORS.greyscale500,
+                color: dark ? COLORS.white : "#111"
+              }]}
               placeholder="Email"
               placeholderTextColor={COLORS.gray}
-              keyboardType="email-address" />
+              keyboardType="email-address"
+              value={email}
+              onChangeText={(text) => {
+                setEmail(text);
+                inputChangedHandler('email', text);
+              }}
+              editable={!userEmail} // Only editable if no email from auth
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            
             <View style={{
               width: SIZES.width - 32
             }}>
@@ -218,10 +478,13 @@ const FillYourProfile = ({ navigation }) => {
                   borderColor: dark ? COLORS.dark2 : COLORS.greyscale500,
                 }]}
                 onPress={handleOnPressStartDate}>
-                <Text style={{ ...FONTS.body4, color: COLORS.grayscale400 }}>{startedDate}</Text>
+                <Text style={{ ...FONTS.body4, color: COLORS.grayscale400 }}>
+                  {startedDate === "12/12/2023" ? "Date of Birth" : startedDate}
+                </Text>
                 <Feather name="calendar" size={24} color={COLORS.grayscale400} />
               </TouchableOpacity>
             </View>
+            
             <View style={[styles.inputContainer, {
               backgroundColor: dark ? COLORS.dark2 : COLORS.greyscale500,
               borderColor: dark ? COLORS.dark2 : COLORS.greyscale500,
@@ -249,11 +512,53 @@ const FillYourProfile = ({ navigation }) => {
               </TouchableOpacity>
               {/* Phone Number Text Input */}
               <TextInput
-                style={styles.input}
-                placeholder="Enter your phone number"
+                style={[styles.input, { color: dark ? COLORS.white : "#111" }]}
+                placeholder="Phone Number *"
                 placeholderTextColor={COLORS.gray}
                 selectionColor="#111"
                 keyboardType="numeric"
+                value={phoneNumber}
+                onChangeText={setPhoneNumber}
+              />
+            </View>
+            
+            {/* Additional fields for address */}
+            <TextInput
+              style={[styles.addressInput, {
+                backgroundColor: dark ? COLORS.dark2 : COLORS.greyscale500,
+                borderColor: dark ? COLORS.dark2 : COLORS.greyscale500,
+                color: dark ? COLORS.white : "#111"
+              }]}
+              placeholder="Address"
+              placeholderTextColor={COLORS.gray}
+              value={address}
+              onChangeText={setAddress}
+            />
+            
+            <View style={styles.rowContainer}>
+              <TextInput
+                style={[styles.halfInput, {
+                  backgroundColor: dark ? COLORS.dark2 : COLORS.greyscale500,
+                  borderColor: dark ? COLORS.dark2 : COLORS.greyscale500,
+                  color: dark ? COLORS.white : "#111"
+                }]}
+                placeholder="City"
+                placeholderTextColor={COLORS.gray}
+                value={city}
+                onChangeText={setCity}
+              />
+              
+              <TextInput
+                style={[styles.halfInput, {
+                  backgroundColor: dark ? COLORS.dark2 : COLORS.greyscale500,
+                  borderColor: dark ? COLORS.dark2 : COLORS.greyscale500,
+                  color: dark ? COLORS.white : "#111"
+                }]}
+                placeholder="ZIP Code"
+                placeholderTextColor={COLORS.gray}
+                keyboardType="numeric"
+                value={zipCode}
+                onChangeText={setZipCode}
               />
             </View>
           </View>
@@ -277,13 +582,15 @@ const FillYourProfile = ({ navigation }) => {
             borderColor: dark ? COLORS.dark3 : COLORS.tansparentPrimary
           }}
           textColor={dark ? COLORS.white : COLORS.primary}
-          onPress={() => navigation.navigate("Main")}
+          onPress={handleSkip}
+          disabled={isLoading}
         />
         <Button
-          title="Continue"
+          title={isLoading ? "Saving..." : "Continue"}
           filled
           style={styles.continueButton}
-          onPress={() => navigation.navigate("Main")}
+          onPress={handleSaveProfile}
+          disabled={isLoading}
         />
       </View>
     </SafeAreaView>
@@ -370,9 +677,31 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingRight: 8
   },
+  addressInput: {
+    borderWidth: 1,
+    borderRadius: 12,
+    borderColor: COLORS.greyscale500,
+    height: 52,
+    paddingHorizontal: 12,
+    fontSize: 14,
+    marginVertical: 6,
+    backgroundColor: COLORS.greyscale500,
+    width: SIZES.width - 32,
+  },
   rowContainer: {
     flexDirection: "row",
-    justifyContent: "space-between"
+    justifyContent: "space-between",
+    marginVertical: 6,
+  },
+  halfInput: {
+    borderWidth: 1,
+    borderRadius: 12,
+    borderColor: COLORS.greyscale500,
+    height: 52,
+    paddingHorizontal: 12,
+    fontSize: 14,
+    backgroundColor: COLORS.greyscale500,
+    width: (SIZES.width - 40) / 2,
   },
   bottomContainer: {
     position: "absolute",
@@ -401,7 +730,18 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     zIndex: 9999
-  }
+  },
+  emailInput: {
+    borderWidth: 1,
+    borderRadius: 12,
+    borderColor: COLORS.greyscale500,
+    height: 52,
+    paddingHorizontal: 12,
+    fontSize: 14,
+    marginVertical: 6,
+    backgroundColor: COLORS.greyscale500,
+    width: SIZES.width - 32,
+  },
 })
 
 export default FillYourProfile

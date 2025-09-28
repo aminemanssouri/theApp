@@ -40,8 +40,7 @@ export default function App() {
       if (url?.includes('reset-password')) {
         // The deep link handling will be managed by the navigation system
         // The AppNavigation component will handle the routing
-        console.log('Password reset deep link received:', url)
-      }
+       }
     }
 
     // Handle app opened from deep link while closed

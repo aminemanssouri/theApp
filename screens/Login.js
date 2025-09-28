@@ -14,6 +14,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { signIn,signInWithGoogle } from '../lib/services/auth';
 import { supabase } from '../lib/supabase';
 import { t } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 
 
 const isTestMode = false;
@@ -37,10 +38,7 @@ const Login = ({ navigation }) => {
   const [isChecked, setChecked] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { colors, dark } = useTheme();
-
-  useEffect(() => {
-    console.log('🔄 Login screen loading state:', isLoading);
-  }, [isLoading]);
+  const { refreshProfileStatus } = useAuth();
 
   const inputChangedHandler = useCallback(
     (inputId, inputValue) => {
@@ -59,55 +57,48 @@ const Login = ({ navigation }) => {
   // Handle login with Supabase
   const handleLogin = async () => {
     const { email, password } = formState.inputValues;
-    const { email: emailError, password: passwordError } = formState.inputValidities;
-    console.log('🟡 handleLogin called');
-    console.log('📝 Credentials:', { email, password: password ? '***' : '' });
     
     if (!email || !password) {
-      console.log('❌ Missing email or password');
-      Alert.alert(t('common.error'), t('auth.please_fill_all_fields'));
-      return;
+      Alert.alert(t('common.error'), t('auth.please_fill_all_fields'))
+      return
     }
-    
-    if (emailError || passwordError) {
-      console.log('❌ Validation error:', { emailError, passwordError });
-      Alert.alert(t('common.error'), t('auth.correct_errors_in_form'));
-      return;
-    }
-    
-    // Set loading state and ensure UI updates
+
     setIsLoading(true);
     setError(null);
-    
+
     try {
-      console.log('🔗 Attempting signIn...');
-      
-      // Add a small delay to ensure the loading state is visible
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
       const { data, error } = await signIn(email, password);
       
       if (error) {
-        console.log('❌ signIn error:', error);
-        setError(error.message);
-        Alert.alert(t('auth.login_failed'), error.message);
-      } else {
-        console.log('✅ signIn success:', data);
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'Main' }],
-        });
+        Alert.alert(t('auth.sign_in_failed'), error.message)
+        setIsLoading(false);
+      } else if (data?.session) {
+        console.log('✅ Login successful, checking profile...');
+        
+        // Keep loading state active while checking profile
+        // Check profile completion directly here
+        const { data: profile } = await supabase
+          .from('users')
+          .select('id, first_name, phone')
+          .eq('id', data.session.user.id)
+          .single();
+        
+        const hasProfile = profile && profile.first_name && profile.phone;
+        
+        console.log('📊 Profile check:', { hasProfile, profile });
+        
+        // Now we know where to navigate
+        // The AuthContext will update and AppNavigation will handle it
+        // But we stay on loading until navigation happens
+        
+        // Small delay to ensure auth context updates
+        setTimeout(() => {
+          setIsLoading(false);
+        }, 300);
       }
     } catch (err) {
-      console.log('❌ Exception in handleLogin:', err);
-      setError(err.message);
-      Alert.alert(t('common.error'), err.message);
-    } finally {
-      // Add a small delay before turning off loading state
-      setTimeout(() => {
-        setIsLoading(false);
-        console.log('🔄 handleLogin finished, loading set to false');
-      }, 300);
+      Alert.alert(t('common.error'), err.message)
+      setIsLoading(false);
     }
   };
 
@@ -122,42 +113,45 @@ const Login = ({ navigation }) => {
   };
 
   // Implementing google authentication
-const googleAuthHandler = async () => {
-  console.log('🟡 Google authentication started');
-  setIsLoading(true);
-  
-  try {
-    // Add a small delay to ensure the loading state is visible
-    await new Promise(resolve => setTimeout(resolve, 800));
+  const googleAuthHandler = async () => {
+    console.log('🟡 Google authentication started');
+    setIsLoading(true);
     
-    const { data, error } = await signInWithGoogle();
-    if (error) throw error;
-    
-    console.log('✅ Google Sign In Data:', data);
-    
-    // Check if we have a valid session
-    const { data: sessionData } = await supabase.auth.getSession();
-    if (sessionData?.session) {
-      console.log('✅ Google authentication successful');
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'Main' }],
-      });
-    } else {
-      console.log('❌ Authentication completed but no session found');
-      Alert.alert(t('auth.login_error'), t('auth.authentication_no_session'));
-    }
-  } catch (error) {
-    console.log('❌ Google authentication error:', error);
-    Alert.alert(t('common.error'), error.message);
-  } finally {
-    // Add a small delay before turning off loading state
-    setTimeout(() => {
+    try {
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      const { data, error } = await signInWithGoogle();
+      if (error) throw error;
+      
+      // Check if we have a valid session
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (sessionData?.session) {
+        console.log('✅ Google login successful, checking profile...');
+        
+        // Check profile completion directly
+        const { data: profile } = await supabase
+          .from('users')
+          .select('id, first_name, phone')
+          .eq('id', sessionData.session.user.id)
+          .single();
+        
+        const hasProfile = profile && profile.first_name && profile.phone;
+        
+        console.log('📊 Google profile check:', { hasProfile, profile });
+        
+        // Keep loading until navigation happens
+        setTimeout(() => {
+          setIsLoading(false);
+        }, 300);
+      } else {
+        Alert.alert(t('auth.login_error'), t('auth.authentication_no_session'));
+        setIsLoading(false);
+      }
+    } catch (error) {
+      Alert.alert(t('common.error'), error.message);
       setIsLoading(false);
-      console.log('🔄 Google authentication finished, loading set to false');
-    }, 300);
-  }
-};
+    }
+  };
   return (
     <SafeAreaView style={[styles.area, {
       backgroundColor: colors.background }]}>
