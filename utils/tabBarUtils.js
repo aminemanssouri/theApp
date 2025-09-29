@@ -63,7 +63,16 @@ export const TabScreenContainer = ({ children, style = {} }) => {
 // Safe area configuration for tab screens
 export const getTabScreenSafeArea = () => {
   const insets = getSafeAreaInsets();
-  const tabBarHeight = useTabBarHeight();
+  // Calculate tab bar height without using hooks
+  const baseHeight = 60;
+  const safeAreaBottom = insets.bottom;
+  let tabBarHeight;
+  
+  if (Platform.OS === 'ios') {
+    tabBarHeight = baseHeight + safeAreaBottom;
+  } else {
+    tabBarHeight = baseHeight + Math.max(safeAreaBottom, 10);
+  }
   
   return {
     paddingTop: insets.top,

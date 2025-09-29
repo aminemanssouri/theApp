@@ -1,0 +1,9 @@
+node_modules/
+.expo/
+.git/
+dist/
+build/
+*.log
+
+# Ignore files with TypeScript syntax but .js extension
+components/TabView.js
