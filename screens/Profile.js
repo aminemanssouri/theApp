@@ -158,19 +158,9 @@ const Profile = ({ navigation }) => {
           onPress={() => navigation.navigate("EditProfile")}
         />
         <SettingsItem
-          icon={icons.bell2}
-          name={t('profile.notification')}
-          onPress={() => navigation.navigate("SettingsNotifications")}
-        />
-        <SettingsItem
-          icon={icons.wallet2Outline}
-          name={t('profile.payment')}
-          onPress={() => navigation.navigate("SettingsPayment")}
-        />
-        <SettingsItem
           icon={icons.shieldOutline}
-          name={t('profile.security')}
-          onPress={() => navigation.navigate("SettingsSecurity")}
+          name={t('change password')}
+          onPress={() => navigation.navigate("ChangePassword")}
         />
         <TouchableOpacity
           onPress={() => navigation.navigate("SettingsLanguage")}
@@ -234,11 +224,6 @@ const Profile = ({ navigation }) => {
           icon={icons.infoCircle}
           name={t('profile.help_center')}
           onPress={() => navigation.navigate("HelpCenter")}
-        />
-        <SettingsItem
-          icon={icons.people4}
-          name={t('profile.invite_friends')}
-          onPress={() => navigation.navigate("InviteFriends")}
         />
         <TouchableOpacity
           onPress={() => refRBSheet.current.open()}

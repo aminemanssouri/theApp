@@ -13,14 +13,13 @@ import { LogBox } from 'react-native'
 import { ThemeProvider } from './theme/ThemeProvider'
 import { AuthProvider } from './context/AuthContext'
 import { NotificationProvider } from './context/NotificationContext'
+import { FavoritesProvider } from './context/FavoritesContext'
 import { StatusBar } from 'react-native';
 import { LanguageProvider } from './context/LanguageContext'
 import { ChatProvider } from './context/ChatContext'
 
 //Ignore all log notifications
 LogBox.ignoreAllLogs();
-
-SplashScreen.preventAutoHideAsync()
 
 // Show alerts while app is foregrounded
 Notifications.setNotificationHandler({
@@ -72,19 +71,21 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <LanguageProvider>
         <AuthProvider>
-          <ThemeProvider>
-            <ChatProvider>
-              <NotificationProvider>
-                <StatusBar 
-                  backgroundColor="transparent" 
-                  translucent={true}
-                />
-                <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
-                  <AppNavigation />
-                </View>
-              </NotificationProvider>
-            </ChatProvider>
-          </ThemeProvider>
+          <FavoritesProvider>
+            <ThemeProvider>
+              <ChatProvider>
+                <NotificationProvider>
+                  <StatusBar 
+                    backgroundColor="transparent" 
+                    translucent={true}
+                  />
+                  <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
+                    <AppNavigation />
+                  </View>
+                </NotificationProvider>
+              </ChatProvider>
+            </ThemeProvider>
+          </FavoritesProvider>
         </AuthProvider>
       </LanguageProvider>
     </GestureHandlerRootView>

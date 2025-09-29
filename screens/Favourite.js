@@ -1,25 +1,21 @@
 import { View, Text, StyleSheet, TouchableOpacity, Image, FlatList, Platform, Alert } from 'react-native';
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { COLORS, SIZES, icons } from '../constants';
 import { getSafeAreaInsets } from '../utils/safeAreaUtils';
 import { ScrollView } from 'react-native-virtualized-view';
 import { category } from '../data';
-import RBSheet from "react-native-raw-bottom-sheet";
-import Button from '../components/Button';
 import WishlistServiceCard from '../components/WishlistServiceCard';
 import { useTheme } from '../theme/ThemeProvider';
 import { useAuth } from '../context/AuthContext';
+import { useFavorites } from '../context/FavoritesContext';
 import { getUserFavoriteServices, getUserFavoriteWorkers, removeFavoriteById } from '../lib/services/favorites';
 import { t } from '../context/LanguageContext';
 
 const Favourite = ({ navigation }) => {
-    const refRBSheet = useRef();
-    const [selectedWishlistItem, setSelectedWishlistItem] = useState(null);
-    const [myWishlistServices, setMyWishlistServices] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [refreshing, setRefreshing] = useState(false);
+    const [selectedCategories, setSelectedCategories] = useState(["1"]);
     const { colors, dark } = useTheme();
     const { user } = useAuth();
+    const { favorites, loading, refreshFavorites, removeFavoriteFromContext } = useFavorites();
     const insets = getSafeAreaInsets();
 
     // Calculate bottom spacing to avoid tab bar overlap
@@ -34,141 +30,38 @@ const Favourite = ({ navigation }) => {
         }
     };
 
-    // Load user's favorite services and workers from database
-    const loadFavorites = async () => {
-        if (!user?.id) {
-            console.log('No user ID found, cannot load favorites');
-            setLoading(false);
-            return;
-        }
-        
-        try {
-            setLoading(true);
-            console.log('Loading favorites for user:', user.id);
-            
-            // Load both service and worker favorites
-            const [serviceFavorites, workerFavorites] = await Promise.all([
-                getUserFavoriteServices(user.id),
-                getUserFavoriteWorkers(user.id)
-            ]);
-            
-            console.log('Raw service favorites:', serviceFavorites);
-            console.log('Raw worker favorites:', workerFavorites);
-            
-            const allFavorites = [];
-            
-            // Transform service favorites
-            if (serviceFavorites && serviceFavorites.length > 0) {
-                const transformedServices = serviceFavorites.map(fav => {
-                    console.log('Transforming service favorite:', fav);
-                    return {
-                        id: fav.id,
-                        favoriteId: fav.favorite_id,
-                        favoriteType: 'service',
-                        name: fav.services?.name || t('service.unknown_service'),
-                        description: fav.services?.description || '',
-                        price: fav.services?.base_price || 0,
-                        image: fav.services?.icon || null,
-                        categoryId: fav.services?.service_categories?.id || '1',
-                        categoryName: fav.services?.service_categories?.name || t('common.general'),
-                        isActive: fav.services?.is_active || false,
-                        createdAt: fav.created_at,
-                        // Mock data for compatibility with existing card
-                        providerName: t('chat.service_provider'),
-                        rating: 0,
-                        numReviews: 0,
-                        isOnDiscount: false,
-                        oldPrice: null
-                    };
-                });
-                allFavorites.push(...transformedServices);
-            }
-            
-            // Transform worker favorites
-            if (workerFavorites && workerFavorites.length > 0) {
-                const transformedWorkers = workerFavorites.map(fav => {
-                    console.log('Transforming worker favorite:', fav);
-                    
-                    // Handle worker-service combinations differently
-                    if (fav.isWorkerService && fav.serviceMetadata) {
-                        return {
-                            id: `${fav.id}_${fav.serviceMetadata.service_id}`,
-                            favoriteId: fav.favorite_id,
-                            favoriteType: 'worker_service',
-                            name: `${fav.serviceMetadata.service_name || t('service.unknown_service')} - ${fav.workers?.first_name || ''} ${fav.workers?.last_name || ''}`.trim(),
-                            description: fav.workers?.bio || t('worker.professional'),
-                            price: fav.workers?.hourly_rate || 0,
-                            image: fav.workers?.Image || null,
-                            categoryId: '1',
-                            categoryName: t('worker.worker_service'),
-                            isActive: fav.workers?.is_available || false,
-                            createdAt: fav.created_at,
-                            providerName: `${fav.workers?.first_name || ''} ${fav.workers?.last_name || ''}`.trim() || t('chat.service_provider'),
-                            rating: fav.workers?.average_rating || 0,
-                            numReviews: fav.workers?.total_jobs || 0,
-                            isOnDiscount: false,
-                            oldPrice: null,
-                            workerId: fav.favorite_id, // Worker ID is stored in favorite_id
-                            serviceId: fav.serviceMetadata.service_id
-                        };
-                    } else {
-                        // Regular worker favorites
-                        return {
-                            id: fav.id,
-                            favoriteId: fav.favorite_id,
-                            favoriteType: 'worker',
-                            name: `${fav.workers?.first_name || ''} ${fav.workers?.last_name || ''}`.trim() || t('worker.unknown_worker'),
-                            description: fav.workers?.bio || t('worker.professional'),
-                            price: fav.workers?.hourly_rate || 0,
-                            image: fav.workers?.Image || null,
-                            categoryId: '1',
-                            categoryName: t('worker.worker'),
-                            isActive: fav.workers?.is_available || false,
-                            createdAt: fav.created_at,
-                            providerName: t('chat.service_provider'),
-                            rating: fav.workers?.average_rating || 0,
-                            numReviews: fav.workers?.total_jobs || 0,
-                            isOnDiscount: false,
-                            oldPrice: null,
-                            workerId: fav.favorite_id
-                        };
-                    }
-                });
-                allFavorites.push(...transformedWorkers);
-            }
-            
-            // Sort by creation date (newest first)
-            allFavorites.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-            
-            console.log('All transformed favorites:', allFavorites);
-            setMyWishlistServices(allFavorites);
-            
-            if (allFavorites.length === 0) {
-                console.log('No favorites found for user');
-            }
-        } catch (error) {
-            console.error('Error loading favorites:', error);
-            setMyWishlistServices([]);
-        } finally {
-            setLoading(false);
-        }
-    };
 
-    // Remove favorite from database
-    const handleRemoveBookmark = async () => {
-        if (!selectedWishlistItem || !user?.id) return;
+    // Remove favorite from database directly (no modal)
+    const handleRemoveBookmark = async (item) => {
+        if (!item || !user?.id) return;
         
         try {
-            await removeFavoriteById(selectedWishlistItem.id, user.id);
+            // Check if the ID is a composite ID (contains underscore and multiple UUIDs)
+            const isCompositeId = item.id.includes('_') && item.id.split('_').length > 1;
             
-            // Update local state
-            const updatedFavorites = myWishlistServices.filter(
-                (item) => item.id !== selectedWishlistItem.id
-            );
-            setMyWishlistServices(updatedFavorites);
+            if (isCompositeId) {
+                // For composite IDs, extract the real database ID (first part)
+                const realId = item.id.split('_')[0];
+                await removeFavoriteById(realId, user.id);
+            } else {
+                // For regular IDs, use as is
+                await removeFavoriteById(item.id, user.id);
+            }
             
-            // Close the bottom sheet
-            refRBSheet.current.close();
+            // Update global context
+            if (item.favoriteType === 'worker_service') {
+                removeFavoriteFromContext(
+                    item.workerId, 
+                    'worker_service', 
+                    item.workerId, 
+                    item.serviceId
+                );
+            } else {
+                removeFavoriteFromContext(
+                    item.favoriteId, 
+                    item.favoriteType
+                );
+            }
             
             // Silently removed - no alert needed
         } catch (error) {
@@ -179,34 +72,22 @@ const Favourite = ({ navigation }) => {
 
     // Refresh favorites
     const onRefresh = async () => {
-        setRefreshing(true);
-        await loadFavorites();
-        setRefreshing(false);
+        await refreshFavorites();
     };
 
-    // Load favorites on mount and when user changes
-    useEffect(() => {
-        console.log('Favourite screen useEffect triggered, user:', user);
-        if (user?.id) {
-            loadFavorites();
+    // Toggle category selection
+    const toggleCategory = (categoryId) => {
+        const updatedCategories = [...selectedCategories];
+        const index = updatedCategories.indexOf(categoryId);
+
+        if (index === -1) {
+            updatedCategories.push(categoryId);
         } else {
-            console.log('No user found, clearing favorites');
-            setMyWishlistServices([]);
-            setLoading(false);
+            updatedCategories.splice(index, 1);
         }
-    }, [user?.id]);
 
-    // Add focus listener to reload favorites when screen comes into focus
-    useEffect(() => {
-        const unsubscribe = navigation.addListener('focus', () => {
-            console.log('Favourite screen focused, reloading favorites');
-            if (user?.id) {
-                loadFavorites();
-            }
-        });
-
-        return unsubscribe;
-    }, [navigation, user?.id]);
+        setSelectedCategories(updatedCategories);
+    };
     
     /**
      * Render header
@@ -247,9 +128,8 @@ const Favourite = ({ navigation }) => {
        * Render my bookmark courses
        */
     const renderMyWishlistServices = () => {
-        const [selectedCategories, setSelectedCategories] = useState(["1"]);
-
-        const filteredServices = myWishlistServices.filter(course => selectedCategories.includes("1") || selectedCategories.includes(course.categoryId));
+        const filteredServices = favorites.filter(course => selectedCategories.includes("1") || selectedCategories.includes(course.categoryId));
+        const filteredServicesLength = filteredServices.length;
 
         // Category item
         const renderCategoryItem = ({ item }) => (
@@ -270,19 +150,6 @@ const Favourite = ({ navigation }) => {
             </TouchableOpacity>
         );
 
-        // Toggle category selection
-        const toggleCategory = (categoryId) => {
-            const updatedCategories = [...selectedCategories];
-            const index = updatedCategories.indexOf(categoryId);
-
-            if (index === -1) {
-                updatedCategories.push(categoryId);
-            } else {
-                updatedCategories.splice(index, 1);
-            }
-
-            setSelectedCategories(updatedCategories);
-        };
 
         return (
             <View>
@@ -314,7 +181,7 @@ const Favourite = ({ navigation }) => {
                     <FlatList
                         data={filteredServices}
                         keyExtractor={item => item.id}
-                        refreshing={refreshing}
+                        refreshing={loading}
                         onRefresh={onRefresh}
                         renderItem={({ item }) => {
                             return (
@@ -340,11 +207,7 @@ const Favourite = ({ navigation }) => {
                                         }
                                     }}
                                     categoryId={item.categoryId}
-                                    bookmarkOnPress={() => {
-                                        // Show the bookmark item in the bottom sheet
-                                        setSelectedWishlistItem(item);
-                                        refRBSheet.current.open()
-                                    }}
+                                    bookmarkOnPress={() => handleRemoveBookmark(item)}
                                 />
                             )
                         }}
@@ -367,72 +230,6 @@ const Favourite = ({ navigation }) => {
                     {renderMyWishlistServices()}
                 </ScrollView>
             </View>
-            <RBSheet
-                ref={refRBSheet}
-                closeOnDragDown={true}
-                closeOnPressMask={false}
-                height={380}
-                customStyles={{
-                    wrapper: {
-                        backgroundColor: "rgba(0,0,0,0.5)",
-                    },
-                    draggableIcon: {
-                        backgroundColor: dark ? COLORS.greyscale300 : COLORS.greyscale300,
-                    },
-                    container: {
-                        borderTopRightRadius: 32,
-                        borderTopLeftRadius: 32,
-                        height: 380,
-                        backgroundColor: dark ? COLORS.dark2 : COLORS.white,
-                        alignItems: "center",
-                        width: "100%"
-                    }
-                }}>
-                <Text style={[styles.bottomSubtitle, { 
-                    color: dark ? COLORS.white : COLORS.black
-                }]}>{t('favorites.remove_confirm_title')}</Text>
-                <View style={styles.separateLine} />
-
-                <View style={[styles.selectedBookmarkContainer, { 
-                    ackgroundColor: dark ? COLORS.dark2 : COLORS.tertiaryWhite
-                }]}>
-                    <WishlistServiceCard
-                        name={selectedWishlistItem?.name}
-                        image={selectedWishlistItem?.image}
-                        providerName={selectedWishlistItem?.providerName}
-                        price={selectedWishlistItem?.price}
-                        isOnDiscount={selectedWishlistItem?.isOnDiscount}
-                        oldPrice={selectedWishlistItem?.oldPrice}
-                        rating={selectedWishlistItem?.rating}
-                        numReviews={selectedWishlistItem?.numReviews}
-                        onPress={() => navigation.navigate("ServiceDetails")}
-                        categoryId={selectedWishlistItem?.categoryId}
-                        containerStyles={{
-                            backgroundColor: COLORS.white
-                        }}
-                    />
-                </View>
-
-                <View style={styles.bottomContainer}>
-                    <Button
-                        title={t('common.cancel')}
-                        style={{
-                            width: (SIZES.width - 32) / 2 - 8,
-                            backgroundColor: dark ? COLORS.dark3 : COLORS.tansparentPrimary,
-                            borderRadius: 32,
-                            borderColor: dark ? COLORS.dark3 : COLORS.tansparentPrimary
-                        }}
-                        textColor={dark ? COLORS.white : COLORS.primary}
-                        onPress={() => refRBSheet.current.close()}
-                    />
-                    <Button
-                        title={t('favorites.yes_remove')}
-                        filled
-                        style={styles.removeButton}
-                        onPress={handleRemoveBookmark}
-                    />
-                </View>
-            </RBSheet>
         </View>
     )
 };
@@ -478,46 +275,6 @@ const styles = StyleSheet.create({
     },
     categoryContainer: {
         marginTop: 0
-    },
-    bottomContainer: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        marginVertical: 16,
-        paddingHorizontal: 16,
-        width: "100%"
-    },
-    cancelButton: {
-        width: (SIZES.width - 32) / 2 - 8,
-        backgroundColor: COLORS.tansparentPrimary,
-        borderRadius: 32
-    },
-    removeButton: {
-        width: (SIZES.width - 32) / 2 - 8,
-        backgroundColor: COLORS.primary,
-        borderRadius: 32
-    },
-    bottomTitle: {
-        fontSize: 24,
-        fontFamily: "semiBold",
-        color: "red",
-        textAlign: "center",
-    },
-    bottomSubtitle: {
-        fontSize: 22,
-        fontFamily: "bold",
-        color: COLORS.greyscale900,
-        textAlign: "center",
-        marginVertical: 12
-    },
-    selectedBookmarkContainer: {
-        marginVertical: 16
-    },
-    separateLine: {
-        width: "100%",
-        height: .2,
-        backgroundColor: COLORS.greyscale300,
-        marginHorizontal: 16
     },
     loadingContainer: {
         flex: 1,

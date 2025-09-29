@@ -4,6 +4,7 @@ import { COLORS, SIZES, icons } from '../constants';
 import { FontAwesome } from '@expo/vector-icons';
 import { useTheme } from '../theme/ThemeProvider';
 import { useAuth } from '../context/AuthContext';
+import { useFavorites } from '../context/FavoritesContext';
 import { 
     toggleFavorite, 
     isFavorited,
@@ -30,6 +31,7 @@ const ServiceCard = ({
     const [loading, setLoading] = useState(false);
     const { dark } = useTheme();
     const { user } = useAuth();
+    const { isFavoriteInContext, addFavoriteToContext, removeFavoriteFromContext, refreshFavorites } = useFavorites();
     
     // Animation values
     const scaleAnim = useRef(new Animated.Value(1)).current;
@@ -65,36 +67,27 @@ const ServiceCard = ({
         ]).start();
     };
 
-    // Check if item is favorited on mount
+    // Check if item is favorited using context
     useEffect(() => {
-        const checkFavoriteStatus = async () => {
-            if (!user?.id || (!serviceId && !workerId)) return;
-            
-            try {
-                if (workerId && serviceId) {
-                    // For worker-service combinations, check if this specific combination exists
-                    const favorited = await isWorkerServiceFavorited(user.id, workerId, serviceId);
-                    setIsBookmarked(favorited);
-                } else if (workerId) {
-                    // For worker-only favorites
-                    const favoriteType = 'worker';
-                    const favoriteId = workerId;
-                    const favorited = await isFavorited(user.id, favoriteType, favoriteId);
-                    setIsBookmarked(favorited);
-                } else {
-                    // For service-only favorites
-                    const favoriteType = 'service';
-                    const favoriteId = serviceId;
-                    const favorited = await isFavorited(user.id, favoriteType, favoriteId);
-                    setIsBookmarked(favorited);
-                }
-            } catch (error) {
-                console.error('Error checking favorite status:', error);
-            }
-        };
+        if (!user?.id || (!serviceId && !workerId)) {
+            setIsBookmarked(false);
+            return;
+        }
         
-        checkFavoriteStatus();
-    }, [user?.id, serviceId, workerId]);
+        let favorited = false;
+        if (workerId && serviceId) {
+            // For worker-service combinations
+            favorited = isFavoriteInContext(workerId, 'worker_service', workerId, serviceId);
+        } else if (workerId) {
+            // For worker-only favorites
+            favorited = isFavoriteInContext(workerId, 'worker');
+        } else {
+            // For service-only favorites
+            favorited = isFavoriteInContext(serviceId, 'service');
+        }
+        
+        setIsBookmarked(favorited);
+    }, [user?.id, serviceId, workerId, isFavoriteInContext]);
 
     // Handle bookmark toggle
     const handleBookmarkPress = async () => {
@@ -117,7 +110,7 @@ const ServiceCard = ({
             
             if (workerId && serviceId) {
                 // For worker-service combinations, use worker type with service metadata
-                favoriteType = 'worker';
+                favoriteType = 'worker_service';
                 favoriteId = workerId;
                 metadata = {
                     service_id: serviceId,
@@ -138,10 +131,26 @@ const ServiceCard = ({
                 // For worker-service combinations, use special toggle function
                 const result = await toggleWorkerServiceFavorite(user.id, workerId, serviceId, name);
                 setIsBookmarked(result.isFavorited);
+                
+                // Update global context
+                if (result.isFavorited) {
+                    // Refresh favorites to get the real data from database
+                    setTimeout(() => refreshFavorites(), 100);
+                } else {
+                    removeFavoriteFromContext(workerId, 'worker_service', workerId, serviceId);
+                }
             } else {
                 // For regular favorites
                 const result = await toggleFavorite(user.id, favoriteType, favoriteId, metadata);
                 setIsBookmarked(result.isFavorited);
+                
+                // Update global context
+                if (result.isFavorited) {
+                    // Refresh favorites to get the real data from database
+                    setTimeout(() => refreshFavorites(), 100);
+                } else {
+                    removeFavoriteFromContext(favoriteId, favoriteType);
+                }
             }
         } catch (error) {
             console.error('Error toggling favorite:', error);

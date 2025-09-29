@@ -159,19 +159,6 @@ const MyBookingsCancelled = () => {
             </View>
             <View style={styles.actionsContainer}>
               <TouchableOpacity
-                onPress={() => navigation.navigate('BookingStep1', {
-                  serviceId: item.service?.id || item.service_id,
-                  serviceName: item.service?.name,
-                  workerId: item.worker?.id || item.worker_id,
-                  workerName: item.worker?.first_name && item.worker?.last_name
-                    ? `${item.worker.first_name} ${item.worker.last_name}`
-                    : undefined,
-                  workerRate: item.worker?.rate || item.worker?.hourly_rate
-                })}
-                style={styles.rateButton}>
-                <Text style={styles.rateButtonText}>{t('booking.actions.rebook')}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
                 onPress={() => navigation.navigate("EReceipt", { bookingId: item.id })}
                 style={styles.reorderButton}>
                 <Text style={styles.reorderButtonText}>{t('booking.actions.view')}</Text>
@@ -252,22 +239,8 @@ const styles = StyleSheet.create({
   },
   actionsContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     marginVertical: 18,
-  },
-  rateButton: {
-    height: 38,
-    width: 140,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderColor: COLORS.primary,
-    borderWidth: 1,
-    borderRadius: 8,
-  },
-  rateButtonText: {
-    color: COLORS.primary,
-    fontSize: 14,
-    fontFamily: "regular",
   },
   reorderButton: {
     height: 38,
