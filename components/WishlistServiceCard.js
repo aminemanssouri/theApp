@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
         shadowRadius: 4,
         elevation: 2,
         marginVertical: 6,
-        marginHorizontal: 16,
+        marginRight: 16,
     },
     courseImage: {
         width: 110,
