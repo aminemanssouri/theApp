@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Calendar } from 'react-native-calendars';
-import { COLORS } from '../constants';
+import { Modal, View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { COLORS, SIZES } from '../constants';
 
 const DatePickerModal = ({
   open,
@@ -10,126 +9,206 @@ const DatePickerModal = ({
   onClose,
   onChangeStartDate,
 }) => {
-  const [selectedStartDate, setSelectedStartDate] = useState(selectedDate);
+  // Parse initial date or set defaults
+  const parseInitialDate = () => {
+    if (selectedDate && selectedDate !== "12/12/2023") {
+      const [day, month, year] = selectedDate.split('/');
+      return {
+        day: parseInt(day) || 1,
+        month: parseInt(month) || 1,
+        year: parseInt(year) || 2000
+      };
+    }
+    return { day: 1, month: 1, year: 2000 };
+  };
 
-  const handleDateSelect = (day) => {
-    console.log('Date selected:', day); // Debug log
-    const formattedDate = `${day.day.toString().padStart(2, '0')}/${day.month.toString().padStart(2, '0')}/${day.year}`;
-    console.log('Formatted date:', formattedDate); // Debug log
-    setSelectedStartDate(formattedDate);
+  const initialDate = parseInitialDate();
+  const [selectedDay, setSelectedDay] = useState(initialDate.day);
+  const [selectedMonth, setSelectedMonth] = useState(initialDate.month);
+  const [selectedYear, setSelectedYear] = useState(initialDate.year);
+
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 100 }, (_, i) => currentYear - i);
+  const months = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+  
+  // Get days in month
+  const getDaysInMonth = (month, year) => {
+    return new Date(year, month, 0).getDate();
+  };
+  
+  const days = Array.from(
+    { length: getDaysInMonth(selectedMonth, selectedYear) }, 
+    (_, i) => i + 1
+  );
+
+  const handleConfirm = () => {
+    const formattedDate = `${selectedDay.toString().padStart(2, '0')}/${selectedMonth.toString().padStart(2, '0')}/${selectedYear}`;
     onChangeStartDate(formattedDate);
     onClose();
   };
 
-  const handleOnPressStartDate = () => {
+  const handleCancel = () => {
+    // Reset to initial values if cancelled
+    setSelectedDay(initialDate.day);
+    setSelectedMonth(initialDate.month);
+    setSelectedYear(initialDate.year);
     onClose();
   };
 
-  const modalVisible = open;
-
-  // Convert selected date to marked format for calendar
-  const getMarkedDates = () => {
-    if (!selectedStartDate || selectedStartDate === "Select Date of Birth") {
-      return {};
-    }
-    
-    try {
-      const [day, month, year] = selectedStartDate.split('/');
-      const dateString = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-      console.log('Marked date string:', dateString); // Debug log
-      
-      return {
-        [dateString]: {
-          selected: true,
-          selectedColor: COLORS.white,
-          selectedTextColor: COLORS.primary,
-        }
-      };
-    } catch (error) {
-      console.log('Error parsing date:', error); // Debug log
-      return {};
-    }
-  };
-
-  // Convert startDate to proper format for calendar
-  const getMinDate = () => {
-    if (!startDate) {
-      // Default to 100 years ago
-      const date = new Date();
-      date.setFullYear(date.getFullYear() - 100);
-      return date.toISOString().split('T')[0];
-    }
-    return startDate;
-  };
-
   return (
-    <Modal animationType="slide" transparent={true} visible={modalVisible}>
-      <View style={styles.centeredView}>
-        <View style={styles.modalView}>
-          <Calendar
-            onDayPress={handleDateSelect}
-            markedDates={getMarkedDates()}
-            minDate={getMinDate()}
-            maxDate={new Date().toISOString().split('T')[0]}
-            enableSwipeMonths={true}
-            hideExtraDays={true}
-            disableMonthChange={false}
-            firstDay={1}
-            hideDayNames={false}
-            showWeekNumbers={false}
-            onPressArrowLeft={(subtractMonth) => subtractMonth()}
-            onPressArrowRight={(addMonth) => addMonth()}
-            theme={{
-              backgroundColor: COLORS.primary,
-              calendarBackground: COLORS.primary,
-              textSectionTitleColor: COLORS.white,
-              selectedDayBackgroundColor: COLORS.white,
-              selectedDayTextColor: COLORS.primary,
-              todayTextColor: COLORS.white,
-              dayTextColor: COLORS.white,
-              textDisabledColor: 'rgba(255,255,255,0.5)',
-              dotColor: COLORS.white,
-              selectedDotColor: COLORS.primary,
-              arrowColor: COLORS.white,
-              monthTextColor: COLORS.white,
-              indicatorColor: COLORS.white,
-              textDayFontFamily: 'System',
-              textMonthFontFamily: 'System',
-              textDayHeaderFontFamily: 'System',
-              textDayFontWeight: '300',
-              textMonthFontWeight: 'bold',
-              textDayHeaderFontWeight: '300',
-              textDayFontSize: 16,
-              textMonthFontSize: 18,
-              textDayHeaderFontSize: 13,
-            }}
-            style={styles.calendar}
-          />
-          <TouchableOpacity 
-            style={styles.closeButton}
-            onPress={handleOnPressStartDate}>
-            <Text style={styles.closeButtonText}>Close</Text>
-          </TouchableOpacity>
+    <Modal animationType="slide" transparent={true} visible={open}>
+      <TouchableOpacity 
+        style={styles.overlay} 
+        activeOpacity={1}
+        onPress={handleCancel}
+      >
+        <View style={styles.modalContainer} onStartShouldSetResponder={() => true}>
+          <View style={styles.header}>
+            <Text style={styles.headerText}>Select Date of Birth</Text>
+          </View>
+          
+          <View style={styles.pickerContainer}>
+            {/* Day Picker */}
+            <View style={styles.pickerColumn}>
+              <Text style={styles.pickerLabel}>Day</Text>
+              <ScrollView 
+                style={styles.scrollView}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.scrollContent}
+              >
+                {days.map((day) => (
+                  <TouchableOpacity
+                    key={day}
+                    style={[
+                      styles.pickerItem,
+                      selectedDay === day && styles.selectedItem
+                    ]}
+                    onPress={() => setSelectedDay(day)}
+                  >
+                    <Text style={[
+                      styles.pickerItemText,
+                      selectedDay === day && styles.selectedItemText
+                    ]}>
+                      {day.toString().padStart(2, '0')}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+
+            {/* Month Picker */}
+            <View style={styles.pickerColumn}>
+              <Text style={styles.pickerLabel}>Month</Text>
+              <ScrollView 
+                style={styles.scrollView}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.scrollContent}
+              >
+                {months.map((month, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={[
+                      styles.pickerItem,
+                      selectedMonth === index + 1 && styles.selectedItem
+                    ]}
+                    onPress={() => {
+                      setSelectedMonth(index + 1);
+                      // Adjust day if needed
+                      const maxDays = getDaysInMonth(index + 1, selectedYear);
+                      if (selectedDay > maxDays) {
+                        setSelectedDay(maxDays);
+                      }
+                    }}
+                  >
+                    <Text style={[
+                      styles.pickerItemText,
+                      selectedMonth === index + 1 && styles.selectedItemText
+                    ]}>
+                      {month.substring(0, 3)}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+
+            {/* Year Picker */}
+            <View style={styles.pickerColumn}>
+              <Text style={styles.pickerLabel}>Year</Text>
+              <ScrollView 
+                style={styles.scrollView}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.scrollContent}
+              >
+                {years.map((year) => (
+                  <TouchableOpacity
+                    key={year}
+                    style={[
+                      styles.pickerItem,
+                      selectedYear === year && styles.selectedItem
+                    ]}
+                    onPress={() => {
+                      setSelectedYear(year);
+                      // Adjust day if needed
+                      const maxDays = getDaysInMonth(selectedMonth, year);
+                      if (selectedDay > maxDays) {
+                        setSelectedDay(maxDays);
+                      }
+                    }}
+                  >
+                    <Text style={[
+                      styles.pickerItemText,
+                      selectedYear === year && styles.selectedItemText
+                    ]}>
+                      {year}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          </View>
+
+          <View style={styles.selectedDateContainer}>
+            <Text style={styles.selectedDateLabel}>Selected Date:</Text>
+            <Text style={styles.selectedDate}>
+              {`${selectedDay.toString().padStart(2, '0')}/${selectedMonth.toString().padStart(2, '0')}/${selectedYear}`}
+            </Text>
+          </View>
+
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity 
+              style={[styles.button, styles.cancelButton]}
+              onPress={handleCancel}
+            >
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.button, styles.confirmButton]}
+              onPress={handleConfirm}
+            >
+              <Text style={styles.confirmButtonText}>Confirm</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
+      </TouchableOpacity>
     </Modal>
   );
 };
 
 const styles = StyleSheet.create({
-  centeredView: {
+  overlay: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  modalView: {
-    margin: 20,
-    backgroundColor: COLORS.primary,
-    alignItems: "center",
-    justifyContent: "center",
+  modalContainer: {
+    backgroundColor: COLORS.white,
     borderRadius: 20,
-    padding: 35,
-    width: "90%",
+    width: SIZES.width * 0.9,
+    maxHeight: SIZES.height * 0.7,
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
@@ -139,20 +218,105 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
   },
-  calendar: {
-    borderRadius: 10,
-    margin: 0,
+  header: {
+    backgroundColor: COLORS.primary,
+    paddingVertical: 15,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    alignItems: 'center',
   },
-  closeButton: {
-    marginTop: 15,
-    padding: 10,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    borderRadius: 8,
-  },
-  closeButtonText: {
-    color: 'white',
-    fontSize: 16,
+  headerText: {
+    color: COLORS.white,
+    fontSize: 18,
     fontWeight: 'bold',
+  },
+  pickerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingHorizontal: 10,
+    paddingTop: 20,
+    height: 250,
+  },
+  pickerColumn: {
+    flex: 1,
+    marginHorizontal: 5,
+  },
+  pickerLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.primary,
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingVertical: 10,
+  },
+  pickerItem: {
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    marginVertical: 2,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  selectedItem: {
+    backgroundColor: COLORS.primary,
+  },
+  pickerItemText: {
+    fontSize: 14,
+    color: COLORS.black,
+  },
+  selectedItemText: {
+    color: COLORS.white,
+    fontWeight: 'bold',
+  },
+  selectedDateContainer: {
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.greyscale300,
+    alignItems: 'center',
+  },
+  selectedDateLabel: {
+    fontSize: 12,
+    color: COLORS.greyscale600,
+    marginBottom: 5,
+  },
+  selectedDate: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: COLORS.primary,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    justifyContent: 'space-between',
+  },
+  button: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 25,
+    marginHorizontal: 5,
+    alignItems: 'center',
+  },
+  cancelButton: {
+    backgroundColor: COLORS.greyscale300,
+  },
+  confirmButton: {
+    backgroundColor: COLORS.primary,
+  },
+  cancelButtonText: {
+    color: COLORS.black,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  confirmButtonText: {
+    color: COLORS.white,
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 

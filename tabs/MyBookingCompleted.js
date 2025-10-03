@@ -159,17 +159,16 @@ const MyBookingCompleted = () => {
             </View>
             <View style={styles.actionsContainer}>
               <TouchableOpacity
-                onPress={() => navigation.navigate('BookingStep1', {
-                  serviceId: item.service?.id || item.service_id,
-                  serviceName: item.service?.name,
+                onPress={() => navigation.navigate('ServiceDetailsReviews', {
                   workerId: item.worker?.id || item.worker_id,
+                  bookingId: item.id,
+                  serviceName: item.service?.name,
                   workerName: item.worker?.first_name && item.worker?.last_name
                     ? `${item.worker.first_name} ${item.worker.last_name}`
-                    : undefined,
-                  workerRate: item.worker?.rate || item.worker?.hourly_rate
+                    : t('chat.service_provider')
                 })}
                 style={styles.rateButton}>
-                <Text style={styles.rateButtonText}>{t('booking.actions.rebook')}</Text>
+                <Text style={styles.rateButtonText}>{t('booking.actions.rate')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => navigation.navigate("EReceipt", { bookingId: item.id })}
