@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScrollView } from 'react-native-virtualized-view';
 import { images, COLORS, SIZES, icons } from "../constants";
-import { banners } from '../data'; // Keep banners as static for now
+import { banners } from '../data';
 import { 
   fetchHomepageData,
   fetchServiceCategories,
@@ -17,7 +17,6 @@ import { supabase } from '../lib/supabase';
 import SubHeaderItem from '../components/SubHeaderItem';
 import Category from '../components/Category';
 import ServiceCard from '../components/ServiceCard';
-// import ServiceDebugger from '../components/ServiceDebugger'; // Import the service debugger
 import { useTheme } from '../theme/ThemeProvider';
 import { useNotifications } from '../context/NotificationContext';
 import { useAuth } from '../context/AuthContext';
@@ -29,7 +28,6 @@ const Home = ({ navigation }) => {
   const insets = useSafeAreaInsets();
   const { notifications, unreadCount, userNotificationStats, isUserAuthenticated } = useNotifications();
   const { user, userProfile } = useAuth();
-  
   // Supabase data states
   const [categories, setCategories] = useState([]);
   const [allCategories, setAllCategories] = useState([]);
@@ -572,6 +570,7 @@ const Home = ({ navigation }) => {
                   hasWorker={item.hasWorker}
                   serviceId={item.serviceId}
                   workerId={item.workerId}
+                  navigation={navigation}
                   onPress={() => {
                     if (item.hasWorker && item.workerId) {
                       navigation.navigate("WorkerDetails", { 
@@ -618,7 +617,7 @@ const Home = ({ navigation }) => {
           {/* {!loading && services && services.length > 0 && <ServiceDebugger services={services} />} */}
           
           {loading ? (
-            <View style={styles.loadingContainer}>
+            <View style={[styles.loadingContainer, { flex: 1 }]}>
               <Text style={[styles.loadingText, { color: colors.text }]}>{t('common.loading')}</Text>
             </View>
           ) : (
