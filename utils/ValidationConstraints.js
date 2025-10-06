@@ -28,7 +28,7 @@ export const validateEmail = (id,value)=>{
 
     if(value !== ""){
         constraints.email = true
-    };
+    }
 
     const validationResult = validate({[id]: value},{[id]: constraints});
     return validationResult && validationResult[id]
@@ -46,7 +46,7 @@ export const validatePassword = (id,value)=>{
             minimum: 6,
             message: "must be at least 6 characters"
         }
-    };
+    }
 
     const validationResult = validate({ [id]: value}, {[id]: constraints});
     return validationResult && validationResult[id];
