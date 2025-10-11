@@ -49,7 +49,6 @@ const Chat = () => {
   const [isOtherTyping, setIsOtherTyping] = useState(false);
   const [inputText, setInputText] = useState('');
   const [chatPartner, setChatPartner] = useState(workerInfo); // Store worker info
-  const [showLoading, setShowLoading] = useState(false); // delayed spinner
   
   const flatListRef = useRef();
   const didInitialScroll = useRef(false);
@@ -95,34 +94,17 @@ const Chat = () => {
     // No animation needed - already visible
   };
 
-  // Load messages immediately on mount with delayed loading overlay
+  // Load messages immediately on mount
   useEffect(() => {
     if (!conversationId) return;
-    let isActive = true;
-    const timer = setTimeout(() => {
-      if (isActive) setShowLoading(true);
-    }, 400);
-
+    
+    // Load messages in background
     getConversationMessages(conversationId)
       .then((msgs) => {
-        if (!isActive) return;
         setMessages(msgs);
         didInitialScroll.current = false;
       })
-      .catch((err) => {
-        if (!isActive) return;
-        setError(err);
-      })
-      .finally(() => {
-        if (!isActive) return;
-        clearTimeout(timer);
-        setShowLoading(false);
-      });
-
-    return () => {
-      isActive = false;
-      clearTimeout(timer);
-    };
+      .catch(setError);
   }, [conversationId]);
 
   // Load worker info only if not already provided
@@ -380,6 +362,7 @@ const Chat = () => {
         enabled={Platform.OS === 'ios'}
       >
         <FlatList
+          ref={flatListRef}
           data={messages.slice().reverse()}
           keyExtractor={item => item.id}
           renderItem={({ item, index }) => {
@@ -408,11 +391,6 @@ const Chat = () => {
           updateCellsBatchingPeriod={50}
           ListEmptyComponent={renderEmptyMessages}
         />
-        {showLoading && (
-          <View style={styles.loadingOverlay} pointerEvents="none">
-            <ActivityIndicator size="large" color={COLORS.primary} />
-          </View>
-        )}
         
         <ChatInput
           onSend={handleSend}
@@ -512,16 +490,6 @@ const styles = StyleSheet.create({
   },
   messagesContainer: {
     paddingTop: 16,
-  },
-  loadingOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.05)'
   },
   emptyMessagesContainer: {
     flex: 1,

@@ -9,7 +9,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useAuth } from '../context/AuthContext';
 import { getUserFavoriteServices, getUserFavoriteWorkers, removeFavoriteById, getUserFavorites } from '../lib/services/favorites';
 import { supabase } from '../lib/supabase';
-import { t } from '../context/LanguageContext';
+import { useI18n } from '../context/LanguageContext';
 
 const Favourite = ({ navigation }) => {
     const [myWishlistServices, setMyWishlistServices] = useState([]);
@@ -18,6 +18,7 @@ const Favourite = ({ navigation }) => {
 
     const { colors, dark } = useTheme();
     const { user } = useAuth();
+    const { t } = useI18n();
     const insets = getSafeAreaInsets();
 
     // Calculate bottom spacing to avoid tab bar overlap
@@ -32,7 +33,48 @@ const Favourite = ({ navigation }) => {
         }
     };
 
-    // Load user's favorite services and workers from database
+    // Normalize a service favorite to card props
+    const mapServiceFavoriteToCard = (fav) => {
+        const svc = fav.services;
+        return {
+            id: fav.id,
+            favoriteId: fav.favorite_id,
+            favoriteType: 'service',
+            name: svc?.name || t('favorites.unknown_service'),
+            image: icons.category, // placeholder icon image
+            providerName: svc?.service_categories?.name || t('favorites.service'),
+            price: svc?.base_price || 0,
+            isOnDiscount: false,
+            oldPrice: undefined,
+            rating: 0,
+            numReviews: 0,
+        };
+    };
+
+    // Normalize a worker/worker-service favorite to card props
+    const mapWorkerFavoriteToCard = (fav) => {
+        const w = fav.workers;
+        const fullName = [w?.first_name, w?.last_name].filter(Boolean).join(' ').trim();
+        // If worker-service, show service name primarily
+        const svcName = fav.isWorkerService ? fav?.serviceMetadata?.service_name : null;
+        return {
+            id: fav.id,
+            favoriteId: fav.favorite_id,
+            favoriteType: fav.isWorkerService ? 'worker_service' : 'worker',
+            name: svcName || fullName || t('favorites.unknown_worker'),
+            image: w?.Image ? { uri: w.Image } : require('../assets/images/avatar.jpeg'),
+            providerName: fav.isWorkerService ? fullName : t('favorites.worker'),
+            price: w?.hourly_rate || 0,
+            isOnDiscount: false,
+            oldPrice: undefined,
+            rating: w?.average_rating || 0,
+            numReviews: w?.total_jobs || 0,
+            workerId: w?.id,
+            serviceId: fav?.serviceMetadata?.service_id,
+        };
+    };
+
+    // Load user's favorite services and workers from database, normalize for UI
     const loadFavorites = async () => {
         if (!user?.id) {
             console.log('No user ID found, cannot load favorites');
@@ -43,12 +85,15 @@ const Favourite = ({ navigation }) => {
         try {
             const services = await getUserFavoriteServices(user.id);
             const workers = await getUserFavoriteWorkers(user.id);
-            let allFavorites = [...services, ...workers];
 
-            // Sort by creation date (newest first)
-            allFavorites.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            // Normalize to card items
+            const serviceCards = (services || []).map(mapServiceFavoriteToCard);
+            const workerCards = (workers || []).map(mapWorkerFavoriteToCard);
+            let allFavorites = [...serviceCards, ...workerCards];
 
-            console.log('All transformed favorites:', allFavorites);
+            // Sort by created_at from original favorites if present, else leave as is
+            // Note: our mapped objects keep id but not created_at; optional: re-fetch order already descending
+
             setMyWishlistServices(allFavorites);
 
             if (allFavorites.length === 0) {
@@ -139,7 +184,11 @@ const Favourite = ({ navigation }) => {
 
     useEffect(() => {
         loadFavorites();
-    }, []);
+        const unsub = navigation?.addListener?.('focus', () => {
+            loadFavorites();
+        });
+        return unsub;
+    }, [navigation, user?.id]);
 
     /** Render header */
     const renderHeader = () => {
