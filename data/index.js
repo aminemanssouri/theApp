@@ -134,173 +134,9 @@ export const faqs = [
     },
 ];
 
-export const messsagesData = [
-    {
-        id: "1",
-        fullName: "Jhon Smith",
-        isOnline: false,
-        userImg: images.user1,
-        lastSeen: "2023-11-16T04:52:06.501Z",
-        lastMessage: 'I love you. see you soon baby',
-        messageInQueue: 2,
-        lastMessageTime: "12:25 PM",
-        isOnline: true,
-    },
-    {
-        id: "2",
-        fullName: "Anuska Sharma",
-        isOnline: false,
-        userImg: images.user2,
-        lastSeen: "2023-11-18T04:52:06.501Z",
-        lastMessage: 'I Know. you are so busy man.',
-        messageInQueue: 0,
-        lastMessageTime: "12:15 PM",
-        isOnline: false
-    },
-    {
-        id: "3",
-        fullName: "Virat Kohili",
-        isOnline: false,
-        userImg: images.user3,
-        lastSeen: "2023-11-20T04:52:06.501Z",
-        lastMessage: 'Ok, see u soon',
-        messageInQueue: 0,
-        lastMessageTime: "09:12 PM",
-        isOnline: true
-    },
-    {
-        id: "4",
-        fullName: "Shikhor Dhaon",
-        isOnline: false,
-        userImg: images.user4,
-        lastSeen: "2023-11-18T04:52:06.501Z",
-        lastMessage: 'Great! Do you Love it.',
-        messageInQueue: 0,
-        lastMessageTime: "04:12 PM",
-        isOnline: true
-    },
-    {
-        id: "5",
-        fullName: "Shakib Hasan",
-        isOnline: false,
-        userImg: images.user5,
-        lastSeen: "2023-11-21T04:52:06.501Z",
-        lastMessage: 'Thank you !',
-        messageInQueue: 2,
-        lastMessageTime: "10:30 AM",
-        isOnline: true
-    },
-    {
-        id: "6",
-        fullName: "Jacksoon",
-        isOnline: false,
-        userImg: images.user6,
-        lastSeen: "2023-11-20T04:52:06.501Z",
-        lastMessage: 'Do you want to go out dinner',
-        messageInQueue: 3,
-        lastMessageTime: "10:05 PM",
-        isOnline: false
-    },
-    {
-        id: "7",
-        fullName: "Tom Jerry",
-        isOnline: false,
-        userImg: images.user7,
-        lastSeen: "2023-11-20T04:52:06.501Z",
-        lastMessage: 'Do you want to go out dinner',
-        messageInQueue: 2,
-        lastMessageTime: "11:05 PM",
-        isOnline: true
-    },
-    {
-        id: "8",
-        fullName: "Lucky Luck",
-        isOnline: false,
-        userImg: images.user8,
-        lastSeen: "2023-11-20T04:52:06.501Z",
-        lastMessage: 'Can you share the design with me?',
-        messageInQueue: 2,
-        lastMessageTime: "09:11 PM",
-        isOnline: true
-    },
-    {
-        id: "9",
-        fullName: "Nate Jack",
-        isOnline: false,
-        userImg: images.user9,
-        lastSeen: "2023-11-20T04:52:06.501Z",
-        lastMessage: 'Tell me what you want?',
-        messageInQueue: 0,
-        lastMessageTime: "06:43 PM",
-        isOnline: true
-    }
-];
+ 
 
-export const callData = [
-    {
-        id: "1",
-        fullName: "Roselle Erhman",
-        userImg: images.user10,
-        status: "Incoming",
-        date: "Dec 19, 2024"
-    },
-    {
-        id: "2",
-        fullName: "Willard Purnell",
-        userImg: images.user9,
-        status: "Outgoing",
-        date: "Dec 17, 2024"
-    },
-    {
-        id: "3",
-        fullName: "Charlotte Hanlin",
-        userImg: images.user8,
-        status: "Missed",
-        date: "Dec 16, 2024"
-    },
-    {
-        id: "4",
-        fullName: "Merlin Kevin",
-        userImg: images.user7,
-        status: "Missed",
-        date: "Dec 16, 2024"
-    },
-    {
-        id: "5",
-        fullName: "Lavern Laboy",
-        userImg: images.user6,
-        status: "Outgoing",
-        date: "Dec 16, 2024"
-    },
-    {
-        id: "6",
-        fullName: "Phyllis Godley",
-        userImg: images.user5,
-        status: "Incoming",
-        date: "Dec 15, 2024"
-    },
-    {
-        id: "7",
-        fullName: "Tyra Dillon",
-        userImg: images.user4,
-        status: "Outgoing",
-        date: "Dec 15, 2024"
-    },
-    {
-        id: "8",
-        fullName: "Marci Center",
-        userImg: images.user3,
-        status: "Missed",
-        date: "Dec 15, 2024"
-    },
-    {
-        id: "9",
-        fullName: "Clinton Mccure",
-        userImg: images.user2,
-        status: "Outgoing",
-        date: "Dec 15, 2024"
-    },
-];
+
 
 export const banners = [
     {
@@ -387,125 +223,7 @@ export const banners = [
   ];
 
 
-  export const mostPopularServices = [
-    {
-        id: "1",
-        name: "Floor Cleaning",
-        image: images.service1,
-        providerName: "Kylee Danford",
-        price: 40,
-        isOnDiscount: true,
-        oldPrice: 78,
-        rating: 4.8,
-        numReviews: 145,
-        date: "2025-01-12 | 14:25:45 UTC",
-        categoryId: "1"
-    },
-    {
-        id: "2",
-        name: "House Cleaning",
-        image: images.service2,
-        providerName: "Alfonzo Magueritha",
-        price: 29,
-        isOnDiscount: false,
-        oldPrice: 29,
-        rating: 4.9,
-        numReviews: 220,
-        date: "2025-01-12 | 14:25:45 UTC",
-        categoryId: "1"
-    },
-    {
-        id: "3",
-        name: "Washing clothes",
-        image: images.service3,
-        providerName: "Mariana Juliana",
-        price: 38,
-        isOnDiscount: true,
-        oldPrice: 52,
-        rating: 4.8,
-        numReviews: 830,
-        date: "2025-01-12 | 14:25:45 UTC",
-        categoryId: "1"
-    },
-    {
-        id: "4",
-        name: "Bathroom Cleaning",
-        image: images.service4,
-        providerName: "Alexandra Polina",
-        price: 29,
-        isOnDiscount: false,
-        oldPrice: 29,
-        rating: 4.9,
-        numReviews: 120,
-        date: "2025-01-12 | 14:25:45 UTC",
-        categoryId: "1"
-    },
-    {
-        id: "5",
-        name: "AC Repairing",
-        image: images.service5,
-        providerName: "Mila Cyrus",
-        price: 29,
-        isOnDiscount: true,
-        oldPrice: 78,
-        rating: 4.8,
-        numReviews: 145,
-        date: "2025-01-12 | 14:25:45 UTC",
-        categoryId: "2"
-    },
-    {
-        id: "6",
-        name: "Motorcycle Repairing",
-        image: images.service6,
-        providerName: "Ali Sunka Baba",
-        price: 78,
-        isOnDiscount: false,
-        oldPrice: 78,
-        rating: 4.8,
-        numReviews: 43,
-        date: "2025-01-12 | 14:25:45 UTC",
-        categoryId: "2"
-    },
-    {
-        id: "7",
-        name: "Laundry Services Pro",
-        image: images.service7,
-        providerName: "Mariana Juliana Des",
-        price: 40,
-        isOnDiscount: true,
-        oldPrice: 78,
-        rating: 4.8,
-        numReviews: 4809,
-        date: "2025-01-12 | 14:25:45 UTC",
-        categoryId: "4"
-    },
-    {
-        id: "8",
-        name: "House Plainting Services",
-        image: images.service9,
-        providerName: "Tom Jerry",
-        price: 19,
-        isOnDiscount: false,
-        oldPrice: 19,
-        rating: 4.9,
-        numReviews: 15,
-        date: "2025-01-12 | 14:25:45 UTC",
-        categoryId: "3"
-    },
-    {
-        id: "9",
-        name: "Plumbing Services Pro",
-        image: images.service10,
-        providerName: "Jules Cesar",
-        price: 29,
-        isOnDiscount: false,
-        oldPrice: 29,
-        rating: 4.9,
-        numReviews: 120,
-        date: "2025-01-12 | 14:25:45 UTC",
-        categoryId: "6"
-    }
-  ];
+  
 
 export const notifications = [
     {
@@ -594,246 +312,9 @@ export const notifications = [
     },
   ];
 
-  export const myWishlistServices = [
-    {
-        id: "1",
-        name: "Floor Cleaning",
-        image: images.service1,
-        providerName: "Kylee Danford",
-        price: 40,
-        isOnDiscount: true,
-        oldPrice: 78,
-        rating: 4.8,
-        numReviews: 145,
-        date: "2025-01-12 | 14:25:45 UTC",
-        categoryId: "1"
-    },
-    {
-        id: "2",
-        name: "House Cleaning",
-        image: images.service2,
-        providerName: "Alfonzo Magueritha",
-        price: 29,
-        isOnDiscount: false,
-        oldPrice: 29,
-        rating: 4.9,
-        numReviews: 220,
-        date: "2025-01-12 | 14:25:45 UTC",
-        categoryId: "1"
-    },
-    {
-        id: "3",
-        name: "Washing clothes",
-        image: images.service3,
-        providerName: "Mariana Juliana",
-        price: 38,
-        isOnDiscount: true,
-        oldPrice: 52,
-        rating: 4.8,
-        numReviews: 830,
-        date: "2025-01-12 | 14:25:45 UTC",
-        categoryId: "1"
-    },
-    {
-        id: "4",
-        name: "Bathroom Cleaning",
-        image: images.service4,
-        providerName: "Alexandra Polina",
-        price: 29,
-        isOnDiscount: false,
-        oldPrice: 29,
-        rating: 4.9,
-        numReviews: 120,
-        date: "2025-01-12 | 14:25:45 UTC",
-        categoryId: "1"
-    },
-    {
-        id: "5",
-        name: "AC Repairing",
-        image: images.service5,
-        providerName: "Mila Cyrus",
-        price: 29,
-        isOnDiscount: true,
-        oldPrice: 78,
-        rating: 4.8,
-        numReviews: 145,
-        date: "2025-01-12 | 14:25:45 UTC",
-        categoryId: "2"
-    },
-    {
-        id: "6",
-        name: "Motorcycle Repairing",
-        image: images.service6,
-        providerName: "Ali Sunka Baba",
-        price: 78,
-        isOnDiscount: false,
-        oldPrice: 78,
-        rating: 4.8,
-        numReviews: 43,
-        date: "2025-01-12 | 14:25:45 UTC",
-        categoryId: "2"
-    },
-    {
-        id: "7",
-        name: "Laundry Services Pro",
-        image: images.service7,
-        providerName: "Mariana Juliana Des",
-        price: 40,
-        isOnDiscount: true,
-        oldPrice: 78,
-        rating: 4.8,
-        numReviews: 4809,
-        date: "2025-01-12 | 14:25:45 UTC",
-        categoryId: "4"
-    },
-    {
-        id: "8",
-        name: "House Plainting Services",
-        image: images.service9,
-        providerName: "Tom Jerry",
-        price: 19,
-        isOnDiscount: false,
-        oldPrice: 19,
-        rating: 4.9,
-        numReviews: 15,
-        date: "2025-01-12 | 14:25:45 UTC",
-        categoryId: "3"
-    },
-    {
-        id: "9",
-        name: "Plumbing Services Pro",
-        image: images.service10,
-        providerName: "Jules Cesar",
-        price: 29,
-        isOnDiscount: false,
-        oldPrice: 29,
-        rating: 4.9,
-        numReviews: 120,
-        date: "2025-01-12 | 14:25:45 UTC",
-        categoryId: "6"
-    }
-  ];
+ 
 
-  export const allServices = [
-    {
-        id: "1",
-        name: "Floor Cleaning",
-        image: images.service1,
-        providerName: "Kylee Danford",
-        price: 40,
-        isOnDiscount: true,
-        oldPrice: 78,
-        rating: 4.8,
-        numReviews: 145,
-        date: "2025-01-12 | 14:25:45 UTC",
-        categoryId: "1"
-    },
-    {
-        id: "2",
-        name: "House Cleaning",
-        image: images.service2,
-        providerName: "Alfonzo Magueritha",
-        price: 29,
-        isOnDiscount: false,
-        oldPrice: 29,
-        rating: 4.9,
-        numReviews: 220,
-        date: "2025-01-12 | 14:25:45 UTC",
-        categoryId: "1"
-    },
-    {
-        id: "3",
-        name: "Washing clothes",
-        image: images.service3,
-        providerName: "Mariana Juliana",
-        price: 38,
-        isOnDiscount: true,
-        oldPrice: 52,
-        rating: 4.8,
-        numReviews: 830,
-        date: "2025-01-12 | 14:25:45 UTC",
-        categoryId: "1"
-    },
-    {
-        id: "4",
-        name: "Bathroom Cleaning",
-        image: images.service4,
-        providerName: "Alexandra Polina",
-        price: 29,
-        isOnDiscount: false,
-        oldPrice: 29,
-        rating: 4.9,
-        numReviews: 120,
-        date: "2025-01-12 | 14:25:45 UTC",
-        categoryId: "1"
-    },
-    {
-        id: "5",
-        name: "AC Repairing",
-        image: images.service5,
-        providerName: "Mila Cyrus",
-        price: 29,
-        isOnDiscount: true,
-        oldPrice: 78,
-        rating: 4.8,
-        numReviews: 145,
-        date: "2025-01-12 | 14:25:45 UTC",
-        categoryId: "2"
-    },
-    {
-        id: "6",
-        name: "Motorcycle Repairing",
-        image: images.service6,
-        providerName: "Ali Sunka Baba",
-        price: 78,
-        isOnDiscount: false,
-        oldPrice: 78,
-        rating: 4.8,
-        numReviews: 43,
-        date: "2025-01-12 | 14:25:45 UTC",
-        categoryId: "2"
-    },
-    {
-        id: "7",
-        name: "Laundry Services Pro",
-        image: images.service7,
-        providerName: "Mariana Juliana Des",
-        price: 40,
-        isOnDiscount: true,
-        oldPrice: 78,
-        rating: 4.8,
-        numReviews: 4809,
-        date: "2025-01-12 | 14:25:45 UTC",
-        categoryId: "4"
-    },
-    {
-        id: "8",
-        name: "House Plainting Services",
-        image: images.service9,
-        providerName: "Tom Jerry",
-        price: 19,
-        isOnDiscount: false,
-        oldPrice: 19,
-        rating: 4.9,
-        numReviews: 15,
-        date: "2025-01-12 | 14:25:45 UTC",
-        categoryId: "3"
-    },
-    {
-        id: "9",
-        name: "Plumbing Services Pro",
-        image: images.service10,
-        providerName: "Jules Cesar",
-        price: 29,
-        isOnDiscount: false,
-        oldPrice: 29,
-        rating: 4.9,
-        numReviews: 120,
-        date: "2025-01-12 | 14:25:45 UTC",
-        categoryId: "6"
-    }
-  ];
-
+  
   export const ratings = [
     {
         id: "1",
@@ -861,79 +342,7 @@ export const notifications = [
     }
   ];
 
-  export const reviews = [
-    {
-        id: "1",
-        avatar: images.user1,
-        name: "Elena Rodriguez",
-        description: "Mariana did an amazing job! My house looks spotless and smells so fresh. Highly recommended! 😊👍",
-        rating: 4.8,
-        avgRating: 5,
-        date: "2024-01-23T04:52:06.501Z",
-        numLikes: 948
-    },
-    {
-        id: "2",
-        avatar: images.user2,
-        name: "James Johnson",
-        description: "Mariana is the best cleaner I've ever hired! She's thorough, efficient, and friendly. Couldn't be happier!",
-        rating: 4.7,
-        avgRating: 5,
-        date: "2024-01-23T04:52:06.501Z",
-        numLikes: 120
-    },
-    {
-        id: "3",
-        avatar: images.user3,
-        name: "Emily Smith",
-        description: "Mariana exceeded my expectations! She pays attention to every detail and leaves my home sparkling clean.",
-        rating: 4.7,
-        avgRating: 5,
-        date: "2024-01-29T04:52:06.501Z",
-        numLikes: 89
-    },
-    {
-        id: "4",
-        avatar: images.user4,
-        name: "David Brown",
-        description: "Mariana did a great job cleaning my apartment. She's reliable and professional. Highly recommend!",
-        rating: 4,
-        avgRating: 4,
-        date: "2024-01-29T04:52:06.501Z",
-        numLikes: 384
-    },
-    {
-        id: "5",
-        avatar: images.user6,
-        name: "Sophia Martinez",
-        description: "Mariana is fantastic! She's punctual, thorough, and friendly. My house has never looked better!",
-        rating: 4.3,
-        avgRating: 4,
-        date: "2024-01-29T04:52:06.501Z",
-        numLikes: 738
-    },
-    {
-        id: "6",
-        avatar: images.user7,
-        name: "Michael Johnson",
-        description: "Mariana is an excellent cleaner! She's reliable, efficient, and always does a fantastic job.",
-        rating: 4.8,
-        avgRating: 5,
-        date: "2024-01-29T04:52:06.501Z",
-        numLikes: 12
-    },
-    {
-        id: "7",
-        avatar: images.user8,
-        name: "Jessica Garcia",
-        description: "Mariana is amazing! She goes above and beyond to ensure my home is clean and organized. Highly recommended!",
-        rating: 4.9,
-        avgRating: 5,
-        date: "2024-01-29T04:52:06.501Z",
-        numLikes: 450
-    }
-  ];
-
+ 
 
   export const bookingItems = {
     cleaning: [
@@ -1089,7 +498,7 @@ export const notifications = [
       address: "123 Main St, Cityville",
       status: "Paid",
       hasRemindMe: true,
-      rating: 4.9,
+      rating: 0,
     },
     {
       id: 2,
@@ -1102,7 +511,7 @@ export const notifications = [
       address: "456 Oak St, Townsville",
       status: "Paid",
       hasRemindMe: true,
-      rating: 4.7
+      rating: 0
     },
     {
       id: 3,
@@ -1115,7 +524,7 @@ export const notifications = [
       address: "789 Pine St, Villagetown",
       status: "Paid",
       hasRemindMe: true,
-      rating: 4.8
+      rating: 0
     },
     {
       id: 4,
@@ -1128,7 +537,7 @@ export const notifications = [
       address: "910 Elm St, Hamlet",
       status: "Paid",
       hasRemindMe: true,
-      rating: 4.7
+      rating: 0
     },
     {
       id: 5,
@@ -1141,7 +550,7 @@ export const notifications = [
       address: "321 Maple St, Suburbia",
       status: "Paid",
       hasRemindMe: true,
-      rating: 4.9
+      rating: 0
     },
     {
       id: 6,
@@ -1154,7 +563,7 @@ export const notifications = [
       address: "567 Cedar St, Countryside",
       status: "Paid",
       hasRemindMe: true,
-      rating: 4.9
+      rating: 0
     },
     {
       id: 7,
@@ -1167,7 +576,7 @@ export const notifications = [
       address: "890 Oakwood Dr, Riverside",
       status: "Paid",
       hasRemindMe: true,
-      rating: 4.9
+      rating: 0
     },
     {
       id: 8,
@@ -1180,7 +589,7 @@ export const notifications = [
       address: "123 Pinecone Ln, Lakeside",
       status: "Paid",
       hasRemindMe: true,
-      rating: 4.9
+      rating: 0
     },
     {
       id: 9,
@@ -1193,7 +602,7 @@ export const notifications = [
       address: "456 Redwood Rd, Mountainview",
       status: "Paid",
       hasRemindMe: true,
-      rating: 4.6
+      rating: 0
     },
   ];
   
@@ -1209,7 +618,7 @@ export const notifications = [
       address: "789 Pine St, Villagetown",
       status: "Paid",
       hasRemindMe: false,
-      rating: 4.9,
+      rating: 0,
     },
     {
       id: 2,
@@ -1222,7 +631,7 @@ export const notifications = [
       address: "910 Elm St, Hamlet",
       status: "Paid",
       hasRemindMe: false,
-      rating: 4.6,
+      rating: 0,
     },
     {
       id: 3,
@@ -1235,7 +644,7 @@ export const notifications = [
       address: "321 Maple St, Suburbia",
       status: "Paid",
       hasRemindMe: false,
-      rating: 4.7,
+      rating: 0,
     },
     {
       id: 4,
@@ -1248,7 +657,7 @@ export const notifications = [
       address: "567 Cedar St, Countryside",
       status: "Paid",
       hasRemindMe: false,
-      rating: 4.9,
+      rating: 0,
     },
     {
       id: 5,
@@ -1261,7 +670,7 @@ export const notifications = [
       address: "890 Oakwood Dr, Riverside",
       status: "Paid",
       hasRemindMe: false,
-      rating: 4.6,
+      rating: 0,
     },
     {
       id: 6,
@@ -1274,7 +683,7 @@ export const notifications = [
       address: "123 Pinecone Ln, Lakeside",
       status: "Paid",
       hasRemindMe: false,
-      rating: 4.9,
+      rating: 0,
     },
     {
       id: 7,
@@ -1287,7 +696,7 @@ export const notifications = [
       address: "456 Redwood Rd, Mountainview",
       status: "Paid",
       hasRemindMe: false,
-      rating: 4.9,
+      rating: 0,
     },
     {
       id: 8,
@@ -1300,7 +709,7 @@ export const notifications = [
       address: "789 Elmwood Ave, Lakeshore",
       status: "Paid",
       hasRemindMe: false,
-      rating: 4.7,
+      rating: 0,
     },
     {
       id: 9,
@@ -1313,7 +722,7 @@ export const notifications = [
       address: "910 Birch St, Brookside",
       status: "Paid",
       hasRemindMe: false,
-      rating: 4.8
+      rating: 0
     },
   ];
   
@@ -1329,7 +738,7 @@ export const notifications = [
       address: "321 Maple St, Suburbia",
       status: "Unpaid",
       hasRemindMe: false,
-      rating: 4.9,
+      rating: 0,
     },
     {
       id: 2,
@@ -1342,7 +751,7 @@ export const notifications = [
       address: "567 Cedar St, Countryside",
       status: "Unpaid",
       hasRemindMe: false,
-      rating: 4.7,
+      rating: 0,
     },
     {
       id: 3,
@@ -1355,7 +764,7 @@ export const notifications = [
       address: "789 Elmwood Ave, Lakeshore",
       status: "Unpaid",
       hasRemindMe: false,
-      rating: 4.8,
+      rating: 0,
     },
     {
       id: 4,
@@ -1368,7 +777,7 @@ export const notifications = [
       address: "123 Main St, Cityville",
       status: "Unpaid",
       hasRemindMe: false,
-      rating: 4.5,
+      rating: 0,
     },
     {
       id: 5,
@@ -1381,7 +790,7 @@ export const notifications = [
       address: "456 Oak St, Townsville",
       status: "Unpaid",
       hasRemindMe: false,
-      rating: 4.9,
+      rating: 0,
     },
     {
       id: 6,
@@ -1394,7 +803,7 @@ export const notifications = [
       address: "789 Pine St, Villagetown",
       status: "Unpaid",
       hasRemindMe: false,
-      rating: 4.9,
+      rating: 0,
     },
     {
       id: 7,
@@ -1407,7 +816,7 @@ export const notifications = [
       address: "910 Elm St, Hamlet",
       status: "Unpaid",
       hasRemindMe: false,
-      rating: 4.9,
+      rating: 0,
     },
     {
       id: 8,
@@ -1420,7 +829,7 @@ export const notifications = [
       address: "321 Maple St, Suburbia",
       status: "Unpaid",
       hasRemindMe: false,
-      rating: 4.9,
+      rating: 0,
     },
     {
       id: 9,
@@ -1433,7 +842,7 @@ export const notifications = [
       address: "567 Cedar St, Countryside",
       status: "Unpaid",
       hasRemindMe: false,
-      rating: 4.9,
+      rating: 0,
     },
   ];
   

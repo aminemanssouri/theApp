@@ -96,36 +96,42 @@ const Chats = ({ searchQuery = '' }) => {
       if (channel) channel.unsubscribe();
     };
   }, [user]);
-
   const onRefresh = () => {
     setRefreshing(true);
     loadConversations();
   };
 
   const handleConversationPress = async (conversationId, participantId) => {
-    try {
-      // Mark as read using the chat context
-      await markConversationAsRead(conversationId);
-      
-      setConversations(prev => 
-        prev.map(conv => 
-          conv.id === conversationId 
-            ? { ...conv, unread_count: 0 }
-            : conv
-        )
-      );
-      
-      navigation.navigate('Chat', { 
-        conversationId, 
-        workerId: participantId 
-      });
-    } catch (error) {
+    // Get worker info to pass to Chat screen
+    const conversation = conversations.find(conv => conv.id === conversationId);
+    const participant = conversation?.participants[0];
+    const workerInfo = participant ? {
+      id: participant.id,
+      name: (participant.first_name || '') + ' ' + (participant.last_name || ''),
+      avatar_url: participant.avatar_url,
+      full_name: (participant.first_name || '') + ' ' + (participant.last_name || ''),
+    } : null;
+
+    // Navigate immediately for instant response
+    navigation.navigate('Chat', { 
+      conversationId, 
+      workerId: participantId,
+      workerInfo: workerInfo // Pass worker info to avoid double loading
+    });
+
+    // Update UI optimistically
+    setConversations(prev => 
+      prev.map(conv => 
+        conv.id === conversationId 
+          ? { ...conv, unread_count: 0 }
+          : conv
+      )
+    );
+
+    // Mark as read in background (don't await)
+    markConversationAsRead(conversationId).catch(error => {
       console.error('Error marking messages as read:', error);
-      navigation.navigate('Chat', { 
-        conversationId, 
-        workerId: participantId 
-      });
-    }
+    });
   };
 
   // Filter by search query

@@ -9,20 +9,23 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useAuth } from '../context/AuthContext';
 import { getUserFavoriteServices, getUserFavoriteWorkers, removeFavoriteById, getUserFavorites } from '../lib/services/favorites';
 import { supabase } from '../lib/supabase';
-import { t } from '../context/LanguageContext';
+import { useI18n } from '../context/LanguageContext';
+
 const Favourite = ({ navigation }) => {
     const [myWishlistServices, setMyWishlistServices] = useState([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+
     const { colors, dark } = useTheme();
     const { user } = useAuth();
+    const { t } = useI18n();
     const insets = getSafeAreaInsets();
 
     // Calculate bottom spacing to avoid tab bar overlap
     const getBottomSpacing = () => {
         const baseTabHeight = 60;
         const safeAreaBottom = insets.bottom;
-        
+
         if (Platform.OS === 'ios') {
             return baseTabHeight + safeAreaBottom + 20;
         } else {
@@ -30,116 +33,69 @@ const Favourite = ({ navigation }) => {
         }
     };
 
+    // Normalize a service favorite to card props
+    const mapServiceFavoriteToCard = (fav) => {
+        const svc = fav.services;
+        return {
+            id: fav.id,
+            favoriteId: fav.favorite_id,
+            favoriteType: 'service',
+            name: svc?.name || t('favorites.unknown_service'),
+            image: icons.category, // placeholder icon image
+            providerName: svc?.service_categories?.name || t('favorites.service'),
+            price: svc?.base_price || 0,
+            isOnDiscount: false,
+            oldPrice: undefined,
+            rating: 0,
+            numReviews: 0,
+        };
+    };
 
-    // Load user's favorite services and workers from database
+    // Normalize a worker/worker-service favorite to card props
+    const mapWorkerFavoriteToCard = (fav) => {
+        const w = fav.workers;
+        const fullName = [w?.first_name, w?.last_name].filter(Boolean).join(' ').trim();
+        // If worker-service, show service name primarily
+        const svcName = fav.isWorkerService ? fav?.serviceMetadata?.service_name : null;
+        return {
+            id: fav.id,
+            favoriteId: fav.favorite_id,
+            favoriteType: fav.isWorkerService ? 'worker_service' : 'worker',
+            name: svcName || fullName || t('favorites.unknown_worker'),
+            image: w?.Image ? { uri: w.Image } : require('../assets/images/avatar.jpeg'),
+            providerName: fav.isWorkerService ? fullName : t('favorites.worker'),
+            price: w?.hourly_rate || 0,
+            isOnDiscount: false,
+            oldPrice: undefined,
+            rating: w?.average_rating || 0,
+            numReviews: w?.total_jobs || 0,
+            workerId: w?.id,
+            serviceId: fav?.serviceMetadata?.service_id,
+        };
+    };
+
+    // Load user's favorite services and workers from database, normalize for UI
     const loadFavorites = async () => {
         if (!user?.id) {
             console.log('No user ID found, cannot load favorites');
             setLoading(false);
             return;
         }
-        
+
         try {
-            setLoading(true);
-            console.log('Loading favorites for user:', user.id);
-            
-            // Load both service and worker favorites
-            const [serviceFavorites, workerFavorites] = await Promise.all([
-                getUserFavoriteServices(user.id),
-                getUserFavoriteWorkers(user.id)
-            ]);
-            
-            console.log('Raw service favorites:', serviceFavorites);
-            console.log('Raw worker favorites:', workerFavorites);
-            
-            const allFavorites = [];
-            
-            // Transform service favorites
-            if (serviceFavorites && serviceFavorites.length > 0) {
-                const transformedServices = serviceFavorites.map(fav => {
-                    console.log('Transforming service favorite:', fav);
-                    return {
-                        id: fav.id,
-                        favoriteId: fav.favorite_id,
-                        favoriteType: 'service',
-                        name: fav.services?.name || t('service.unknown_service'),
-                        description: fav.services?.description || '',
-                        price: fav.services?.base_price || 0,
-                        image: fav.services?.icon || null,
-                        categoryId: fav.services?.service_categories?.id || '1',
-                        categoryName: fav.services?.service_categories?.name || t('common.general'),
-                        isActive: fav.services?.is_active || false,
-                        createdAt: fav.created_at,
-                        // Mock data for compatibility with existing card
-                        providerName: t('chat.service_provider'),
-                        rating: 4.5,
-                        numReviews: 0,
-                        isOnDiscount: false,
-                        oldPrice: null
-                    };
-                });
-                allFavorites.push(...transformedServices);
-            }
-            
-            // Transform worker favorites
-            if (workerFavorites && workerFavorites.length > 0) {
-                const transformedWorkers = workerFavorites.map(fav => {
-                    console.log('Transforming worker favorite:', fav);
-                    
-                    // Handle worker-service combinations differently
-                    if (fav.isWorkerService && fav.serviceMetadata) {
-                        return {
-                            id: `${fav.id}_${fav.serviceMetadata.service_id}`,
-                            favoriteId: fav.favorite_id,
-                            favoriteType: 'worker_service',
-                            name: `${fav.serviceMetadata.service_name || t('service.unknown_service')} - ${fav.workers?.first_name || ''} ${fav.workers?.last_name || ''}`.trim(),
-                            description: fav.workers?.bio || t('worker.professional'),
-                            price: fav.workers?.hourly_rate || 0,
-                            image: fav.workers?.Image || null,
-                            categoryId: '1',
-                            categoryName: t('worker.worker_service'),
-                            isActive: fav.workers?.is_available || false,
-                            createdAt: fav.created_at,
-                            providerName: `${fav.workers?.first_name || ''} ${fav.workers?.last_name || ''}`.trim() || t('chat.service_provider'),
-                            rating: fav.workers?.average_rating || 0,
-                            numReviews: fav.workers?.total_jobs || 0,
-                            isOnDiscount: false,
-                            oldPrice: null,
-                            workerId: fav.favorite_id, // Worker ID is stored in favorite_id
-                            serviceId: fav.serviceMetadata.service_id
-                        };
-                    } else {
-                        // Regular worker favorites
-                        return {
-                            id: fav.id,
-                            favoriteId: fav.favorite_id,
-                            favoriteType: 'worker',
-                            name: `${fav.workers?.first_name || ''} ${fav.workers?.last_name || ''}`.trim() || t('worker.unknown_worker'),
-                            description: fav.workers?.bio || t('worker.professional'),
-                            price: fav.workers?.hourly_rate || 0,
-                            image: fav.workers?.Image || null,
-                            categoryId: '1',
-                            categoryName: t('worker.worker'),
-                            isActive: fav.workers?.is_available || false,
-                            createdAt: fav.created_at,
-                            providerName: t('chat.service_provider'),
-                            rating: fav.workers?.average_rating || 0,
-                            numReviews: fav.workers?.total_jobs || 0,
-                            isOnDiscount: false,
-                            oldPrice: null,
-                            workerId: fav.favorite_id
-                        };
-                    }
-                });
-                allFavorites.push(...transformedWorkers);
-            }
-            
-            // Sort by creation date (newest first)
-            allFavorites.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-            
-            console.log('All transformed favorites:', allFavorites);
+            const services = await getUserFavoriteServices(user.id);
+            const workers = await getUserFavoriteWorkers(user.id);
+
+            // Normalize to card items
+            const serviceCards = (services || []).map(mapServiceFavoriteToCard);
+            const workerCards = (workers || []).map(mapWorkerFavoriteToCard);
+            let allFavorites = [...serviceCards, ...workerCards];
+
+            // Sort by created_at from original favorites if present, else leave as is
+            // Note: our mapped objects keep id but not created_at; optional: re-fetch order already descending
+
             setMyWishlistServices(allFavorites);
-            
+
             if (allFavorites.length === 0) {
                 console.log('No favorites found for user');
             }
@@ -151,25 +107,24 @@ const Favourite = ({ navigation }) => {
         }
     };
 
-
     // Handle bookmark press - remove favorite directly without modal
     const handleBookmarkPress = async (item) => {
         if (!item || !user?.id) return;
-        
+
         try {
             console.log('🗑️ Removing favorite from Favourites screen:', item);
-            
+
             if (item.favoriteType === 'worker_service') {
                 // For worker-service combinations, handle complex metadata
                 const favorites = await getUserFavorites(user.id);
-                const targetFavorite = favorites.find(fav => 
-                    fav.favorite_type === 'worker' && 
+                const targetFavorite = favorites.find(fav =>
+                    fav.favorite_type === 'worker' &&
                     fav.favorite_id === item.workerId
                 );
-                
+
                 if (targetFavorite) {
                     const metadata = targetFavorite.metadata;
-                    
+
                     // Check if single service or multiple services
                     if (metadata?.service_id === item.serviceId) {
                         // Single service - remove entire favorite
@@ -178,7 +133,7 @@ const Favourite = ({ navigation }) => {
                     } else if (metadata?.services && Array.isArray(metadata.services)) {
                         // Multiple services - remove just this service from array
                         const updatedServices = metadata.services.filter(s => s.service_id !== item.serviceId);
-                        
+
                         if (updatedServices.length === 0) {
                             // No services left, remove entire favorite
                             console.log('🗑️ No services left, removing entire favorite');
@@ -212,13 +167,13 @@ const Favourite = ({ navigation }) => {
                 console.log('🗑️ Removing simple favorite');
                 await removeFavoriteById(item.id, user.id);
             }
-            
+
             // Update local state
             const updatedFavorites = myWishlistServices.filter(
                 (favorite) => favorite.id !== item.id
             );
             setMyWishlistServices(updatedFavorites);
-            
+
             // Optional: Show a brief toast/feedback that item was removed
             console.log('✅ Favorite removed:', item.name);
         } catch (error) {
@@ -227,40 +182,15 @@ const Favourite = ({ navigation }) => {
         }
     };
 
-    // Refresh favorites
-    const onRefresh = async () => {
-        setRefreshing(true);
-        await loadFavorites();
-        setRefreshing(false);
-    };
-
-    // Load favorites on mount and when user changes
     useEffect(() => {
-        console.log('Favourite screen useEffect triggered, user:', user);
-        if (user?.id) {
+        loadFavorites();
+        const unsub = navigation?.addListener?.('focus', () => {
             loadFavorites();
-        } else {
-            console.log('No user found, clearing favorites');
-            setMyWishlistServices([]);
-            setLoading(false);
-        }
-    }, [user?.id]);
-
-    // Add focus listener to reload favorites when screen comes into focus
-    useEffect(() => {
-        const unsubscribe = navigation.addListener('focus', () => {
-            console.log('Favourite screen focused, reloading favorites');
-            if (user?.id) {
-                loadFavorites();
-            }
         });
-
-        return unsubscribe;
+        return unsub;
     }, [navigation, user?.id]);
-    
-    /**
-     * Render header
-     */
+
+    /** Render header */
     const renderHeader = () => {
         return (
             <View style={styles.headerContainer}>
@@ -270,13 +200,13 @@ const Favourite = ({ navigation }) => {
                         <Image
                             source={icons.arrowBack}
                             resizeMode='contain'
-                            style={[styles.backIcon, { 
-                                tintColor: dark? COLORS.white : COLORS.greyscale900
+                            style={[styles.backIcon, {
+                                tintColor: dark ? COLORS.white : COLORS.greyscale900
                             }]}
                         />
                     </TouchableOpacity>
-                    <Text style={[styles.headerTitle, { 
-                        color: dark? COLORS.white : COLORS.greyscale900
+                    <Text style={[styles.headerTitle, {
+                        color: dark ? COLORS.white : COLORS.greyscale900
                     }]}>
                         {t('favorites.title')}
                     </Text>
@@ -285,73 +215,26 @@ const Favourite = ({ navigation }) => {
                     <Image
                         source={icons.moreCircle}
                         resizeMode='contain'
-                        style={[styles.moreIcon, { 
-                            tintColor: dark? COLORS.secondaryWhite : COLORS.greyscale900
+                        style={[styles.moreIcon, {
+                            tintColor: dark ? COLORS.secondaryWhite : COLORS.greyscale900
                         }]}
                     />
                 </TouchableOpacity>
             </View>
         )
     }
-    /**
-       * Render my bookmark courses
-       */
+
+    /** Render my bookmark services */
     const renderMyWishlistServices = () => {
-        const [selectedCategories, setSelectedCategories] = useState(["1"]);
-
-        const filteredServices = myWishlistServices.filter(course => selectedCategories.includes("1") || selectedCategories.includes(course.categoryId));
-
-        // Category item
-        const renderCategoryItem = ({ item }) => (
-            <TouchableOpacity
-                style={{
-                    backgroundColor: selectedCategories.includes(item.id) ? COLORS.primary : "transparent",
-                    padding: 10,
-                    marginVertical: 5,
-                    borderColor: COLORS.primary,
-                    borderWidth: 1.3,
-                    borderRadius: 24,
-                    marginRight: 12,
-                }}
-                onPress={() => toggleCategory(item.id)}>
-                <Text style={{
-                    color: selectedCategories.includes(item.id) ? COLORS.white : COLORS.primary
-                }}>{item.name}</Text>
-            </TouchableOpacity>
-        );
-
-        // Toggle category selection
-        const toggleCategory = (categoryId) => {
-            const updatedCategories = [...selectedCategories];
-            const index = updatedCategories.indexOf(categoryId);
-
-            if (index === -1) {
-                updatedCategories.push(categoryId);
-            } else {
-                updatedCategories.splice(index, 1);
-            }
-
-            setSelectedCategories(updatedCategories);
-        };
-
         return (
             <View>
-                <View style={styles.categoryContainer}>
-                    <FlatList
-                        data={category}
-                        keyExtractor={item => item.id}
-                        showsHorizontalScrollIndicator={false}
-                        horizontal
-                        renderItem={renderCategoryItem}
-                    />
-                </View>
                 {loading ? (
                     <View style={styles.loadingContainer}>
                         <Text style={[styles.loadingText, { color: dark ? COLORS.white : COLORS.black }]}>
                             {t('favorites.loading')}
                         </Text>
                     </View>
-                ) : filteredServices.length === 0 ? (
+                ) : myWishlistServices.length === 0 ? (
                     <View style={styles.emptyContainer}>
                         <Text style={[styles.emptyText, { color: dark ? COLORS.white : COLORS.black }]}>
                             {t('favorites.empty_title')}
@@ -362,10 +245,10 @@ const Favourite = ({ navigation }) => {
                     </View>
                 ) : (
                     <FlatList
-                        data={filteredServices}
+                        data={myWishlistServices}
                         keyExtractor={item => item.id}
-                        refreshing={refreshing}
-                        onRefresh={onRefresh}
+                        refreshing={loading}
+                        onRefresh={loadFavorites}
                         renderItem={({ item }) => {
                             return (
                                 <WishlistServiceCard
@@ -381,7 +264,7 @@ const Favourite = ({ navigation }) => {
                                         if (item.favoriteType === 'worker') {
                                             navigation.navigate("WorkerDetails", { workerId: item.workerId || item.favoriteId });
                                         } else if (item.favoriteType === 'worker_service') {
-                                            navigation.navigate("WorkerDetails", { 
+                                            navigation.navigate("WorkerDetails", {
                                                 workerId: item.workerId,
                                                 serviceId: item.serviceId
                                             });
@@ -404,7 +287,7 @@ const Favourite = ({ navigation }) => {
         <View style={[styles.area, { backgroundColor: colors.background }]}>
             <View style={[styles.container, { backgroundColor: colors.background }]}>
                 {renderHeader()}
-                <ScrollView 
+                <ScrollView
                     showsVerticalScrollIndicator={false}
                     contentContainerStyle={{
                         paddingBottom: getBottomSpacing(),
@@ -419,15 +302,14 @@ const Favourite = ({ navigation }) => {
 
 const styles = StyleSheet.create({
     area: {
-    flex: 1,
-    paddingTop: Platform.OS === 'android' ? 25 : 0,
-  },
-  container: {
-    flex: 1,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-
-  },
+        flex: 1,
+        paddingTop: Platform.OS === 'android' ? 25 : 0,
+    },
+    container: {
+        flex: 1,
+        paddingHorizontal: 16,
+        paddingVertical: 16,
+    },
     headerContainer: {
         flexDirection: "row",
         alignItems: "center",
@@ -438,14 +320,12 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center"
     },
-  
     headerTitle: {
         fontSize: 22,
         fontFamily: 'bold',
         color: COLORS.black,
         marginLeft: 12
-    }, 
-    
+    },
     backIcon: {
         height: 24,
         width: 24,
@@ -455,9 +335,6 @@ const styles = StyleSheet.create({
         width: 24,
         height: 24,
         tintColor: COLORS.black
-    },
-    categoryContainer: {
-        marginTop: 0
     },
     loadingContainer: {
         flex: 1,
@@ -487,4 +364,4 @@ const styles = StyleSheet.create({
     }
 })
 
-export default Favourite
+export default Favourite;

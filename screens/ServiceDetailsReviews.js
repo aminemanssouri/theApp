@@ -51,6 +51,12 @@ const ServiceDetailsReviews = ({ navigation, route }) => {
         if (!bookingId) return;
         
         console.log('Checking review eligibility for booking:', bookingId);
+        
+        // Always show modal when bookingId is present (from MyBookingCompleted)
+        console.log('User navigated with booking ID - showing modal automatically');
+        setModalVisible(true);
+        
+        /* Optional: Keep this for future validation if needed
         const result = await reviewsService.canReviewBooking(bookingId);
         console.log('Review eligibility result:', result);
         
@@ -60,10 +66,16 @@ const ServiceDetailsReviews = ({ navigation, route }) => {
         } else {
             console.log('User cannot review:', result.reason || result.error);
         }
+        */
     };
 
     // Fetch reviews from database
     const fetchReviews = async () => {
+        if (!workerId) {
+            setLoading(false);
+            return;
+        }
+
         setLoading(true);
         try {
             const result = await reviewsService.getWorkerReviews(workerId, {
@@ -71,12 +83,31 @@ const ServiceDetailsReviews = ({ navigation, route }) => {
                 limit: 50
             });
 
-            if (result.success) {
-                setReviews(result.data.reviews);
-                setStatistics(result.data.statistics);
+            if (result && result.success && result.data) {
+                setReviews(result.data.reviews || []);
+                setStatistics(result.data.statistics || {
+                    average: 0,
+                    total: 0,
+                    distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
+                });
+            } else {
+                // Set default empty state
+                setReviews([]);
+                setStatistics({
+                    average: 0,
+                    total: 0,
+                    distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
+                });
             }
         } catch (error) {
             console.error('Error fetching reviews:', error);
+            // Set default empty state on error
+            setReviews([]);
+            setStatistics({
+                average: 0,
+                total: 0,
+                distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
+            });
         } finally {
             setLoading(false);
         }
@@ -141,7 +172,7 @@ const ServiceDetailsReviews = ({ navigation, route }) => {
                     <Text style={[styles.headerTitle, {
                         color: dark ? COLORS.white : COLORS.greyscale900
                     }]}>
-                        {statistics.average > 0 
+                        {(statistics?.average && statistics?.total) && statistics.average > 0 
                             ? `${statistics.average} (${statistics.total} reviews)`
                             : t('reviews.title') || 'Reviews'
                         }
@@ -171,21 +202,23 @@ const ServiceDetailsReviews = ({ navigation, route }) => {
                 <View style={styles.statsLeft}>
                     <Text style={[styles.statsNumber, {
                         color: dark ? COLORS.white : COLORS.greyscale900
-                    }]}>{statistics.average || '0.0'}</Text>
+                    }]}>{statistics?.average || '0.0'}</Text>
                     <ReviewStars 
-                        review={parseFloat(statistics.average) || 0} 
+                        review={parseFloat(statistics?.average) || 0} 
                         size={16}
                         color={COLORS.primary}
                     />
                     <Text style={[styles.statsTotal, {
                         color: dark ? COLORS.gray : COLORS.grayscale700
-                    }]}>({statistics.total} reviews)</Text>
+                    }]}>({statistics?.total || 0} reviews)</Text>
                 </View>
                 <View style={styles.statsRight}>
                     {[5, 4, 3, 2, 1].map(star => {
-                        const count = statistics.distribution[star] || 0;
-                        const percentage = statistics.total > 0 
-                            ? (count / statistics.total * 100).toFixed(0) 
+                        const distribution = statistics?.distribution || {};
+                        const count = distribution[star] || 0;
+                        const total = statistics?.total || 0;
+                        const percentage = total > 0 
+                            ? (count / total * 100).toFixed(0) 
                             : 0;
                         
                         return (
@@ -383,8 +416,10 @@ const ServiceDetailsReviews = ({ navigation, route }) => {
                         data={filteredReviews}
                         keyExtractor={item => item.id?.toString() || Math.random().toString()}
                         renderItem={({ item }) => {
-                            // Format review data for ReviewCard
-                            const reviewer = item.users || {};
+                            // Format review data for ReviewCard with safety checks
+                            if (!item) return null;
+                            
+                            const reviewer = item.reviewer || {};
                             const avatar = reviewer.profile_picture 
                                 ? { uri: reviewer.profile_picture }
                                 : images.user1; // fallback image
@@ -394,7 +429,7 @@ const ServiceDetailsReviews = ({ navigation, route }) => {
                                     avatar={avatar}
                                     name={`${reviewer.first_name || ''} ${reviewer.last_name || ''}`.trim() || 'Anonymous'}
                                     description={item.comment || 'No comment provided'}
-                                    avgRating={item.rating}
+                                    avgRating={item.rating || 0}
                                     date={item.created_at}
                                     numLikes={item.likes || 0}
                                 />
@@ -424,19 +459,6 @@ const ServiceDetailsReviews = ({ navigation, route }) => {
                 {renderContent()}
             </View>
             {renderModal()}
-            
-            {/* Floating test button - Remove in production */}
-            {__DEV__ && (
-                <TouchableOpacity 
-                    onPress={() => {
-                        console.log('Test modal triggered');
-                        setModalVisible(true);
-                    }}
-                    style={styles.testButton}
-                >
-                    <Text style={styles.testButtonText}>TEST</Text>
-                </TouchableOpacity>
-            )}
         </SafeAreaView>
     )
 };

@@ -2,91 +2,28 @@ import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import React, { useState } from 'react';
 import { COLORS, icons } from '../constants';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Header from '../components/Header';
 import { ScrollView } from 'react-native-virtualized-view';
+import Header from '../components/Header';
 import GlobalSettingsItem from '../components/GlobalSettingsItem';
 import Button from '../components/Button';
 import { useTheme } from '../theme/ThemeProvider';
 import { t } from '../context/LanguageContext';
 
 const SettingsSecurity = ({ navigation }) => {
-  const [isRememberMeEnabled, setIsRememberMeEnabled] = useState(true);
-  const [isFaceIDEnabled, setIsFaceIDEnabled] = useState(false);
-  const [isBiometricIDEnabled, setIsBiometricIDEnabled] = useState(true);
   const { colors, dark } = useTheme();
 
-  const toggleRememberMe = () => {
-    setIsRememberMeEnabled(!isRememberMeEnabled);
-  };
+  // Navigate to forgot password immediately when component mounts
+  React.useEffect(() => {
+    navigation.navigate("ForgotPassword");
+  }, [navigation]);
 
-  const toggleFaceID = () => {
-    setIsFaceIDEnabled(!isFaceIDEnabled);
-  };
-
-  const toggleBiometricID = () => {
-    setIsBiometricIDEnabled(!isBiometricIDEnabled);
-  }
   return (
     <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <Header title={t('settings.security.title')}/>
         <ScrollView style={styles.scrollView}
           showsVerticalScrollIndicator={false}>
-          <GlobalSettingsItem
-            title={t('settings.security.remember_me')}
-            isNotificationEnabled={isRememberMeEnabled}
-            toggleNotificationEnabled={toggleRememberMe}
-          />
-          <GlobalSettingsItem
-            title={t('settings.security.face_id')}
-            isNotificationEnabled={isFaceIDEnabled}
-            toggleNotificationEnabled={toggleFaceID} />
-          <GlobalSettingsItem
-            title={t('settings.security.biometric_id')}
-            isNotificationEnabled={isBiometricIDEnabled}
-            toggleNotificationEnabled={toggleBiometricID}
-          />
-          <TouchableOpacity style={styles.view}>
-            <Text style={[styles.viewLeft, { color: dark ? COLORS.white : COLORS.greyscale900 }]}>{t('settings.security.google_authenticator')}</Text>
-            <Image
-              source={icons.arrowRight}
-              resizeMode='contain'
-              style={[styles.arrowRight, { tintColor: dark ? COLORS.primary : COLORS.greyscale900 }]}
-            />
-          </TouchableOpacity>
-          <Button
-            title={t('settings.security.change_pin')}
-            style={{
-              backgroundColor: dark ? COLORS.dark3 : COLORS.tansparentPrimary,
-              borderRadius: 32,
-              borderColor: dark ? COLORS.dark3 : COLORS.tansparentPrimary,
-              marginTop: 22
-            }}
-            textColor={dark ? COLORS.white : COLORS.primary}
-            onPress={() => { navigation.navigate("ChangePIN") }}
-          />
-          <Button
-            title={t('settings.security.change_password')}
-            style={{
-              backgroundColor: dark ? COLORS.dark3 : COLORS.tansparentPrimary,
-              borderRadius: 32,
-              borderColor: dark ? COLORS.dark3 : COLORS.tansparentPrimary,
-              marginTop: 22
-            }}
-            textColor={dark ? COLORS.white : COLORS.primary}
-            onPress={() => { navigation.navigate("ChangePassword") }}
-          />
-          <Button
-            title={t('settings.security.change_email')}
-            style={{
-              backgroundColor: dark ? COLORS.dark3 : COLORS.tansparentPrimary,
-              borderRadius: 32,
-              borderColor: dark ? COLORS.dark3 : COLORS.tansparentPrimary,
-              marginTop: 22
-            }}
-            textColor={dark ? COLORS.white : COLORS.primary}
-            onPress={() => { navigation.navigate("ChangeEmail") }}
-          />
+          {/* All security options removed - redirects to forgot password */}
         </ScrollView>
       </View>
     </SafeAreaView>

@@ -174,53 +174,50 @@ const googleAuthHandler = async () => {
       const { data, error } = await signUp(
         email,
         password,
-        '', // firstName - will be filled in next screen
-        '', // lastName - will be filled in next screen
-        'client' // userType
+        '', 
+        '', 
+        'client'
       )
 
       console.log('📋 Signup response:', { data, error });
-      console.log('📋 Signup data:', data);
-      console.log('📋 Signup error:', error);
 
       if (error) {
         console.log('❌ Signup failed with error:', error.message);
-        setError(error.message)
-        
-        // Check for specific error types
-        if (error.message?.includes('User already registered') || 
-            error.message?.includes('already registered') ||
-            error.message?.includes('already exists')) {
-          Alert.alert(
-            'Account Already Exists',
-            'This email is already registered. Please sign in instead.'
-          );
-        } else {
-          Alert.alert(t('auth.sign_up_failed'), error.message)
-        }
-      } else if (data?.user) {
-        // User created successfully (session can be null if email confirmation is required)
-        console.log('✅ Signup successful, user created:', data.user.id);
-        
-        if (data.session) {
-          console.log('✅ Session created immediately, user confirmed');
-        } else {
-          console.log('📧 Session null - email confirmation required');
-        }
-        
-        Alert.alert(t('common.success'), t('auth.account_created_successfully'))
-        navigation.navigate("FillYourProfile")
+        Alert.alert(t('auth.sign_up_failed'), error.message)
       } else {
-        // Unexpected case - no user data
-        console.log('⚠️ Unexpected signup response - no user data');
-        Alert.alert(
-          t('common.error'), 
-          'Something went wrong during signup. Please try again.'
-        );
+        // Check if user needs email confirmation
+        if (data?.user && !data?.session) {
+          // User created but needs email confirmation
+          Alert.alert(
+            t('auth.check_email'), 
+            t('auth.confirmation_email_sent'),
+            [
+              {
+                text: t('common.ok'),
+                onPress: () => navigation.navigate('Login')
+              }
+            ]
+          )
+        } else if (data?.session) {
+          // User is immediately authenticated (email confirmation disabled)
+          console.log('✅ Signup successful, navigating to FillYourProfile');
+          Alert.alert(t('common.success'), t('auth.account_created_successfully'))
+          // Pass user data to FillYourProfile
+          navigation.navigate("FillYourProfile", {
+            userId: data.user.id,
+            email: data.user.email
+          })
+        } else if (data?.user) {
+          // User created, no session (could be email confirmation or other scenario)
+          console.log('✅ User created, navigating to FillYourProfile');
+          navigation.navigate("FillYourProfile", {
+            userId: data.user.id,
+            email: email // Use the email from form
+          })
+        }
       }
     } catch (err) {
       console.log('💥 Signup catch error:', err.message);
-      setError(err.message)
       Alert.alert(t('common.error'), err.message)
     } finally {
       setIsLoading(false)

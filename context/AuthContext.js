@@ -13,11 +13,51 @@ export const useAuth = () => {
   return context;
 };
 
+// Profile completion check function
+const checkProfileCompletion = async (userId) => {
+  try {
+    console.log('🔍 Checking profile completion for user:', userId);
+    
+    const { data: profile, error } = await supabase
+      .from('users')
+      .select('id, first_name, last_name, phone, email, address')
+      .eq('id', userId)
+      .single();
+    
+    if (error) {
+      console.log('❌ Profile check error:', error);
+      if (error.code === 'PGRST116') {
+        console.log('❌ No profile found for user');
+        return false;
+      }
+      return false;
+    }
+    
+    const hasFirstName = profile?.first_name && profile.first_name.trim().length > 0;
+    const hasPhone = profile?.phone && profile.phone.trim().length > 0;
+    const isComplete = !!(hasFirstName && hasPhone);
+    
+    console.log('✅ Profile check result:', {
+      hasProfile: !!profile,
+      hasFirstName,
+      hasPhone,
+      isComplete
+    });
+    
+    return isComplete;
+  } catch (error) {
+    console.error('💥 Profile completion check failed:', error);
+    return false;
+  }
+};
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState(null);
+  const [profileComplete, setProfileComplete] = useState(false);
+  const [profileCheckLoading, setProfileCheckLoading] = useState(true); // Add this
 
   // Fetch user profile data
   const fetchUserProfile = async (userId) => {
@@ -40,89 +80,137 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
- useEffect(() => {
-  let isMounted = true;
-  
-  // Get initial session with timeout protection
-  const getInitialSession = async () => {
-    try {
-      const sessionPromise = Promise.race([
-        supabase.auth.getSession(),
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Session check timed out')), 8000)
-        )
-      ]);
-      
-      const { data: { session } } = await sessionPromise;
-      
-      if (isMounted) {
-        setSession(session);
-        setUser(session?.user || null);
+  useEffect(() => {
+    let isMounted = true;
+    
+    const initializeAuth = async () => {
+      try {
+        console.log('🔄 Initializing auth...');
         
-        // Fetch user profile if user exists
-        if (session?.user?.id) {
-          await fetchUserProfile(session.user.id);
-          // Register push token for this user
-          registerPushTokenForUser(session.user.id);
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (isMounted) {
+          if (session?.user) {
+            console.log('👤 User found:', session.user.id);
+            
+            setUser(session.user);
+            setSession(session);
+            
+            // Start profile check loading
+            setProfileCheckLoading(true);
+            
+            // Check if profile is complete
+            const isComplete = await checkProfileCompletion(session.user.id);
+            setProfileComplete(isComplete);
+            
+            // Profile check complete
+            setProfileCheckLoading(false);
+            
+            await fetchUserProfile(session.user.id);
+            registerPushTokenForUser(session.user.id);
+            
+            console.log('🎯 Auth initialized - Profile complete:', isComplete);
+          } else {
+            console.log('👤 No user session found');
+            setUser(null);
+            setSession(null);
+            setUserProfile(null);
+            setProfileComplete(false);
+            setProfileCheckLoading(false);
+          }
+        }
+      } catch (error) {
+        console.error('💥 Error initializing auth:', error);
+        if (isMounted) {
+          setUser(null);
+          setSession(null);
+          setUserProfile(null);
+          setProfileComplete(false);
+          setProfileCheckLoading(false);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
         }
       }
-    } catch (error) {
-      console.error('Error getting initial session:', error);
-      if (isMounted) {
-        // Even if there's an error, we still need to stop loading
-        setSession(null);
-        setUser(null);
-        setUserProfile(null);
-      }
-    } finally {
-      if (isMounted) {
-        setLoading(false); // Always set loading to false
-      }
-    }
-  };
+    };
 
-  getInitialSession();
-  
-  // Use a timeout as a fallback to ensure loading never stays true indefinitely
-  const timeoutId = setTimeout(() => {
-    if (isMounted && loading) {
-      setLoading(false);
-    }
-  }, 10000); // 10 second maximum loading time
-
-  // Listen for auth state changes
-  const { data: { subscription } } = onAuthStateChange(async (event, session) => {
-    if (isMounted) {
-      setSession(session);
-      setUser(session?.user || null);
+    initializeAuth();
+    
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('🔄 Auth state changed:', event);
       
-      // Fetch user profile when auth state changes
-      if (session?.user?.id) {
-        await fetchUserProfile(session.user.id);
-        // Register push token for this user
-        registerPushTokenForUser(session.user.id);
-      } else {
-        setUserProfile(null);
+      if (isMounted) {
+        if (event === 'SIGNED_IN' && session?.user) {
+          console.log('✅ User signed in:', session.user.id);
+          
+          // Set loading state for profile check
+          setProfileCheckLoading(true);
+          
+          setUser(session.user);
+          setSession(session);
+          
+          // Check profile completion
+          const isComplete = await checkProfileCompletion(session.user.id);
+          setProfileComplete(isComplete);
+          
+          // Profile check complete
+          setProfileCheckLoading(false);
+          
+          await fetchUserProfile(session.user.id);
+          registerPushTokenForUser(session.user.id);
+          
+          console.log('🎯 Sign in complete - Profile complete:', isComplete);
+        } else if (event === 'SIGNED_OUT') {
+          console.log('👋 User signed out');
+          setUser(null);
+          setSession(null);
+          setUserProfile(null);
+          setProfileComplete(false);
+          setProfileCheckLoading(false);
+        } else if (event === 'USER_UPDATED' && session?.user) {
+          console.log('👤 User updated');
+          setUser(session.user);
+          setSession(session);
+          
+          setProfileCheckLoading(true);
+          const isComplete = await checkProfileCompletion(session.user.id);
+          setProfileComplete(isComplete);
+          setProfileCheckLoading(false);
+          
+          await fetchUserProfile(session.user.id);
+        }
+        
+        setLoading(false);
       }
-      
-      // Ensure loading state is updated
-      setLoading(false);
-    }
-  });
+    });
 
-  // Cleanup function
-  return () => {
-    isMounted = false;
-    clearTimeout(timeoutId);
-    subscription?.unsubscribe();
+    return () => {
+      isMounted = false;
+      subscription?.unsubscribe();
+    };
+  }, []);
+
+  const refreshProfileStatus = async () => {
+    if (user?.id) {
+      console.log('🔄 Manually refreshing profile status for:', user.id);
+      setProfileCheckLoading(true);
+      const isComplete = await checkProfileCompletion(user.id);
+      console.log('✅ Manual refresh result - Profile complete:', isComplete);
+      setProfileComplete(isComplete);
+      setProfileCheckLoading(false);
+      return isComplete;
+    }
+    return false;
   };
-}, []);
 
   const value = {
     user,
     userProfile,
     session,
-    loading,
+    loading: loading || profileCheckLoading, // Combined loading state
+    profileComplete,
+    setProfileComplete,
     signOut: async () => {
       try {
         await supabase.auth.signOut();
@@ -130,18 +218,16 @@ export const AuthProvider = ({ children }) => {
         console.error('Error signing out:', error);
       }
     },
-    refreshUserProfile: () => fetchUserProfile(user?.id)
+    refreshUserProfile: () => fetchUserProfile(user?.id),
+    refreshProfileStatus
   };
 
-  // Debug log the auth state
-  // console.log('🔐 AuthProvider state:', {
-  //   hasUser: !!user,
-  //   userId: user?.id,
-  //   userEmail: user?.email,
-  //   hasProfile: !!userProfile,
-  //   hasSession: !!session,
-  //   loading
-  // });
+  console.log('🔐 Auth State:', {
+    hasUser: !!user,
+    userId: user?.id,
+    profileComplete,
+    loading: loading || profileCheckLoading
+  });
 
   return (
     <AuthContext.Provider value={value}>

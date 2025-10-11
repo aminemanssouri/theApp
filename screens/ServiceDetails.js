@@ -1,5 +1,5 @@
-import { View, Text, StyleSheet, TouchableOpacity, Image, useWindowDimensions, Alert } from 'react-native';
 import React from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Image, useWindowDimensions, Alert } from 'react-native';
 import { COLORS, SIZES, icons, images } from '../constants';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ReviewStars from '../components/ReviewStars';
@@ -97,10 +97,10 @@ const ServiceDetails = (props) => {
             color: dark? COLORS.secondaryWhite: COLORS.greyscale900
           }]}>{t('worker.years_experience', { years: 5 })}</Text>
           <View style={styles.reviewContainer}>
-            <ReviewStars review={5} size={14} color="orange" />
+            <ReviewStars review={0} size={14} color="orange" />
             <Text style={[styles.ratingNum, { 
               color: dark ? COLORS.grayscale200 : "gray"
-            }]}>(4.7)</Text>
+            }]}>(0.0)</Text>
           </View>
           <Text style={styles.price}>$30.00/h</Text>
 

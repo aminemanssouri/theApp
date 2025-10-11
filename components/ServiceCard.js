@@ -7,6 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import { addToFavorites, removeFromFavorites, getUserFavorites } from '../lib/services/favorites';
 import { supabase } from '../lib/supabase';
 import { t } from '../context/LanguageContext';
+import ReviewStars from './ReviewStars';
 
 const ServiceCard = ({
     name,
@@ -398,9 +399,13 @@ const ServiceCard = ({
                         }
                     </View>
                     <View style={styles.ratingContainer}>
-                        <FontAwesome name="star-half-empty" size={16} color="orange" />
-                        <Text style={[styles.rating, { color: dark ? COLORS.greyscale300 : COLORS.grayscale700 }]}> {" "}{rating}</Text>
-                        <Text style={[styles.numReviews, { color: dark ? COLORS.greyscale300 : COLORS.grayscale700 }]}> |  {t('service.reviews_count', { count: numReviews })}</Text>
+                        <ReviewStars 
+                            review={rating || 0} 
+                            size={14}
+                            color="orange"
+                        />
+                        <Text style={[styles.rating, { color: dark ? COLORS.greyscale300 : COLORS.grayscale700 }]}> {" "}{rating || '0.0'}</Text>
+                        <Text style={[styles.numReviews, { color: dark ? COLORS.greyscale300 : COLORS.grayscale700 }]}> |  {t('service.reviews_count', { count: numReviews || 0 })}</Text>
                     </View>
                 </View>
             </TouchableOpacity>
@@ -453,15 +458,15 @@ const styles = StyleSheet.create({
         borderRadius: 4,
         alignItems: 'flex-start',
         justifyContent: 'center',
-        maxWidth: '80%', // Limit width to prevent overflow
+        maxWidth: '80%',
     },
     categoryName: {
-        fontSize: 12, // Slightly smaller for longer text
+        fontSize: 12,
         fontFamily: 'semiBold',
         color: COLORS.primary
     },
     bookmarkButton: {
-        padding: 4, // Add padding for better touch target
+        padding: 4,
     },
     bookmarkIcon: {
         width: 24,
@@ -469,7 +474,7 @@ const styles = StyleSheet.create({
         tintColor: COLORS.primary
     },
     name: {
-        fontSize: 15, // Slightly smaller to fit better
+        fontSize: 15,
         fontFamily: 'bold',
         color: COLORS.black,
         marginVertical: 6,
@@ -501,7 +506,7 @@ const styles = StyleSheet.create({
         color: "gray",
     },
     numReviews: {
-        fontSize: 12, // Slightly smaller
+        fontSize: 12,
         fontFamily: 'medium',
         color: "gray",
         marginLeft: 8,
