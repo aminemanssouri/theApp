@@ -453,15 +453,7 @@ const EditProfile = ({ navigation }) => {
               containerStyle={styles.inputWrapper}
             />
             
-            <Input
-              id="occupation"
-              onInputChanged={inputChangedHandler}
-              errorText={formState.inputValidities['occupation']}
-              placeholder={t('profile.fields.occupation_optional')}
-              placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
-              initialValue={formState.inputValues.occupation}
-              containerStyle={styles.inputWrapper}
-            />
+            
           </View>
           
           {/* Add padding at bottom to prevent button overlap */}

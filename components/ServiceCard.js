@@ -72,9 +72,7 @@ const ServiceCard = ({
         try {
             // Get all user favorites
             const favorites = await getUserFavorites(user.id);
-            console.log('🔍 Checking favorite status for:', { name, serviceId, workerId });
-            console.log('📋 User favorites:', favorites.length);
-            
+              
             // Check if this item is favorited
             let isFavorited = false;
             
@@ -87,8 +85,7 @@ const ServiceCard = ({
                         
                         // Check single service structure
                         if (metadata.service_id === serviceId) {
-                            console.log('✅ Found worker-service favorite match (single)');
-                            return true;
+                             return true;
                         }
                         
                         // Check multiple services structure
@@ -97,8 +94,7 @@ const ServiceCard = ({
                                 service.service_id === serviceId
                             );
                             if (serviceMatch) {
-                                console.log('✅ Found worker-service favorite match (multiple)');
-                                return true;
+                                 return true;
                             }
                         }
                     }
@@ -127,8 +123,7 @@ const ServiceCard = ({
                 });
             }
             
-            console.log('💖 Is favorited:', isFavorited);
-            setIsBookmarked(isFavorited);
+             setIsBookmarked(isFavorited);
         } catch (error) {
             console.error('❌ Error checking favorite status:', error);
             setIsBookmarked(false);
