@@ -75,10 +75,7 @@ export const NotificationProvider = ({ children }) => {
       console.log('📥 Loading notifications for user:', user.id);
       setLoading(true);
       const data = await getUserNotifications(user.id);
-      console.log('✅ Notifications loaded successfully:', {
-        count: data?.length || 0,
-        notifications: data?.slice(0, 3) || [] // Log first 3 for debugging
-      });
+       
 
       const deduped = dedupeNotifications(data);
       setNotifications(deduped);

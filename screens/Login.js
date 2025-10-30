@@ -123,31 +123,32 @@ const Login = ({ navigation }) => {
       const { data, error } = await signInWithGoogle();
       if (error) throw error;
       
+      console.log('🟢 Google signInWithGoogle completed');
+      
       // Check if we have a valid session
       const { data: sessionData } = await supabase.auth.getSession();
+      console.log('🟢 Session data after Google login:', { 
+        hasSession: !!sessionData?.session, 
+        userId: sessionData?.session?.user?.id 
+      });
+      
       if (sessionData?.session) {
-        console.log('✅ Google login successful, checking profile...');
+        console.log('✅ Google login successful - AppNavigation will handle routing');
         
-        // Check profile completion directly
-        const { data: profile } = await supabase
-          .from('users')
-          .select('id, first_name, phone')
-          .eq('id', sessionData.session.user.id)
-          .single();
+        // Don't manually navigate - let AuthContext and AppNavigation handle it
+        // The auth state change will trigger automatic navigation based on profileComplete
         
-        const hasProfile = profile && profile.first_name && profile.phone;
-        
-        console.log('📊 Google profile check:', { hasProfile, profile });
-        
-        // Keep loading until navigation happens
+        // Keep loading briefly for smooth transition
         setTimeout(() => {
+          console.log('🟢 Setting isLoading to false after Google login');
           setIsLoading(false);
-        }, 300);
+        }, 500);
       } else {
         Alert.alert(t('auth.login_error'), t('auth.authentication_no_session'));
         setIsLoading(false);
       }
     } catch (error) {
+      console.error('🔴 Google auth error:', error);
       Alert.alert(t('common.error'), error.message);
       setIsLoading(false);
     }

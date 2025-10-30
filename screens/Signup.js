@@ -108,33 +108,24 @@ const googleAuthHandler = async () => {
     // Check if we have a valid session
     const { data: sessionData } = await supabase.auth.getSession();
     if (sessionData?.session) {
-      console.log('Google authentication successful');
+      console.log('✅ Google authentication successful - AppNavigation will handle routing');
       
-      // Check if this is a first-time login (new user)
-      const isNewUser = sessionData.session.user?.app_metadata?.provider === 'google' && 
-                       !sessionData.session.user?.user_metadata?.profile_completed;
+      // Don't manually navigate - let AuthContext and AppNavigation handle it
+      // The SIGNED_IN event will trigger checkProfileCompletion
+      // and AppNavigation will show FillYourProfile or Main automatically
       
-      if (isNewUser) {
-        // New user - send to profile completion
-        navigation.navigate("FillYourProfile", { 
-          userId: sessionData.session.user.id,
-          email: sessionData.session.user.email
-        });
-      } else {
-        // Existing user - go to main screen
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'Main' }],
-        });
-      }
+      // Keep loading briefly for smooth transition
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 500);
     } else {
       console.log('Authentication completed but no session found');
       Alert.alert(t('common.error'), t('auth.authentication_no_session'));
+      setIsLoading(false);
     }
   } catch (error) {
     console.error('Google auth error:', error);
     Alert.alert(t('common.error'), error.message);
-  } finally {
     setIsLoading(false);
   }
 };

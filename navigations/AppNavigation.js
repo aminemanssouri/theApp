@@ -1,8 +1,8 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, useNavigation } from '@react-navigation/native';
 import * as Linking from 'expo-linking';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Platform, View, ActivityIndicator } from 'react-native';
 import { COLORS } from '../constants';
 import { useAuth } from '../context/AuthContext';
@@ -25,7 +25,48 @@ const defaultScreenOptions = {
   }),
 };
 
-const AppNavigation = () => {
+// Navigation wrapper component to handle profileComplete changes
+const NavigationWrapper = () => {
+  const navigationRef = useRef();
+  const { user, loading: authLoading, profileComplete } = useAuth();
+  
+  // Handle navigation when profileComplete changes
+  useEffect(() => {
+    if (!user || authLoading) return;
+    
+    // Only navigate if we have a navigation ref
+    if (navigationRef.current) {
+      const currentRoute = navigationRef.current.getCurrentRoute()?.name;
+      
+      console.log('🔄 ProfileComplete changed:', {
+        profileComplete,
+        currentRoute,
+        hasUser: !!user
+      });
+      
+      // If profile becomes complete and we're on FillYourProfile, navigate to Main
+      if (profileComplete && currentRoute === 'FillYourProfile') {
+        console.log('✅ Navigating to Main because profile is now complete');
+        navigationRef.current.reset({
+          index: 0,
+          routes: [{ name: 'Main' }],
+        });
+      }
+      // If profile becomes incomplete and we're on Main, navigate to FillYourProfile
+      else if (!profileComplete && currentRoute === 'Main') {
+        console.log('⚠️ Navigating to FillYourProfile because profile is incomplete');
+        navigationRef.current.reset({
+          index: 0,
+          routes: [{ name: 'FillYourProfile' }],
+        });
+      }
+    }
+  }, [profileComplete, user, authLoading]);
+  
+  return <AppNavigationContent navigationRef={navigationRef} />;
+};
+
+const AppNavigationContent = ({ navigationRef }) => {
   const [isFirstLaunch, setIsFirstLaunch] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const { user, loading: authLoading, profileComplete } = useAuth();
@@ -89,6 +130,7 @@ const AppNavigation = () => {
 
   return (
     <NavigationContainer
+      ref={navigationRef}
       linking={linking}
       theme={{
         colors: {
@@ -101,7 +143,16 @@ const AppNavigation = () => {
         },
       }}
     >
-      <Stack.Navigator screenOptions={defaultScreenOptions}>
+      <Stack.Navigator 
+        screenOptions={defaultScreenOptions}
+        initialRouteName={
+          !user || shouldWaitForAuth 
+            ? (isFirstLaunch ? "Onboarding1" : "Welcome")
+            : !profileComplete 
+              ? "FillYourProfile" 
+              : "Main"
+        }
+      >
         {!user || shouldWaitForAuth ? (
           // NOT LOGGED IN or WAITING FOR AUTH - Show authentication screens
           <>
@@ -116,21 +167,20 @@ const AppNavigation = () => {
             <Stack.Screen name="Welcome" component={Welcome} options={getTransitionConfig('Welcome')} />
             <Stack.Screen name="Login" component={Login} options={getTransitionConfig('Login')} />
             <Stack.Screen name="Signup" component={Signup} options={getTransitionConfig('Signup')} />
-            <Stack.Screen name="FillYourProfile" component={FillYourProfile} options={getTransitionConfig('FillYourProfile')} />
             <Stack.Screen name="ForgotPasswordMethods" component={ForgotPasswordMethods} options={getTransitionConfig('ForgotPasswordMethods')} />
             <Stack.Screen name="ForgotPasswordEmail" component={ForgotPasswordEmail} options={getTransitionConfig('ForgotPasswordEmail')} />
             <Stack.Screen name="ForgotPasswordPhoneNumber" component={ForgotPasswordPhoneNumber} options={getTransitionConfig('ForgotPasswordPhoneNumber')} />
             <Stack.Screen name="OTPVerification" component={OTPVerification} options={getTransitionConfig('OTPVerification')} />
             <Stack.Screen name="CreateNewPassword" component={CreateNewPassword} options={getTransitionConfig('CreateNewPassword')} />
           </>
-        ) : !profileComplete ? (
-          // LOGGED IN BUT NO PROFILE - Show FillYourProfile
-          <>
-            <Stack.Screen name="FillYourProfile" component={FillYourProfile} options={getTransitionConfig('FillYourProfile')} />
-          </>
         ) : (
-          // LOGGED IN WITH COMPLETE PROFILE - Show Main app
+          // LOGGED IN - Show Main app and all screens
           <>
+            <Stack.Screen 
+              name="FillYourProfile" 
+              component={FillYourProfile} 
+              options={getTransitionConfig('FillYourProfile')} 
+            />
             <Stack.Screen 
               name="Main" 
               component={BottomTabNavigation}
@@ -185,4 +235,4 @@ const AppNavigation = () => {
   );
 };
 
-export default AppNavigation;
+export default NavigationWrapper;

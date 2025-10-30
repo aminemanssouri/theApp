@@ -19,7 +19,8 @@ const isTestMode = false;
 
 const initialState = {
   inputValues: {
-    fullName: isTestMode ? 'John Doe' : '',
+    firstName: isTestMode ? 'John' : '',
+    lastName: isTestMode ? 'Doe' : '',
     nickname: isTestMode ? 'John' : '',
     email: isTestMode ? 'john@example.com' : '',
     phoneNumber: isTestMode ? '1234567890' : '',
@@ -28,7 +29,8 @@ const initialState = {
     zipCode: isTestMode ? '10001' : '',
   },
   inputValidities: {
-    fullName: false,
+    firstName: false,
+    lastName: false,
     nickname: false,
     email: false,
     phoneNumber: false,
@@ -53,8 +55,10 @@ const FillYourProfile = ({ navigation, route }) => {
   const [zipCode, setZipCode] = useState('');
   const [email, setEmail] = useState(''); // Add this state
   const [isLoading, setIsLoading] = useState(false);
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const { colors, dark } = useTheme();
-  const { user, setProfileComplete, refreshUserProfile } = useAuth();
+  const { user, setProfileComplete, setProfileCompleteWithSkip, refreshUserProfile } = useAuth();
 
   // Get user data from route params (if coming from Google OAuth)
   const userId = route?.params?.userId || user?.id;
@@ -109,8 +113,13 @@ const FillYourProfile = ({ navigation, route }) => {
         
         if (data) {
           // Pre-fill form with existing data
-          if (data.first_name || data.last_name) {
-            inputChangedHandler('fullName', `${data.first_name || ''} ${data.last_name || ''}`.trim());
+          if (data.first_name) {
+            setFirstName(data.first_name);
+            inputChangedHandler('firstName', data.first_name);
+          }
+          if (data.last_name) {
+            setLastName(data.last_name);
+            inputChangedHandler('lastName', data.last_name);
           }
           if (data.email) {
             setEmail(data.email); // Set email state
@@ -192,15 +201,13 @@ const FillYourProfile = ({ navigation, route }) => {
       return;
     }
 
-    // Extract first and last name from full name
-    const fullName = formState.inputValues.fullName || '';
-    const nameParts = fullName.trim().split(' ');
-    const firstName = nameParts[0] || '';
-    const lastName = nameParts.slice(1).join(' ') || '';
+    // Get first and last name from form state
+    const firstName = formState.inputValues.firstName?.trim() || '';
+    const lastName = formState.inputValues.lastName?.trim() || '';
 
     // Validate required fields
     if (!firstName || !phoneNumber) {
-      Alert.alert('Required Fields', 'Please fill in your name and phone number');
+      Alert.alert('Required Fields', 'Please fill in your first name and phone number');
       return;
     }
 
@@ -302,32 +309,38 @@ const FillYourProfile = ({ navigation, route }) => {
 
   // Handle Skip button
   const handleSkip = async () => {
-    // Save minimal profile data (just mark as skipped)
-    if (userId) {
-      try {
-        // Create minimal user record
+    setIsLoading(true);
+    try {
+      // Create minimal user record with email only
+      if (userId && userEmail) {
         const { error } = await supabase
           .from('users')
           .upsert([{
             id: userId,
             email: userEmail,
             updated_at: new Date().toISOString()
-          }]);
-        
-        if (!error) {
-          setProfileComplete(true);
-          navigation.reset({
-            index: 0,
-            routes: [{ name: 'Main' }],
+          }], {
+            onConflict: 'id'
           });
+        
+        if (error) {
+          console.error('Error creating user record:', error);
         }
-      } catch (error) {
-        console.error('Error skipping profile:', error);
-        // Navigate anyway
-        navigation.navigate("Main");
       }
-    } else {
-      navigation.navigate("Main");
+      
+      // Mark profile as complete with skip flag
+      await setProfileCompleteWithSkip(true, userId);
+      
+      console.log('✅ Profile skipped - navigation will handle automatically');
+      
+      // Don't manually navigate - let AppNavigation handle it automatically
+      // The state change will trigger navigation re-render with Main screen
+    } catch (error) {
+      console.error('Error skipping profile:', error);
+      // Even on error, mark as skipped to allow access
+      await setProfileCompleteWithSkip(true, userId);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -443,11 +456,21 @@ const FillYourProfile = ({ navigation, route }) => {
           </View>
           <View>
             <Input
-              id="fullName"
+              id="firstName"
               onInputChanged={inputChangedHandler}
-              errorText={formState.inputValidities['fullName']}
-              placeholder="Full Name *"
-              placeholderTextColor={COLORS.gray} />
+              errorText={formState.inputValidities['firstName']}
+              placeholder="First Name *"
+              placeholderTextColor={COLORS.gray}
+              initialValue={firstName}
+            />
+            <Input
+              id="lastName"
+              onInputChanged={inputChangedHandler}
+              errorText={formState.inputValidities['lastName']}
+              placeholder="Last Name"
+              placeholderTextColor={COLORS.gray}
+              initialValue={lastName}
+            />
             
             {/* Replace the Input component with TextInput for email */}
             <TextInput
