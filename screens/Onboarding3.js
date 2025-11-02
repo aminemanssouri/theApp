@@ -5,6 +5,7 @@ import DotsView from '../components/DotsView';
 import Button from '../components/Button';
 import { COLORS, SIZES, images } from '../constants';
 import { useTheme } from '../theme/ThemeProvider';
+import { t } from '../context/LanguageContext';
 
 const Onboarding3 = ({ navigation }) => {
   // Screen 3 = progress 2 (third screen)
@@ -29,12 +30,12 @@ const Onboarding3 = ({ navigation }) => {
           </View>
           
           <View style={styles.titleContainer}>
-            <Text style={[styles.title, { color: colors.text }]}>Verified Professionals</Text>
-            <Text style={[styles.subTitle, { color: COLORS.primary }]}>You Can Trust</Text>
+            <Text style={[styles.title, { color: colors.text }]}>{t('onboarding.screen3_title')}</Text>
+            <Text style={[styles.subTitle, { color: COLORS.primary }]}>{t('onboarding.screen3_subtitle')}</Text>
           </View>
 
           <Text style={[styles.description, { color: colors.text }]}>
-            All our service providers are background-checked and rated by real customers to ensure quality and safety.
+            {t('onboarding.screen3_description')}
           </Text>
 
           <View style={styles.dotsContainer}>
@@ -42,14 +43,14 @@ const Onboarding3 = ({ navigation }) => {
           </View>
           
           <Button
-            title="Next"
+            title={t('common.next')}
             filled
             onPress={() => navigation.navigate('Onboarding4')}
             style={styles.nextButton}
           />
           
           <Button
-            title="Skip"
+            title={t('common.skip')}
             onPress={() => navigation.navigate('Login')}
             textColor={colors.primary}
             style={styles.skipButton}

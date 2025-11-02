@@ -69,11 +69,11 @@ const ForgotPasswordEmail = ({ navigation }) => {
             } else {
                 Alert.alert(
                     t('auth.email_sent'), 
-                    t('auth.check_email_for_reset_code'),
+                    t('auth.check_email_for_reset_link'),
                     [
                         {
                             text: t('common.ok'),
-                            onPress: () => navigation.navigate('OTPVerification', { email })
+                            onPress: () => navigation.navigate('Login')
                         }
                     ]
                 );

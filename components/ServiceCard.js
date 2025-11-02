@@ -106,9 +106,7 @@ const ServiceCard = ({
                     const match = fav.favorite_type === 'worker' && 
                                  fav.favorite_id === workerId &&
                                  (!fav.metadata || (!fav.metadata.service_id && !fav.metadata.services));
-                    if (match) {
-                        console.log('✅ Found worker-only favorite match');
-                    }
+                    
                     return match;
                 });
             } else if (serviceId) {
@@ -116,9 +114,6 @@ const ServiceCard = ({
                 isFavorited = favorites.some(fav => {
                     const match = fav.favorite_type === 'service' && 
                                  fav.favorite_id === serviceId;
-                    if (match) {
-                        console.log('✅ Found service favorite match');
-                    }
                     return match;
                 });
             }
@@ -138,7 +133,6 @@ const ServiceCard = ({
     // Add focus listener to refresh favorite status when screen comes into focus
     useEffect(() => {
         const unsubscribe = navigation?.addListener?.('focus', () => {
-            console.log('🔄 Screen focused, refreshing favorite status for:', name);
             checkFavoriteStatus();
         });
 
@@ -165,8 +159,6 @@ const ServiceCard = ({
             // Determine favorite type and ID
             let favoriteType, favoriteId, metadata = null;
             
-            console.log('🔍 Determining favorite type for:', { name, serviceId, workerId });
-            
             if (workerId && serviceId) {
                 // For worker-service combinations
                 favoriteType = 'worker';
@@ -176,27 +168,20 @@ const ServiceCard = ({
                     service_name: name,
                     is_worker_service: true
                 };
-                console.log('📋 Worker-Service combination detected');
             } else if (workerId) {
                 // For worker-only favorites
                 favoriteType = 'worker';
                 favoriteId = workerId;
-                console.log('📋 Worker-only detected');
             } else if (serviceId) {
                 // For service-only favorites
                 favoriteType = 'service';
                 favoriteId = serviceId;
-                console.log('📋 Service-only detected');
             } else {
-                console.error('❌ No valid ID found for favorite');
                 return;
             }
             
-            console.log('📝 Final favorite config:', { favoriteType, favoriteId, metadata });
-            
             if (isBookmarked) {
                 // Remove from favorites
-                console.log('🗑️ Removing from favorites:', { name, serviceId, workerId });
                 
                 if (workerId && serviceId) {
                     // For worker-service combinations, we need special handling
@@ -212,7 +197,6 @@ const ServiceCard = ({
                         // Check if single service or multiple services
                         if (metadata?.service_id === serviceId) {
                             // Single service - remove entire favorite
-                            console.log('🗑️ Removing single service favorite');
                             await supabase.from('favorites').delete().eq('id', targetFavorite.id);
                         } else if (metadata?.services && Array.isArray(metadata.services)) {
                             // Multiple services - remove just this service from array
@@ -220,11 +204,9 @@ const ServiceCard = ({
                             
                             if (updatedServices.length === 0) {
                                 // No services left, remove entire favorite
-                                console.log('🗑️ No services left, removing entire favorite');
                                 await supabase.from('favorites').delete().eq('id', targetFavorite.id);
                             } else if (updatedServices.length === 1) {
                                 // Only one service left, convert back to single service structure
-                                console.log('🗑️ Converting back to single service');
                                 const updatedMetadata = {
                                     service_id: updatedServices[0].service_id,
                                     service_name: updatedServices[0].service_name,
@@ -235,7 +217,6 @@ const ServiceCard = ({
                                     .eq('id', targetFavorite.id);
                             } else {
                                 // Multiple services remain, update array
-                                console.log('🗑️ Updating services array');
                                 const updatedMetadata = {
                                     ...metadata,
                                     services: updatedServices
@@ -248,11 +229,9 @@ const ServiceCard = ({
                     }
                 } else {
                     // For simple favorites, use the standard function
-                    console.log('🗑️ Removing simple favorite');
                     await removeFromFavorites(user.id, favoriteType, favoriteId);
                 }
                 setIsBookmarked(false);
-                console.log('✅ Removed from favorites:', name);
             } else {
                 // Add to favorites - but first check if it already exists
                 try {
@@ -290,19 +269,9 @@ const ServiceCard = ({
                     }
                     
                     if (!alreadyExists) {
-                        console.log('🔄 Adding to favorites:', {
-                            userId: user.id,
-                            favoriteType,
-                            favoriteId,
-                            metadata,
-                            name
-                        });
-                        
                         const result = await addToFavorites(user.id, favoriteType, favoriteId, metadata);
-                        console.log('📝 Add result:', result);
                         
                         setIsBookmarked(true);
-                        console.log('✅ Added to favorites:', name);
                         
                         // Force refresh to verify it was added
                         setTimeout(() => {
@@ -311,20 +280,17 @@ const ServiceCard = ({
                     } else {
                         // Already exists, just update UI
                         setIsBookmarked(true);
-                        console.log('ℹ️ Already in favorites:', name);
                     }
                 } catch (error) {
                     if (error.message === 'Item is already in favorites') {
                         // Handle the duplicate case gracefully
                         setIsBookmarked(true);
-                        console.log('ℹ️ Already in favorites (caught):', name);
                     } else {
                         throw error; // Re-throw other errors
                     }
                 }
             }
         } catch (error) {
-            console.error('❌ Error toggling favorite:', error);
             Alert.alert(t('common.error'), t('favorites.failed_update'));
         } finally {
             setLoading(false);
@@ -347,7 +313,7 @@ const ServiceCard = ({
                     backgroundColor: dark ? COLORS.dark2 : COLORS.white
                 }]}>
                 <Image
-                    source={image}
+                    source={typeof image === 'string' ? { uri: image } : image}
                     resizeMode='cover'
                     style={styles.courseImage}
                 />
@@ -359,7 +325,7 @@ const ServiceCard = ({
                                 numberOfLines={1} 
                                 ellipsizeMode="tail"
                             >
-                                {providerName}
+                                {providerName || 'N/A'}
                             </Text>
                         </View>
                         <TouchableOpacity
@@ -383,14 +349,14 @@ const ServiceCard = ({
                         numberOfLines={2} 
                         ellipsizeMode="tail"
                     >
-                        {name}
+                        {name || 'Unnamed Service'}
                     </Text>
                     <View style={styles.priceContainer}>
-                        <Text style={styles.price}>${price}</Text>
+                        <Text style={styles.price}>${price || 0}</Text>
                         {
                             isOnDiscount && <Text style={[styles.oldPrice, { 
                                 color: dark ? COLORS.greyscale300 : COLORS.grayscale700,
-                            }]}>{"   "}${oldPrice}</Text>
+                            }]}>{"   "}${oldPrice || 0}</Text>
                         }
                     </View>
                     <View style={styles.ratingContainer}>
