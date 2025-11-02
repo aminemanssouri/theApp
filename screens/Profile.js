@@ -53,15 +53,6 @@ const Profile = ({ navigation }) => {
             color: dark ? COLORS.white : COLORS.greyscale900
           }]}>{t('profile.title')}</Text>
         </View>
-        <TouchableOpacity>
-          <Image
-            source={icons.moreCircle}
-            resizeMode='contain'
-            style={[styles.headerIcon, {
-              tintColor: dark ? COLORS.secondaryWhite : COLORS.greyscale900
-            }]}
-          />
-        </TouchableOpacity>
       </TouchableOpacity>
     )
   }
@@ -354,11 +345,6 @@ const styles = StyleSheet.create({
     fontFamily: "bold",
     color: COLORS.greyscale900,
     marginLeft: 12
-  },
-  headerIcon: {
-    height: 24,
-    width: 24,
-    tintColor: COLORS.greyscale900
   },
    backIcon: {
         height: 24,

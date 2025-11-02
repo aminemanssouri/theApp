@@ -137,9 +137,15 @@ const CancelledBooking = forwardRef((props, ref) => {
                   <View style={[styles.statusContainer, {
                     borderColor: COLORS.red
                   }]}>
-                    <Text style={[styles.statusText, {
-                      color: COLORS.red
-                    }]}>{t('booking.status.cancelled')}</Text>
+                    <Text 
+                      style={[styles.statusText, {
+                        color: COLORS.red
+                      }]}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit={true}
+                    >
+                      {t('booking.status.cancelled')}
+                    </Text>
                   </View>
                 </View>
               </View>
@@ -188,14 +194,15 @@ const styles = StyleSheet.create({
     color: COLORS.greyscale900
   },
   statusContainer: {
-    width: 54,
-    height: 24,
+    minHeight: 24,
     borderRadius: 6,
     backgroundColor: "transparent",
     alignItems: "center",
     justifyContent: "center",
     borderColor: COLORS.primary,
-    borderWidth: 1
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
   },
   statusText: {
     fontSize: 10,

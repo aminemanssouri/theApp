@@ -71,14 +71,25 @@ const MyBooking = ({ navigation }) => {
         shadowColor: 'transparent',
         elevation: 0,
       }}
+      labelStyle={{
+        fontSize: 16,
+        fontFamily: "semiBold",
+        textTransform: 'none',
+      }}
+      activeColor={COLORS.primary}
+      inactiveColor={dark ? COLORS.white : COLORS.black}
       renderLabel={({ route, focused }) => (
-        <Text style={{
-          color: focused ? COLORS.primary : (dark ? COLORS.white : colors.text),
-          fontSize: 16,
-          fontFamily: "semiBold"
-        }}>
-          {route.title}
-        </Text>
+        <View style={{ paddingVertical: 8, paddingHorizontal: 12 }}>
+          <Text style={{
+            color: focused ? COLORS.primary : (dark ? COLORS.white : COLORS.greyscale900),
+            fontSize: 16,
+            fontFamily: "semiBold",
+            textTransform: 'none',
+            textAlign: 'center',
+          }}>
+            {route.title}
+          </Text>
+        </View>
       )}
     />
   );
@@ -101,13 +112,6 @@ const MyBooking = ({ navigation }) => {
             {t('bookings.title')}
           </Text>
         </View>
-        <TouchableOpacity>
-          <Image
-            source={icons.moreCircle}
-            resizeMode='contain'
-            style={[styles.moreIcon, { tintColor: iconColor }]}
-          />
-        </TouchableOpacity>
       </View>
     )
   }
@@ -161,10 +165,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontFamily: 'bold',
     marginLeft: 16
-  },
-  moreIcon: {
-    width: 24,
-    height: 24,
   },
 });
 

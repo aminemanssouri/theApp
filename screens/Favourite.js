@@ -211,15 +211,6 @@ const Favourite = ({ navigation }) => {
                         {t('favorites.title')}
                     </Text>
                 </View>
-                <TouchableOpacity>
-                    <Image
-                        source={icons.moreCircle}
-                        resizeMode='contain'
-                        style={[styles.moreIcon, {
-                            tintColor: dark ? COLORS.secondaryWhite : COLORS.greyscale900
-                        }]}
-                    />
-                </TouchableOpacity>
             </View>
         )
     }
@@ -329,11 +320,6 @@ const styles = StyleSheet.create({
     backIcon: {
         height: 24,
         width: 24,
-        tintColor: COLORS.black
-    },
-    moreIcon: {
-        width: 24,
-        height: 24,
         tintColor: COLORS.black
     },
     loadingContainer: {
