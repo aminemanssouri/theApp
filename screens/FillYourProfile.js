@@ -14,6 +14,7 @@ import Button from '../components/Button';
 import { useTheme } from '../theme/ThemeProvider';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
+import { useI18n } from '../context/LanguageContext';
 
 const isTestMode = false;
 
@@ -59,6 +60,7 @@ const FillYourProfile = ({ navigation, route }) => {
   const [lastName, setLastName] = useState('');
   const { colors, dark } = useTheme();
   const { user, setProfileComplete, setProfileCompleteWithSkip, refreshUserProfile } = useAuth();
+  const { t } = useI18n();
 
   // Get user data from route params (if coming from Google OAuth)
   const userId = route?.params?.userId || user?.id;
@@ -301,7 +303,7 @@ const FillYourProfile = ({ navigation, route }) => {
       );
     } catch (error) {
       console.error('Error saving profile:', error);
-      Alert.alert('Error', 'Failed to save profile. Please try again.');
+      Alert.alert(t('common.error'), t('profile.save_failed'));
     } finally {
       setIsLoading(false);
     }
@@ -436,7 +438,7 @@ const FillYourProfile = ({ navigation, route }) => {
   return (
     <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <Header title="Fill Your Profile" />
+        <Header title={t('profile.fill_your_profile')} />
         <ScrollView showsVerticalScrollIndicator={false}>
           <View style={{ alignItems: "center", marginVertical: 12 }}>
             <View style={styles.avatarContainer}>
@@ -459,7 +461,7 @@ const FillYourProfile = ({ navigation, route }) => {
               id="firstName"
               onInputChanged={inputChangedHandler}
               errorText={formState.inputValidities['firstName']}
-              placeholder="First Name *"
+              placeholder={t('profile.first_name')}
               placeholderTextColor={COLORS.gray}
               initialValue={firstName}
             />
@@ -467,7 +469,7 @@ const FillYourProfile = ({ navigation, route }) => {
               id="lastName"
               onInputChanged={inputChangedHandler}
               errorText={formState.inputValidities['lastName']}
-              placeholder="Last Name"
+              placeholder={t('profile.last_name')}
               placeholderTextColor={COLORS.gray}
               initialValue={lastName}
             />
@@ -479,7 +481,7 @@ const FillYourProfile = ({ navigation, route }) => {
                 borderColor: dark ? COLORS.dark2 : COLORS.greyscale500,
                 color: dark ? COLORS.white : "#111"
               }]}
-              placeholder="Email"
+              placeholder={t('profile.email')}
               placeholderTextColor={COLORS.gray}
               keyboardType="email-address"
               value={email}
@@ -502,7 +504,7 @@ const FillYourProfile = ({ navigation, route }) => {
                 }]}
                 onPress={handleOnPressStartDate}>
                 <Text style={{ ...FONTS.body4, color: COLORS.grayscale400 }}>
-                  {startedDate === "12/12/2023" ? "Date of Birth" : startedDate}
+                  {startedDate === "12/12/2023" ? t('profile.date_of_birth') : startedDate}
                 </Text>
                 <Feather name="calendar" size={24} color={COLORS.grayscale400} />
               </TouchableOpacity>
@@ -536,7 +538,7 @@ const FillYourProfile = ({ navigation, route }) => {
               {/* Phone Number Text Input */}
               <TextInput
                 style={[styles.input, { color: dark ? COLORS.white : "#111" }]}
-                placeholder="Phone Number *"
+                placeholder={t('profile.phone_number')}
                 placeholderTextColor={COLORS.gray}
                 selectionColor="#111"
                 keyboardType="numeric"
@@ -552,7 +554,7 @@ const FillYourProfile = ({ navigation, route }) => {
                 borderColor: dark ? COLORS.dark2 : COLORS.greyscale500,
                 color: dark ? COLORS.white : "#111"
               }]}
-              placeholder="Address"
+              placeholder={t('profile.address')}
               placeholderTextColor={COLORS.gray}
               value={address}
               onChangeText={setAddress}
@@ -565,7 +567,7 @@ const FillYourProfile = ({ navigation, route }) => {
                   borderColor: dark ? COLORS.dark2 : COLORS.greyscale500,
                   color: dark ? COLORS.white : "#111"
                 }]}
-                placeholder="City"
+                placeholder={t('profile.city')}
                 placeholderTextColor={COLORS.gray}
                 value={city}
                 onChangeText={setCity}
@@ -577,7 +579,7 @@ const FillYourProfile = ({ navigation, route }) => {
                   borderColor: dark ? COLORS.dark2 : COLORS.greyscale500,
                   color: dark ? COLORS.white : "#111"
                 }]}
-                placeholder="ZIP Code"
+                placeholder={t('profile.zip_code')}
                 placeholderTextColor={COLORS.gray}
                 keyboardType="numeric"
                 value={zipCode}
@@ -597,7 +599,7 @@ const FillYourProfile = ({ navigation, route }) => {
       {RenderAreasCodesModal()}
       <View style={styles.bottomContainer}>
         <Button
-          title="Skip"
+          title={t('common.skip')}
           style={{
             width: (SIZES.width - 32) / 2 - 8,
             borderRadius: 32,
@@ -609,7 +611,7 @@ const FillYourProfile = ({ navigation, route }) => {
           disabled={isLoading}
         />
         <Button
-          title={isLoading ? "Saving..." : "Continue"}
+          title={isLoading ? t('profile.saving') : t('common.continue')}
           filled
           style={styles.continueButton}
           onPress={handleSaveProfile}

@@ -7,10 +7,12 @@ import Button from '../components/Button';
 import { useTheme } from '../theme/ThemeProvider';
 import { createBooking } from '../lib/services/booking';
 import { useAuth } from '../context/AuthContext';
+import { useI18n } from '../context/LanguageContext';
 
 const YourAddress = ({ navigation, route }) => {
     const { colors, dark } = useTheme();
     const { user } = useAuth();
+    const { t } = useI18n();
     
     // Get booking details from previous screens
     const { 
@@ -37,15 +39,15 @@ const YourAddress = ({ navigation, route }) => {
     // Validation
     const validateForm = () => {
         if (!address.trim()) {
-            Alert.alert('Error', 'Please enter your address');
+            Alert.alert(t('common.error'), t('booking.please_enter_address'));
             return false;
         }
         if (!city.trim()) {
-            Alert.alert('Error', 'Please enter your city');
+            Alert.alert(t('common.error'), t('booking.please_enter_city'));
             return false;
         }
         if (!postalCode.trim()) {
-            Alert.alert('Error', 'Please enter your postal code');
+            Alert.alert(t('common.error'), t('booking.please_enter_postal_code'));
             return false;
         }
         return true;
@@ -83,7 +85,7 @@ const YourAddress = ({ navigation, route }) => {
             
         } catch (error) {
             console.error('Error preparing booking:', error);
-            Alert.alert('Error', 'Failed to process booking. Please try again.');
+            Alert.alert(t('common.error'), t('booking.error_preparing_booking'));
         } finally {
             setLoading(false);
         }
@@ -107,7 +109,7 @@ const YourAddress = ({ navigation, route }) => {
                 </TouchableOpacity>
                 <Text style={[styles.headerTitle, { 
                     color: dark? COLORS.white : COLORS.greyscale900
-                }]}>Your Address</Text>
+                }]}>{t('booking.your_address')}</Text>
                 <TouchableOpacity>
                     <Feather name="more-vertical" size={24} color={dark? COLORS.white : COLORS.greyscale900} />
                 </TouchableOpacity>
@@ -157,57 +159,57 @@ const YourAddress = ({ navigation, route }) => {
                     <Text style={[styles.title, { 
                         color: dark ? COLORS.white : COLORS.greyscale900 
                     }]}>
-                        Enter Your Service Address
+                        {t('booking.enter_service_address')}
                     </Text>
                     
                     <Text style={[styles.subtitle, { 
                         color: dark ? COLORS.grayscale200 : COLORS.grayscale700 
                     }]}>
-                        Please provide the address where the service will be performed
+                        {t('booking.address_subtitle')}
                     </Text>
                     
                     {renderInput(
-                        'Street Address*',
+                        t('booking.street_address'),
                         address,
                         setAddress,
-                        'Enter your street address',
+                        t('booking.street_address_placeholder'),
                         'default'
                     )}
                     
                     <View style={styles.row}>
                         <View style={[styles.halfInput, { marginRight: 8 }]}>
                             {renderInput(
-                                'Apartment/Suite',
+                                t('booking.apartment_suite'),
                                 apartmentNumber,
                                 setApartmentNumber,
-                                'Apt/Suite #',
+                                t('booking.apartment_placeholder'),
                                 'default'
                             )}
                         </View>
                         <View style={[styles.halfInput, { marginLeft: 8 }]}>
                             {renderInput(
-                                'Postal Code*',
+                                t('booking.postal_code'),
                                 postalCode,
                                 setPostalCode,
-                                'Postal code',
+                                t('booking.postal_code_placeholder'),
                                 'numeric'
                             )}
                         </View>
                     </View>
                     
                     {renderInput(
-                        'City*',
+                        t('booking.city'),
                         city,
                         setCity,
-                        'Enter your city',
+                        t('booking.city_placeholder'),
                         'default'
                     )}
                     
                     {renderInput(
-                        'Special Instructions (Optional)',
+                        t('booking.special_instructions'),
                         notes,
                         setNotes,
-                        'Any special instructions for the service provider...',
+                        t('booking.instructions_placeholder'),
                         'default',
                         true
                     )}
@@ -220,13 +222,13 @@ const YourAddress = ({ navigation, route }) => {
                         <Text style={[styles.summaryTitle, {
                             color: dark ? COLORS.white : COLORS.greyscale900
                         }]}>
-                            Booking Summary
+                            {t('booking.booking_summary')}
                         </Text>
                         
                         <View style={styles.summaryRow}>
                             <Text style={[styles.summaryLabel, {
                                 color: dark ? COLORS.grayscale200 : COLORS.grayscale700
-                            }]}>Service:</Text>
+                            }]}>{t('booking.service_label')}</Text>
                             <Text style={[styles.summaryValue, {
                                 color: dark ? COLORS.white : COLORS.greyscale900
                             }]}>{serviceName || 'House Cleaning'}</Text>
@@ -235,7 +237,7 @@ const YourAddress = ({ navigation, route }) => {
                         <View style={styles.summaryRow}>
                             <Text style={[styles.summaryLabel, {
                                 color: dark ? COLORS.grayscale200 : COLORS.grayscale700
-                            }]}>Provider:</Text>
+                            }]}>{t('booking.provider_label')}</Text>
                             <Text style={[styles.summaryValue, {
                                 color: dark ? COLORS.white : COLORS.greyscale900
                             }]}>{workerName || 'Professional'}</Text>
@@ -244,7 +246,7 @@ const YourAddress = ({ navigation, route }) => {
                         <View style={styles.summaryRow}>
                             <Text style={[styles.summaryLabel, {
                                 color: dark ? COLORS.grayscale200 : COLORS.grayscale700
-                            }]}>Date:</Text>
+                            }]}>{t('booking.date_label')}</Text>
                             <Text style={[styles.summaryValue, {
                                 color: dark ? COLORS.white : COLORS.greyscale900
                             }]}>{bookingDate || 'Today'}</Text>
@@ -253,7 +255,7 @@ const YourAddress = ({ navigation, route }) => {
                         <View style={styles.summaryRow}>
                             <Text style={[styles.summaryLabel, {
                                 color: dark ? COLORS.grayscale200 : COLORS.grayscale700
-                            }]}>Time:</Text>
+                            }]}>{t('booking.time_label')}</Text>
                             <Text style={[styles.summaryValue, {
                                 color: dark ? COLORS.white : COLORS.greyscale900
                             }]}>{startTime || '09:00'} - {endTime || '11:00'}</Text>
@@ -266,7 +268,7 @@ const YourAddress = ({ navigation, route }) => {
                     borderTopColor: dark ? COLORS.grayscale700 : COLORS.grayscale200,
                 }]}>
                     <Button
-                        title={`Continue - $${price || 125}`}
+                        title={t('booking.continue_with_price', { price: price || 125 })}
                         filled
                         style={styles.continueButton}
                         onPress={handleContinue}
