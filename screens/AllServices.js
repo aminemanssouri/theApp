@@ -60,9 +60,9 @@ const AllServices = ({ navigation }) => {
           />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: dark ? COLORS.white : COLORS.black }]}>
-          {t('service.all_services')}
+          {t('service.all_services') || 'All Services'}
         </Text>
-        <View style={{ width: 24 }} /> {/* Empty view for layout balance */}
+        <View style={{ width: 24 }} />
       </View>
     );
   };
@@ -73,7 +73,7 @@ const AllServices = ({ navigation }) => {
         <View style={styles.centerContainer}>
           <ActivityIndicator size="large" color={COLORS.primary} />
           <Text style={[styles.messageText, { color: colors.text }]}>
-            {t('service.loading_services')}
+            {t('service.loading_services') || 'Loading services...'}
           </Text>
         </View>
       );
@@ -83,13 +83,13 @@ const AllServices = ({ navigation }) => {
       return (
         <View style={styles.centerContainer}>
           <Text style={[styles.messageText, { color: colors.text }]}>
-            {error || t('service.failed_load')}
+            {error || t('service.failed_load') || 'Failed to load services'}
           </Text>
           <TouchableOpacity 
             style={styles.retryButton}
             onPress={loadAllServices}
           >
-            <Text style={styles.retryText}>{t('common.try_again')}</Text>
+            <Text style={styles.retryText}>{t('common.try_again') || 'Try Again'}</Text>
           </TouchableOpacity>
         </View>
       );
@@ -99,7 +99,7 @@ const AllServices = ({ navigation }) => {
       return (
         <View style={styles.centerContainer}>
           <Text style={[styles.messageText, { color: colors.text }]}>
-            {t('service.no_services')}
+            {t('service.no_services') || 'No services available'}
           </Text>
         </View>
       );
@@ -108,7 +108,7 @@ const AllServices = ({ navigation }) => {
     return (
       <FlatList
         data={services}
-        keyExtractor={item => item.id}
+        keyExtractor={(item, index) => `service-${item.id || item.serviceId || index}`}
         renderItem={({ item }) => (
           <ServiceCard
             name={item.name}
@@ -119,7 +119,24 @@ const AllServices = ({ navigation }) => {
             oldPrice={item.oldPrice}
             rating={item.rating}
             numReviews={item.numReviews}
-            onPress={() => navigation.navigate("WorkerDetails", { workerId: item.workerId,serviceId: item.serviceId})}
+            worker={item.worker}
+            hasWorker={item.hasWorker}
+            serviceId={item.serviceId}
+            workerId={item.workerId}
+            navigation={navigation}
+            onPress={() => {
+              if (item.hasWorker && item.workerId) {
+                navigation.navigate("WorkerDetails", { 
+                  workerId: item.workerId,
+                  serviceId: item.serviceId
+                });
+              } else {
+                navigation.navigate("ServiceDetails", { 
+                  serviceId: item.serviceId, 
+                  workerId: item.workerId
+                });
+              }
+            }}
             categoryId={item.categoryId}
           />
         )}

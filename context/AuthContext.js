@@ -4,8 +4,7 @@ import { getCurrentUser, onAuthStateChange, getUserProfile } from '../lib/servic
 import { registerPushTokenForUser } from '../utils/registerPushToken';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-console.log('🚀 AuthContext module loaded');
-
+ 
 const AuthContext = createContext({});
 
 export const useAuth = () => {
@@ -96,6 +95,7 @@ export const AuthProvider = ({ children }) => {
   const [session, setSession] = useState(null);
   const [profileComplete, setProfileComplete] = useState(false);
   const [profileCheckLoading, setProfileCheckLoading] = useState(true);
+  const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
 
   // Custom setProfileComplete that persists the skip state
   const setProfileCompleteWithSkip = async (value, userId) => {
@@ -195,74 +195,39 @@ export const AuthProvider = ({ children }) => {
 
     initializeAuth();
     
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('🔄 Auth state changed:', event, 'User ID:', session?.user?.id);
+    supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('🔄 Auth state changed:', event);
       
-      if (isMounted) {
-        if (event === 'SIGNED_IN' && session?.user) {
-          console.log('✅ User signed in:', session.user.id);
-          
-          // Set user and session immediately - no need to wait
-          setUser(session.user);
-          setSession(session);
-          setProfileCheckLoading(true);
-          
-          console.log('🔄 Starting profile check in SIGNED_IN event...');
-          
-          // Start with optimistic assumption (incomplete) for fast UI
-          setProfileComplete(false);
-          
-          try {
-            // Check profile completion in background
-            const isComplete = await checkProfileCompletion(session.user.id);
-            console.log('✅ Profile check completed in SIGNED_IN:', isComplete);
-            
-            // Update if different from optimistic value
-            if (isComplete !== false) {
-              setProfileComplete(isComplete);
-            }
-            
-            // Fetch additional data in background (non-blocking)
-            fetchUserProfile(session.user.id).catch(err => 
-              console.error('❌ Background fetchUserProfile failed:', err)
-            );
-            registerPushTokenForUser(session.user.id);
-            
-            console.log('🎯 Sign in complete - Profile complete:', isComplete);
-          } catch (profileError) {
-            console.error('❌ Profile check failed in SIGNED_IN:', profileError);
-            setProfileComplete(false);
-          } finally {
-            // ALWAYS set loading to false
-            setProfileCheckLoading(false);
-            console.log('✅ Profile check loading set to FALSE in SIGNED_IN');
-          }
-        } else if (event === 'SIGNED_OUT') {
-          console.log('👋 User signed out');
-          // Clear skip state on sign out
-          if (session?.user?.id) {
-            const skipKey = `profile_skipped_${session.user.id}`;
-            await AsyncStorage.removeItem(skipKey);
-          }
-          setUser(null);
-          setSession(null);
-          setUserProfile(null);
-          setProfileComplete(false);
-          setProfileCheckLoading(false);
-        } else if (event === 'USER_UPDATED' && session?.user) {
-          console.log('👤 User updated');
-          setUser(session.user);
-          setSession(session);
-          
-          setProfileCheckLoading(true);
-          const isComplete = await checkProfileCompletion(session.user.id);
-          setProfileComplete(isComplete);
-          setProfileCheckLoading(false);
-          
-          await fetchUserProfile(session.user.id);
+      // Skip password recovery events - handle them separately
+      if (event === 'PASSWORD_RECOVERY') {
+        console.log('🔐 Password recovery event detected - handled by deep link');
+        return; // Don't process this as a regular sign-in
+      }
+      
+      if (event === 'SIGNED_IN' && session) {
+        // Check if this is a password recovery session
+        const isRecovery = await AsyncStorage.getItem('is_password_recovery');
+        
+        if (isRecovery === 'true') {
+          console.log('⚠️ SIGNED_IN during password recovery - ignoring to prevent auto-login');
+          return; // Don't process this sign-in
         }
         
-        setLoading(false);
+        console.log('✅ User signed in successfully');
+        const user = session.user;
+        setUser(user);
+        
+        // Load user profile
+        const profile = await getUserProfile(user.id);
+        if (profile) {
+          const isComplete = await checkProfileCompletion(user.id);
+          setProfileComplete(isComplete);
+          console.log('📊 Profile loaded. Complete:', isComplete);
+        }
+      } else if (event === 'SIGNED_OUT') {
+        console.log('👋 User signed out');
+        setUser(null);
+        setProfileComplete(false);
       }
     });
 
@@ -293,6 +258,7 @@ export const AuthProvider = ({ children }) => {
     profileComplete,
     setProfileComplete,
     setProfileCompleteWithSkip, // Add this new function
+    isPasswordRecovery, // Export password recovery state
     signOut: async () => {
       try {
         // Clear skip state on sign out
