@@ -402,31 +402,63 @@ export const notifications = [
   export const hoursData = [
     {
         id: "1",
-        hour: "09:00 AM"
+        hour: "09:00"
     },
     {
         id: "2",
-        hour: "10:00 AM"
+        hour: "10:00"
     },
     {
         id: "3",
-        hour: "11:00 AM"
+        hour: "11:00"
     },
     {
         id: "4",
-        hour: "12:00 AM"
+        hour: "12:00"
     },
     {
         id: "5",
-        hour: "02:00 PM"
+        hour: "13:00"
     },
     {
         id: "6",
-        hour: "03:00 PM"
+        hour: "14:00"
     },
     {
         id: "7",
-        hour: "04:00 PM"
+        hour: "15:00"
+    },
+    {
+        id: "8",
+        hour: "16:00"
+    },
+    {
+        id: "9",
+        hour: "17:00"
+    },
+    {
+        id: "10",
+        hour: "18:00"
+    },
+    {
+        id: "11",
+        hour: "19:00"
+    },
+    {
+        id: "12",
+        hour: "20:00"
+    },
+    {
+        id: "13",
+        hour: "21:00"
+    },
+    {
+        id: "14",
+        hour: "22:00"
+    },
+    {
+        id: "15",
+        hour: "23:00"
     },
   ];
   

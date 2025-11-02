@@ -198,6 +198,9 @@ const BookingStep1 = ({ navigation, route }) => {
                         }]}>${calculatePrice().toFixed(2)}</Text>
                     </View>
                 </View>
+                
+                {/* Bottom spacing to ensure content is not hidden behind button */}
+                <View style={{ height: 20 }} />
             </View>
         );
     };
@@ -280,7 +283,7 @@ const styles = StyleSheet.create({
     },
     listContent: {
         paddingHorizontal: 16,
-        paddingBottom: 20, // Add padding to prevent last item being hidden behind button
+        paddingBottom: 100, // Add padding to prevent last item being hidden behind button
     },
     itemNum: {
         fontSize: 16,

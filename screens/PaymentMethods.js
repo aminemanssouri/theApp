@@ -65,10 +65,6 @@ const PaymentMethods = ({ navigation, route }) => {
           serviceName,
           workingHours
         });
-      } else if (selectedItem === 'paypal') {
-        Alert.alert(t('common.coming_soon'), t('payment.paypal_coming_soon'));
-      } else if (selectedItem === 'apple') {
-        Alert.alert(t('common.coming_soon'), t('payment.apple_pay_coming_soon'));
       }
     } catch (error) {
       console.error('Payment processing failed:', error);
@@ -94,20 +90,6 @@ const PaymentMethods = ({ navigation, route }) => {
           title={t('payment.cryptocurrency')}
           subtitle={t('payment.cryptocurrency_sub')}
           icon={icons.wallet || icons.creditCard}
-        />
-        <PaymentMethodItem
-          checked={selectedItem === 'paypal'}
-          onPress={() => handleCheckboxPress('paypal')}
-          title={t('payment.paypal')}
-          subtitle={t('payment.paypal_sub')}
-          icon={icons.paypal}
-        />
-        <PaymentMethodItem
-          checked={selectedItem === 'apple'}
-          onPress={() => handleCheckboxPress('apple')}
-          title={t('payment.apple_pay')}
-          subtitle={t('payment.apple_pay_sub')}
-          icon={icons.appleLogo}
         />
       </View>
     )

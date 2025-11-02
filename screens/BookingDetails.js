@@ -30,9 +30,24 @@ const BookingDetails = ({ navigation, route }) => {
 
   // Get today's date for minimum date
   const today = new Date();
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  const minDate = tomorrow.toISOString().split('T')[0];
+  const minDate = today.toISOString().split('T')[0];
+  
+  // Check if selected date is weekend (Saturday = 6, Sunday = 0)
+  const isWeekend = (dateString) => {
+    if (!dateString) return false;
+    const date = new Date(dateString);
+    const day = date.getDay();
+    return day === 0 || day === 6;
+  };
+  
+  // Check if selected hour is after 7 PM (19:00)
+  const isAfterSevenPM = (hourId) => {
+    if (!hourId) return false;
+    const hourData = hoursData.find(h => h.id === hourId);
+    if (!hourData) return false;
+    const [hour] = hourData.hour.split(':');
+    return parseInt(hour) >= 19;
+  };
 
   const handleIncrease = () => {
     setCount(count + 1);
@@ -68,12 +83,27 @@ const BookingDetails = ({ navigation, route }) => {
     // Get addon costs from basePrice (basePrice = hourlyRate*2 + addonCosts)
     const addonCosts = (basePrice || hourlyRate*2) - (hourlyRate * 2);
     
-    // Calculate new price with selected hours + addon costs
-    return (hourlyRate * hours) + addonCosts;
+    // Calculate base price with selected hours + addon costs
+    let totalPrice = (hourlyRate * hours) + addonCosts;
+    
+    // Add €10 surcharge for weekend bookings
+    if (isWeekend(selectedDate)) {
+      totalPrice += 10;
+    }
+    
+    // Add €10 surcharge for bookings after 7 PM
+    if (isAfterSevenPM(selectedHour)) {
+      totalPrice += 10;
+    }
+    
+    return totalPrice;
   };
 
   // Render each hour as a selectable button
   const renderHourItem = ({ item }) => {
+    const [hour] = item.hour.split(':');
+    const isLateHour = parseInt(hour) >= 19;
+    
     return (
       <TouchableOpacity
         style={[
@@ -83,7 +113,10 @@ const BookingDetails = ({ navigation, route }) => {
         onPress={() => handleHourSelect(item.id)}
       >
         <Text style={[styles.hourText,
-        selectedHour === item.id && styles.selectedHourText]}>{item.hour}</Text>
+        selectedHour === item.id && styles.selectedHourText]}>
+          {item.hour}
+          {isLateHour && ' (+€10)'}
+        </Text>
       </TouchableOpacity>
     );
   };
@@ -122,6 +155,14 @@ const BookingDetails = ({ navigation, route }) => {
             color: dark ? COLORS.white : COLORS.greyscale900 
           }]}>{t('booking.select_date')}</Text>
           
+          {isWeekend(selectedDate) && (
+            <View style={styles.surchargeNotice}>
+              <Text style={styles.surchargeText}>
+                ⚠️ {t('booking.weekend_surcharge')}
+              </Text>
+            </View>
+          )}
+          
           <View style={styles.calendarContainer}>
             <Calendar
               onDayPress={(day) => {
@@ -130,14 +171,32 @@ const BookingDetails = ({ navigation, route }) => {
               markedDates={{
                 [selectedDate]: {
                   selected: true,
-                  selectedColor: COLORS.primary,
-                  selectedTextColor: COLORS.white
+                  selectedColor: COLORS.white,
+                  selectedTextColor: COLORS.primary,
+                  marked: true,
+                  dotColor: COLORS.primary,
                 }
               }}
               minDate={minDate}
-              theme={calendarTheme}
+              theme={{
+                ...calendarTheme,
+                backgroundColor: COLORS.primary,
+                calendarBackground: COLORS.primary,
+                todayTextColor: COLORS.white,
+                selectedDayBackgroundColor: COLORS.white,
+                selectedDayTextColor: COLORS.primary,
+                arrowColor: COLORS.white,
+                dotColor: COLORS.white,
+                indicatorColor: COLORS.white,
+                monthTextColor: COLORS.white,
+                dayTextColor: COLORS.white,
+                textSectionTitleColor: COLORS.white,
+                textDisabledColor: 'rgba(255, 255, 255, 0.3)',
+              }}
               style={[styles.calendar, {
-                borderColor: dark ? COLORS.grayscale700 : COLORS.grayscale200,
+                borderColor: COLORS.white,
+                borderWidth: 3,
+                backgroundColor: COLORS.primary,
               }]}
             />
           </View>
@@ -176,6 +235,8 @@ const BookingDetails = ({ navigation, route }) => {
               showsVerticalScrollIndicator={false}
             />
           </View>
+          
+           <View style={{ height: 100 }} />
         </ScrollView>
       </View>
 
@@ -240,6 +301,18 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     padding: 10,
+  },
+  surchargeNotice: {
+    backgroundColor: COLORS.tansparentPrimary,
+    padding: 8,
+    borderRadius: 6,
+    marginTop: 8,
+  },
+  surchargeText: {
+    color: COLORS.primary,
+    fontSize: 12,
+    fontFamily: 'medium',
+    textAlign: 'center',
   },
   ourContainer: {
     width: SIZES.width - 32,
