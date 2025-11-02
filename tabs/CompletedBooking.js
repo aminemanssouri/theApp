@@ -134,7 +134,13 @@ const CompletedBooking = forwardRef((props, ref) => {
                     <Text style={styles.totalPrice}>€{item.total_amount || item.price}</Text>
                   </View>
                   <View style={styles.statusContainer}>
-                    <Text style={styles.statusText}>{t('booking.status.completed')}</Text>
+                    <Text 
+                      style={styles.statusText}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit={true}
+                    >
+                      {t('booking.status.completed')}
+                    </Text>
                   </View>
                 </View>
               </View>
@@ -183,14 +189,15 @@ const styles = StyleSheet.create({
     color: COLORS.greyscale900
   },
   statusContainer: {
-    width: 54,
-    height: 24,
+    minHeight: 24,
     borderRadius: 6,
     backgroundColor: "transparent",
     alignItems: "center",
     justifyContent: "center",
     borderColor: COLORS.primary,
-    borderWidth: 1
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
   },
   statusText: {
     fontSize: 10,

@@ -148,14 +148,25 @@ const Inbox = ({ navigation }) => {
         paddingHorizontal: 8,
         marginHorizontal: 4,
       }}
+      labelStyle={{
+        fontSize: 16,
+        fontFamily: 'bold',
+        textTransform: 'none',
+      }}
+      activeColor={colors.primary}
+      inactiveColor={dark ? COLORS.white : COLORS.greyscale900}
       renderLabel={({ route, focused }) => (
-        <Text style={{
-          color: focused ? colors.primary : colors.text,
-          fontSize: 16,
-          fontFamily: 'bold',
-        }}>
-          {route.title}
-        </Text>
+        <View style={{ paddingVertical: 8, paddingHorizontal: 12 }}>
+          <Text style={{
+            color: focused ? colors.primary : (dark ? COLORS.white : COLORS.greyscale900),
+            fontSize: 16,
+            fontFamily: 'bold',
+            textTransform: 'none',
+            textAlign: 'center',
+          }}>
+            {route.title}
+          </Text>
+        </View>
       )}
     />
   );

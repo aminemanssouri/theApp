@@ -138,16 +138,29 @@ const WorkerDetails = ({ route, navigation }) => {
         backgroundColor: COLORS.primary,
       }}
       style={{
-        backgroundColor: colors.background
+        backgroundColor: colors.background,
+        shadowColor: 'transparent',
+        elevation: 0,
       }}
+      labelStyle={{
+        fontSize: 16,
+        fontFamily: "semiBold",
+        textTransform: 'none',
+      }}
+      activeColor={COLORS.primary}
+      inactiveColor={dark ? COLORS.white : COLORS.greyscale900}
       renderLabel={({ route, focused }) => (
-        <Text style={[{
-          color: focused ? COLORS.primary : "gray",
-          fontSize: 16,
-          fontFamily: "semiBold"
-        }]}>
-          {route.title}
-        </Text>
+        <View style={{ paddingVertical: 8, paddingHorizontal: 12 }}>
+          <Text style={{
+            color: focused ? COLORS.primary : (dark ? COLORS.white : COLORS.greyscale900),
+            fontSize: 16,
+            fontFamily: "semiBold",
+            textTransform: 'none',
+            textAlign: 'center',
+          }}>
+            {route.title}
+          </Text>
+        </View>
       )}
     />
   )
