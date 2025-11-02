@@ -5,6 +5,7 @@ import DotsView from '../components/DotsView';
 import Button from '../components/Button';
 import { COLORS, SIZES, images } from '../constants';
 import { useTheme } from '../theme/ThemeProvider';
+import { t } from '../context/LanguageContext';
 
 const Onboarding4 = ({ navigation }) => {
   // Screen 4 = progress 3 (fourth screen)
@@ -29,12 +30,12 @@ const Onboarding4 = ({ navigation }) => {
           </View>
           
           <View style={styles.titleContainer}>
-            <Text style={[styles.title, { color: colors.text }]}>Book in Seconds,</Text>
-            <Text style={[styles.subTitle, { color: COLORS.primary }]}>Not Hours</Text>
+            <Text style={[styles.title, { color: colors.text }]}>{t('onboarding.screen4_title')}</Text>
+            <Text style={[styles.subTitle, { color: COLORS.primary }]}>{t('onboarding.screen4_subtitle')}</Text>
           </View>
 
           <Text style={[styles.description, { color: colors.text }]}>
-            Enjoy a simple booking process with secure payments and service guarantees for complete peace of mind.
+            {t('onboarding.screen4_description')}
           </Text>
 
           <View style={styles.dotsContainer}>
@@ -42,14 +43,14 @@ const Onboarding4 = ({ navigation }) => {
           </View>
           
           <Button
-            title="Get Started"
+            title={t('onboarding.get_started')}
             filled
             onPress={() => navigation.navigate('Welcome')}
             style={styles.nextButton}
           />
           
           <Button
-            title="Skip"
+            title={t('common.skip')}
             onPress={() => navigation.navigate('Login')}
             textColor={colors.primary}
             style={styles.skipButton}

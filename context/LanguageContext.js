@@ -20,7 +20,7 @@ function interpolate(str, params) {
 }
 
 // Module-level state for a simple, importable t()
-let currentLanguage = 'en';
+let currentLanguage = 'it';
 
 export const rawT = (key, params) => {
   const dict = TRANSLATIONS[currentLanguage] || {};
@@ -35,12 +35,12 @@ export const rawT = (key, params) => {
 };
 
 const LanguageContext = createContext({
-  language: 'en',
+  language: 'it',
   setLanguage: () => {},
   t: rawT,
 });
 
-export const LanguageProvider = ({ children, defaultLanguage = 'en' }) => {
+export const LanguageProvider = ({ children, defaultLanguage = 'it' }) => {
   const [language, setLanguage] = useState(defaultLanguage);
 
   // keep module-level currentLanguage in sync so raw t() calls work anywhere
