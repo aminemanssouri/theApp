@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { getUserFavoriteServices, getUserFavoriteWorkers } from '../lib/services/favorites';
+import { supabase } from '../lib/supabase';
 
 const FavoritesContext = createContext({
   favorites: [],
@@ -30,10 +31,19 @@ export const FavoritesProvider = ({ children }) => {
       setLoading(true);
       console.log('🔄 Loading favorites for user:', user.id);
       
+      // Add delay to ensure session is ready
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
       // Load both service and worker favorites
       const [serviceFavorites, workerFavorites] = await Promise.all([
-        getUserFavoriteServices(user.id),
-        getUserFavoriteWorkers(user.id)
+        getUserFavoriteServices(user.id).catch(err => {
+          console.log('⚠️ Failed to load service favorites:', err.message);
+          return [];
+        }),
+        getUserFavoriteWorkers(user.id).catch(err => {
+          console.log('⚠️ Failed to load worker favorites:', err.message);
+          return [];
+        })
       ]);
       
       const allFavorites = [];

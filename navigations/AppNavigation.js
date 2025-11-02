@@ -44,6 +44,10 @@ const NavigationWrapper = ({ navigationRef: externalRef }) => {
 
   // Handle navigation when profileComplete changes
   useEffect(() => {
+    // DISABLED: Always skip FillYourProfile screen
+    console.log('🔄 ProfileComplete listener disabled - FillYourProfile screen bypassed');
+    return;
+    
     // CRITICAL: Don't do any navigation if we're in password recovery mode
     if (isPasswordRecovery) {
       console.log('🔐 Skipping profile navigation - in password recovery mode');
@@ -125,10 +129,10 @@ const AppNavigationContent = ({ navigationRef }) => {
     authLoading,
     profileComplete,
     shouldWaitForAuth,
-    isPasswordRecovery, // Add this to see the state
+    isPasswordRecovery,
     willShowAuth: shouldShowAuthStack,
-    willShowFillProfile: user && !profileComplete && !authLoading && !isPasswordRecovery,
-    willShowMain: user && profileComplete && !authLoading && !isPasswordRecovery
+    willShowFillProfile: false, // ALWAYS FALSE - screen disabled
+    willShowMain: user && !authLoading && !isPasswordRecovery
   });
 
   // Deep link configuration
@@ -169,9 +173,7 @@ const AppNavigationContent = ({ navigationRef }) => {
         initialRouteName={
           shouldShowAuthStack
             ? (isFirstLaunch ? "Onboarding1" : "Welcome")
-            : !profileComplete 
-              ? "FillYourProfile" 
-              : "Main"
+            : "Main" // Always go to Main, skip FillYourProfile
         }
       >
         {shouldShowAuthStack ? (
@@ -197,11 +199,7 @@ const AppNavigationContent = ({ navigationRef }) => {
         ) : (
           // LOGGED IN - Show Main app and all screens
           <>
-            <Stack.Screen 
-              name="FillYourProfile" 
-              component={FillYourProfile} 
-              options={getTransitionConfig('FillYourProfile')} 
-            />
+            {/* FillYourProfile REMOVED - Screen bypassed for all users */}
             <Stack.Screen 
               name="Main" 
               component={BottomTabNavigation}

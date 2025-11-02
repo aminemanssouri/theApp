@@ -61,8 +61,9 @@ const FillYourProfile = ({ navigation, route }) => {
   const { colors, dark } = useTheme();
   const { user, setProfileComplete, setProfileCompleteWithSkip, refreshUserProfile } = useAuth();
   const { t } = useI18n();
+  const [dataLoaded, setDataLoaded] = useState(false);
 
-  // Get user data from route params (if coming from Google OAuth)
+  // Get user data from route params (if coming from Google OAuth) OR from AuthContext
   const userId = route?.params?.userId || user?.id;
   const userEmail = route?.params?.email || user?.email;
 
@@ -94,17 +95,41 @@ const FillYourProfile = ({ navigation, route }) => {
 
   // Initialize email state with userEmail
   useEffect(() => {
+    // DISABLED - Screen is bypassed
+    console.log('⏭️ Email initialization disabled - FillYourProfile screen bypassed');
+    return;
+    
+    console.log('📧 FillYourProfile - Initializing email:', { 
+      userEmail, 
+      userId,
+      hasUser: !!user,
+      userFromContext: user?.email,
+      currentEmailState: email
+    });
+    
     if (userEmail) {
       setEmail(userEmail);
-      // Also update the form state
       inputChangedHandler('email', userEmail);
+      console.log('✅ Email set successfully:', userEmail);
+      console.log('🔍 Email state after set:', email);
+    } else {
+      console.log('❌ No userEmail available');
     }
-  }, [userEmail]);
+  }, [userEmail, user]);
 
   // Load existing user data if available
   useEffect(() => {
+    // DISABLED - Screen is bypassed, no need to load data
+    console.log('⏭️ FillYourProfile data loading disabled - screen bypassed');
+    return;
+    
     const loadUserData = async () => {
-      if (!userId) return;
+      if (!userId) {
+        console.log('⏳ Waiting for userId...');
+        return;
+      }
+      
+      console.log('📥 Loading user data for:', userId);
       
       try {
         const { data, error } = await supabase
@@ -112,6 +137,8 @@ const FillYourProfile = ({ navigation, route }) => {
           .select('*')
           .eq('id', userId)
           .single();
+        
+        console.log('📊 User data fetched:', { hasData: !!data, email: data?.email, error });
         
         if (data) {
           // Pre-fill form with existing data
@@ -124,8 +151,9 @@ const FillYourProfile = ({ navigation, route }) => {
             inputChangedHandler('lastName', data.last_name);
           }
           if (data.email) {
-            setEmail(data.email); // Set email state
+            setEmail(data.email);
             inputChangedHandler('email', data.email);
+            console.log('✅ Email loaded from database:', data.email);
           }
           if (data.phone) {
             setPhoneNumber(data.phone);
@@ -147,13 +175,15 @@ const FillYourProfile = ({ navigation, route }) => {
             setStartedDate(getFormatedDate(date, "MM/DD/YYYY"));
           }
         }
+        setDataLoaded(true);
       } catch (error) {
-        console.error('Error loading user data:', error);
+        console.error('❌ Error loading user data:', error);
+        setDataLoaded(true);
       }
     };
     
     loadUserData();
-  }, [userId]);
+  }, [userId, user]);
 
   const pickImage = async () => {
     try {
@@ -435,6 +465,8 @@ const FillYourProfile = ({ navigation, route }) => {
     )
   }
 
+  console.log('🎨 Rendering FillYourProfile with email:', email);
+
   return (
     <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -476,6 +508,7 @@ const FillYourProfile = ({ navigation, route }) => {
             
             {/* Replace the Input component with TextInput for email */}
             <TextInput
+              key={`email-${email}`} // Force re-render when email changes
               style={[styles.emailInput, {
                 backgroundColor: dark ? COLORS.dark2 : COLORS.greyscale500,
                 borderColor: dark ? COLORS.dark2 : COLORS.greyscale500,
@@ -486,6 +519,7 @@ const FillYourProfile = ({ navigation, route }) => {
               keyboardType="email-address"
               value={email}
               onChangeText={(text) => {
+                console.log('📝 Email input changed:', text);
                 setEmail(text);
                 inputChangedHandler('email', text);
               }}
