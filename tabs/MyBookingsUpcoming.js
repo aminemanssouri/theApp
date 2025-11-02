@@ -1,19 +1,21 @@
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
-import { View, Text, FlatList, Image, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, Image, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native';
+
 import { COLORS } from '../constants';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../theme/ThemeProvider';
 import { getUpcomingBookings } from '../lib/services/booking';
 import { useAuth } from '../context/AuthContext';
 import { FontAwesome } from "@expo/vector-icons";
+import { t } from '../context/LanguageContext';
 
 const MyBookingsUpcoming = forwardRef((props, ref) => {
   const navigation = useNavigation();
   const { colors, dark } = useTheme();
   const { user, loading: authLoading } = useAuth();
   const [bookings, setBookings] = useState([]);
-    const [loading, setLoading] = useState(true);
-
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const fetchUpcomingBookings = async () => {
     if (!user?.id) return;
@@ -55,6 +57,25 @@ const MyBookingsUpcoming = forwardRef((props, ref) => {
       };
     }, [user?.id, authLoading]);
 
+  // Refetch when screen gains focus
+  useFocusEffect(
+    React.useCallback(() => {
+      if (!authLoading && user?.id) {
+        fetchUpcomingBookings();
+      }
+    }, [authLoading, user?.id])
+  );
+
+  const onRefresh = async () => {
+    if (!user?.id) return;
+    try {
+      setRefreshing(true);
+      await fetchUpcomingBookings();
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   if (loading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -73,11 +94,11 @@ const MyBookingsUpcoming = forwardRef((props, ref) => {
           color: dark ? COLORS.white : COLORS.greyscale900,
           textAlign: 'center',
           marginBottom: 8
-        }]}>No Upcoming Bookings</Text>
+        }]}>{t('booking.empty.upcoming_title')}</Text>
         <Text style={[styles.itemDate, {
           color: dark ? COLORS.grayscale200 : COLORS.grayscale700,
           textAlign: 'center'
-        }]}>You don't have any upcoming bookings at the moment.</Text>
+        }]}>{t('booking.empty.upcoming_sub')}</Text>
       </View>
     );
   }
@@ -87,26 +108,35 @@ const MyBookingsUpcoming = forwardRef((props, ref) => {
       <FlatList
         data={bookings}
         showsVerticalScrollIndicator={false}
-        keyExtractor={item => item.id}
+        keyExtractor={item => String(item.id)}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={COLORS.primary}
+          />
+        }
         renderItem={({ item, index }) => (
           <View style={styles.itemContainer}>
             <View style={styles.statusContainer}>
               <Text style={[styles.typeText, { 
                 color: dark ? COLORS.white : COLORS.greyscale900
-              }]}>{item.service?.name || 'Service'}</Text>
+              }]}>{item.service?.name || t('payment.service')}</Text>
               <Text style={[styles.statusText, { 
                 color: item.status === "confirmed" ? COLORS.green : 
                       item.status === "pending" ? COLORS.orange : COLORS.red, 
                 marginLeft: 12 
               }]}>
-                {item.status || 'N/A'}
+                {item.status === 'confirmed' ? t('booking.status.confirmed') : item.status === 'pending' ? t('booking.status.pending') : item.status === 'cancelled' ? t('booking.status.cancelled') : (item.status || 'N/A')}
               </Text>
             </View>
             <View style={styles.infoContainer}>
               <View style={styles.infoLeft}>
                 <Image
                   source={
-                    item.worker?.profile_picture 
+                    item.worker?.Image
+                      ? { uri: item.worker.Image }
+                      : item.worker?.profile_picture
                       ? { uri: item.worker.profile_picture }
                       : require('../assets/images/users/user1.jpeg')
                   }
@@ -118,7 +148,7 @@ const MyBookingsUpcoming = forwardRef((props, ref) => {
                   }]}>
                     {item.worker?.first_name && item.worker?.last_name
                       ? `${item.worker.first_name} ${item.worker.last_name}`
-                      : "Service Provider"}
+                      : t('chat.service_provider')}
                   </Text>
                   <View style={styles.itemSubDetails}>
                     <Text style={[styles.itemPrice, { 
@@ -129,7 +159,7 @@ const MyBookingsUpcoming = forwardRef((props, ref) => {
                     }]}> | {new Date(item.booking_date).toLocaleDateString()}</Text>
                     <Text style={[styles.itemItems, { 
                       color: dark ? COLORS.grayscale200 : COLORS.grayscale700
-                    }]}> | {item.address || 'No address'}</Text>
+                    }]}> | {item.address || t('booking.address_missing')}</Text>
                   </View>
                   {item.worker?.average_rating && (
                     <View style={styles.ratingContainer}>
@@ -144,12 +174,12 @@ const MyBookingsUpcoming = forwardRef((props, ref) => {
               <TouchableOpacity
                 onPress={() => navigation.navigate("CancelBooking", { bookingId: item.id })}
                 style={styles.rateButton}>
-                <Text style={styles.rateButtonText}>Cancel</Text>
+                <Text style={styles.rateButtonText}>{t('booking.actions.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => navigation.navigate("EReceipt", { bookingId: item.id })}
                 style={styles.reorderButton}>
-                <Text style={styles.reorderButtonText}>View</Text>
+                <Text style={styles.reorderButtonText}>{t('booking.actions.view')}</Text>
               </TouchableOpacity>
             </View>
           </View>

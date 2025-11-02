@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, Image, Alert, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, Alert, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
 import React, { useCallback, useEffect, useReducer, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SIZES, icons, images } from '../constants';
@@ -13,6 +13,10 @@ import OrSeparator from '../components/OrSeparator';
 import { useTheme } from '../theme/ThemeProvider';
 import { signIn,signInWithGoogle } from '../lib/services/auth';
 import { supabase } from '../lib/supabase';
+import { t } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
+
+
 const isTestMode = false;
 
 const initialState = {
@@ -34,10 +38,7 @@ const Login = ({ navigation }) => {
   const [isChecked, setChecked] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { colors, dark } = useTheme();
-
-  useEffect(() => {
-    console.log('🔄 Login screen loading state:', isLoading);
-  }, [isLoading]);
+  const { refreshProfileStatus } = useAuth();
 
   const inputChangedHandler = useCallback(
     (inputId, inputValue) => {
@@ -49,59 +50,55 @@ const Login = ({ navigation }) => {
 
   useEffect(() => {
     if (error) {
-      Alert.alert('An error occured', error)
+      Alert.alert(t('common.error'), error)
     }
   }, [error]);
 
   // Handle login with Supabase
   const handleLogin = async () => {
     const { email, password } = formState.inputValues;
-    const { email: emailError, password: passwordError } = formState.inputValidities;
-    console.log('🟡 handleLogin called');
-    console.log('📝 Credentials:', { email, password: password ? '***' : '' });
     
     if (!email || !password) {
-      console.log('❌ Missing email or password');
-      Alert.alert('Error', 'Please fill in all fields');
-      return;
+      Alert.alert(t('common.error'), t('auth.please_fill_all_fields'))
+      return
     }
-    
-    if (emailError || passwordError) {
-      console.log('❌ Validation error:', { emailError, passwordError });
-      Alert.alert('Error', 'Please correct the errors in the form');
-      return;
-    }
-    
-    // Set loading state and ensure UI updates
+
     setIsLoading(true);
     setError(null);
-    
+
     try {
-      console.log('🔗 Attempting signIn...');
-      
-      // Add a small delay to ensure the loading state is visible
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
       const { data, error } = await signIn(email, password);
       
       if (error) {
-        console.log('❌ signIn error:', error);
-        setError(error.message);
-        Alert.alert('Login Failed', error.message);
-      } else {
-        console.log('✅ signIn success:', data);
-        navigation.navigate("Main");
+        Alert.alert(t('auth.sign_in_failed'), error.message)
+        setIsLoading(false);
+      } else if (data?.session) {
+        console.log('✅ Login successful, checking profile...');
+        
+        // Keep loading state active while checking profile
+        // Check profile completion directly here
+        const { data: profile } = await supabase
+          .from('users')
+          .select('id, first_name, phone')
+          .eq('id', data.session.user.id)
+          .single();
+        
+        const hasProfile = profile && profile.first_name && profile.phone;
+        
+        console.log('📊 Profile check:', { hasProfile, profile });
+        
+        // Now we know where to navigate
+        // The AuthContext will update and AppNavigation will handle it
+        // But we stay on loading until navigation happens
+        
+        // Small delay to ensure auth context updates
+        setTimeout(() => {
+          setIsLoading(false);
+        }, 300);
       }
     } catch (err) {
-      console.log('❌ Exception in handleLogin:', err);
-      setError(err.message);
-      Alert.alert('Error', err.message);
-    } finally {
-      // Add a small delay before turning off loading state
-      setTimeout(() => {
-        setIsLoading(false);
-        console.log('🔄 handleLogin finished, loading set to false');
-      }, 300);
+      Alert.alert(t('common.error'), err.message)
+      setIsLoading(false);
     }
   };
 
@@ -116,124 +113,139 @@ const Login = ({ navigation }) => {
   };
 
   // Implementing google authentication
-const googleAuthHandler = async () => {
-  console.log('🟡 Google authentication started');
-  setIsLoading(true);
-  
-  try {
-    // Add a small delay to ensure the loading state is visible
-    await new Promise(resolve => setTimeout(resolve, 800));
+  const googleAuthHandler = async () => {
+    console.log('🟡 Google authentication started');
+    setIsLoading(true);
     
-    const { data, error } = await signInWithGoogle();
-    if (error) throw error;
-    
-    console.log('✅ Google Sign In Data:', data);
-    
-    // Check if we have a valid session
-    const { data: sessionData } = await supabase.auth.getSession();
-    if (sessionData?.session) {
-      console.log('✅ Google authentication successful');
-      navigation.navigate("Main");
-    } else {
-      console.log('❌ Authentication completed but no session found');
-      Alert.alert('Login Error', 'Authentication completed but no valid session was created. Please try again.');
-    }
-  } catch (error) {
-    console.log('❌ Google authentication error:', error);
-    Alert.alert('Error', error.message);
-  } finally {
-    // Add a small delay before turning off loading state
-    setTimeout(() => {
+    try {
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      const { data, error } = await signInWithGoogle();
+      if (error) throw error;
+      
+      console.log('🟢 Google signInWithGoogle completed');
+      
+      // Check if we have a valid session
+      const { data: sessionData } = await supabase.auth.getSession();
+      console.log('🟢 Session data after Google login:', { 
+        hasSession: !!sessionData?.session, 
+        userId: sessionData?.session?.user?.id 
+      });
+      
+      if (sessionData?.session) {
+        console.log('✅ Google login successful - AppNavigation will handle routing');
+        
+        // Don't manually navigate - let AuthContext and AppNavigation handle it
+        // The auth state change will trigger automatic navigation based on profileComplete
+        
+        // Keep loading briefly for smooth transition
+        setTimeout(() => {
+          console.log('🟢 Setting isLoading to false after Google login');
+          setIsLoading(false);
+        }, 500);
+      } else {
+        Alert.alert(t('auth.login_error'), t('auth.authentication_no_session'));
+        setIsLoading(false);
+      }
+    } catch (error) {
+      console.error('🔴 Google auth error:', error);
+      Alert.alert(t('common.error'), error.message);
       setIsLoading(false);
-      console.log('🔄 Google authentication finished, loading set to false');
-    }, 300);
-  }
-};
+    }
+  };
   return (
     <SafeAreaView style={[styles.area, {
       backgroundColor: colors.background }]}>
-      <View style={[styles.container, {
-        backgroundColor: colors.background
-      }]}>
-        <Header />
-        <ScrollView showsVerticalScrollIndicator={false}>
-          <View style={styles.logoContainer}>
-            <Image
-              source={images.logo}
-              resizeMode='contain'
-              style={styles.logo}
-            />
-          </View>
-          <Text style={[styles.title, {
-            color: dark ? COLORS.white : COLORS.black
-          }]}>Login to Your Account</Text>
-          <Input
-            id="email"
-            onInputChanged={inputChangedHandler}
-            errorText={formState.inputValidities['email']}
-            placeholder="Email"
-            placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
-            icon={icons.email}
-            keyboardType="email-address"
-          />
-          <Input
-            onInputChanged={inputChangedHandler}
-            errorText={formState.inputValidities['password']}
-            autoCapitalize="none"
-            id="password"
-            placeholder="Password"
-            placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
-            icon={icons.padlock}
-            secureTextEntry={true}
-          />
-          <View style={styles.checkBoxContainer}>
-            <View style={{ flexDirection: 'row' }}>
-              <Checkbox
-                style={styles.checkbox}
-                value={isChecked}
-                color={isChecked ? COLORS.primary : dark ? COLORS.primary : "gray"}
-                onValueChange={setChecked}
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{ flex: 1 }}
+      >
+        <View style={[styles.container, {
+          backgroundColor: colors.background
+        }]}>
+          <Header showBackButton={false} />
+          <ScrollView 
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
+          >
+            <View style={styles.logoContainer}>
+              <Image
+                source={images.logo}
+                resizeMode='contain'
+                style={styles.logo}
               />
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.privacy, {
-                  color: dark ? COLORS.white : COLORS.black
-                }]}>Remenber me</Text>
+            </View>
+            <Text style={[styles.title, {
+              color: dark ? COLORS.white : COLORS.black
+            }]}>{t('auth.login_title')}</Text>
+            <Input
+              id="email"
+              onInputChanged={inputChangedHandler}
+              errorText={formState.inputValidities['email']}
+              placeholder={t('auth.email')}
+              placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
+              icon={icons.email}
+              keyboardType="email-address"
+            />
+            <Input
+              onInputChanged={inputChangedHandler}
+              errorText={formState.inputValidities['password']}
+              autoCapitalize="none"
+              id="password"
+              placeholder={t('auth.password')}
+              placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
+              icon={icons.padlock}
+              secureTextEntry={true}
+            />
+            <View style={styles.checkBoxContainer}>
+              <View style={{ flexDirection: 'row' }}>
+                <Checkbox
+                  style={styles.checkbox}
+                  value={isChecked}
+                  color={isChecked ? COLORS.primary : dark ? COLORS.primary : "gray"}
+                  onValueChange={setChecked}
+                />
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.privacy, {
+                    color: dark ? COLORS.white : COLORS.black
+                  }]}>{t('auth.remember_me')}</Text>
+                </View>
               </View>
             </View>
-          </View>
-          <Button
-            title="Login"
-            filled
-            onPress={handleLogin}
-            style={styles.button}
-            isLoading={isLoading}
-          />
-          <TouchableOpacity
-            onPress={() => navigation.navigate("ForgotPasswordMethods")}>
-            <Text style={styles.forgotPasswordBtnText}>Forgot the password?</Text>
-          </TouchableOpacity>
-          <View>
+            <Button
+              title={t('auth.login')}
+              filled
+              onPress={handleLogin}
+              style={styles.button}
+              isLoading={isLoading}
+            />
+            <TouchableOpacity
+              onPress={() => navigation.navigate("ForgotPasswordMethods")}>
+              <Text style={styles.forgotPasswordBtnText}>{t('auth.forgot_password')}</Text>
+            </TouchableOpacity>
+            <View>
 
-            <OrSeparator text="or continue with" />
-            <View style={styles.socialBtnContainer}>
-              
-              <SocialButton
-                icon={icons.google}
-                onPress={googleAuthHandler}
-              />
+              <OrSeparator text={t('common.or_continue_with')} />
+              <View style={styles.socialBtnContainer}>
+                
+                <SocialButton
+                  icon={icons.google}
+                  onPress={googleAuthHandler}
+                />
+              </View>
             </View>
+          </ScrollView>
+          <View style={styles.bottomContainer}>
+            <Text style={[styles.bottomLeft, {
+              color: dark ? COLORS.white : COLORS.black
+            }]}>{t('auth.dont_have_account')}</Text>
+            <TouchableOpacity
+              onPress={() => navigation.navigate("Signup")}>
+              <Text style={styles.bottomRight}>{"  "}{t('auth.sign_up')}</Text>
+            </TouchableOpacity>
           </View>
-        </ScrollView>
-        <View style={styles.bottomContainer}>
-          <Text style={[styles.bottomLeft, {
-            color: dark ? COLORS.white : COLORS.black
-          }]}>Don't have an account ?</Text>
-          <TouchableOpacity
-            onPress={() => navigation.navigate("Signup")}>
-            <Text style={styles.bottomRight}>{"  "}Sign Up</Text>
-          </TouchableOpacity>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   )
 };
@@ -247,6 +259,10 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
     backgroundColor: COLORS.white
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 100 // Add space at bottom for the fixed bottom container
   },
   logo: {
     width: 100,
@@ -311,11 +327,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginVertical: 18,
+    paddingVertical: 17,
+    paddingHorizontal: 16,
+    backgroundColor: 'transparent',
     position: "absolute",
-    bottom: 12,
-    right: 0,
+    bottom: 0,
     left: 0,
+    right: 0,
   },
   bottomLeft: {
     fontSize: 14,

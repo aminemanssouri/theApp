@@ -6,6 +6,7 @@ import * as LocalAuthentication from 'expo-local-authentication';
 import Header from '../components/Header';
 import Button from '../components/Button';
 import { useTheme } from '../theme/ThemeProvider';
+import { t } from '../context/LanguageContext';
 
 const Fingerprint = ({ navigation }) => {
   const [isSupported, setIsSupported] = useState(false);
@@ -28,7 +29,7 @@ const Fingerprint = ({ navigation }) => {
 
   const authenticateUser = async () => {
     const result = await LocalAuthentication.authenticateAsync({
-      promptMessage: 'Authenticate with your fingerprint',
+      promptMessage: t('settings.security.fingerprint_prompt'),
     });
 
     if (result.success) {
@@ -57,12 +58,12 @@ const Fingerprint = ({ navigation }) => {
                 source={illustrations.passwordSuccess}
                 resizeMode='contain'
                 style={styles.modalIllustration}/>
-              <Text style={styles.modalTitle}>Congratulations!</Text>
+              <Text style={styles.modalTitle}>{t('auth.congratulations')}</Text>
               <Text style={[styles.modalSubtitle, {
                 color: dark ? COLORS.grayTie : COLORS.greyscale900
-              }]}>Your account is ready to use. You will be redirected to the Home page in a few seconds..</Text>
+              }]}>{t('auth.account_ready_redirect')}</Text>
               <Button
-                title="Continue"
+                title={t('common.continue')}
                 filled
                 onPress={() => {
                   setModalVisible(false)
@@ -83,14 +84,13 @@ const Fingerprint = ({ navigation }) => {
   return (
     <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <Header title="Set Your Fingerprint" />
+        <Header title={t('settings.security.set_fingerprint')} />
         <ScrollView
           contentContainerStyle={{ alignItems: 'center' }}
           showsVerticalScrollIndicator={false}>
           <Text style={[styles.title, {
             color: dark ? COLORS.white : COLORS.greyscale900
-          }]}>Add a fingerprint to make your account
-            more secure.</Text>
+          }]}>{t('settings.security.fingerprint_add_desc')}</Text>
           <Image
             source={illustrations.fingerprint}
             resizeMode='contain'
@@ -98,13 +98,12 @@ const Fingerprint = ({ navigation }) => {
           />
           <Text style={[styles.title, {
             color: dark ? COLORS.white : COLORS.greyscale900
-          }]}>Please put your finger on the fingerprint
-            scanner to get started.</Text>
+          }]}>{t('settings.security.fingerprint_put_finger')}</Text>
         </ScrollView>
       </View>
       <View style={styles.bottomContainer}>
         <Button
-          title="Skip"
+          title={t('common.skip')}
           style={{
             width: (SIZES.width - 32) / 2 - 8,
             borderRadius: 32,
@@ -115,7 +114,7 @@ const Fingerprint = ({ navigation }) => {
           onPress={() => navigation.navigate("Login")}
         />
         <Button
-          title="Continue"
+          title={t('common.continue')}
           filled
           style={styles.continueButton}
           onPress={() => setModalVisible(true)}

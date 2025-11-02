@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, Image, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, Image, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native';
+
 import { COLORS } from '../constants';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../theme/ThemeProvider';
 import { useAuth } from '../context/AuthContext';
 import { getCompletedBookings } from '../lib/services/booking';
+import { t } from '../context/LanguageContext';
 
 const MyBookingCompleted = () => {
   const navigation = useNavigation();
@@ -12,6 +14,7 @@ const MyBookingCompleted = () => {
   const { user, loading: authLoading } = useAuth();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const fetchCompletedBookings = async () => {
     if (!user?.id) return;
@@ -46,6 +49,25 @@ const MyBookingCompleted = () => {
     };
   }, [user?.id, authLoading]);
 
+  // Refetch when screen gains focus
+  useFocusEffect(
+    React.useCallback(() => {
+      if (!authLoading && user?.id) {
+        fetchCompletedBookings();
+      }
+    }, [authLoading, user?.id])
+  );
+
+  const onRefresh = async () => {
+    if (!user?.id) return;
+    try {
+      setRefreshing(true);
+      await fetchCompletedBookings();
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   if (loading) {
     return (
       <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
@@ -63,11 +85,11 @@ const MyBookingCompleted = () => {
           marginBottom: 8,
           fontSize: 18,
           fontFamily: 'bold'
-        }}>No Completed Bookings</Text>
+        }}>{t('booking.empty.completed_title')}</Text>
         <Text style={{
           color: dark ? COLORS.grayscale400 : COLORS.grayscale700,
           textAlign: 'center'
-        }}>You don't have any completed bookings yet.</Text>
+        }}>{t('booking.empty.completed_sub')}</Text>
       </View>
     );
   }
@@ -77,37 +99,47 @@ const MyBookingCompleted = () => {
       <FlatList
         data={bookings}
         showsVerticalScrollIndicator={false}
-        keyExtractor={item => item.id}
+        keyExtractor={item => String(item.id)}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={COLORS.primary}
+          />
+        }
         renderItem={({ item, index }) => (
           <View style={styles.itemContainer}>
             <View style={styles.statusContainer}>
               <Text style={[styles.typeText, { 
                 color: dark ? COLORS.white : COLORS.greyscale900
-              }]}>{item.service?.name || 'Service'}</Text>
+              }]}>{item.service?.name || t('payment.service')}</Text>
               <Text style={[styles.statusText, { 
                 color: COLORS.green, 
                 marginLeft: 12 
-              }]}>
-                Completed
+              }]}> 
+                {t('booking.status.completed')}
               </Text>
             </View>
             <View style={styles.infoContainer}>
               <View style={styles.infoLeft}>
                 <Image
                   source={
-                    item.worker?.profile_picture 
+                    item.worker?.Image
+                      ? { uri: item.worker.Image }
+                      : item.worker?.profile_picture
                       ? { uri: item.worker.profile_picture }
                       : require('../assets/images/users/user1.jpeg')
                   }
                   style={styles.itemImage}
                 />
+
                 <View style={styles.itemDetails}>
                   <Text style={[styles.itemName, { 
                     color: dark ? COLORS.white : COLORS.greyscale900
                   }]}>
                     {item.worker?.first_name && item.worker?.last_name
-                      ? `${item.worker.first_name} ${item.worker.last_name}`
-                      : "Service Provider"}
+                    ? `${item.worker.first_name} ${item.worker.last_name}`
+                    : t('chat.service_provider')}
                   </Text>
                   <View style={styles.itemSubDetails}>
                     <Text style={[styles.itemPrice, { 
@@ -115,25 +147,33 @@ const MyBookingCompleted = () => {
                     }]}>€{item.total_amount || item.price}</Text>
                     <Text style={[styles.itemDate, { 
                       color: dark ? COLORS.grayscale200 : COLORS.grayscale700
-                    }]}> | {item.booking_date}</Text>
+                    }]}> | {new Date(item.booking_date).toLocaleDateString()}</Text>
+
                     <Text style={[styles.itemItems, { 
                       color: dark ? COLORS.grayscale200 : COLORS.grayscale700
                     }]}> | {item.city}</Text>
                   </View>
                 </View>
               </View>
-              <Text style={styles.receiptText}>Receipt</Text>
+              <Text style={styles.receiptText}>{t('booking.actions.receipt')}</Text>
             </View>
             <View style={styles.actionsContainer}>
               <TouchableOpacity
-                onPress={() => console.log("Archiving booking...")}
+                onPress={() => navigation.navigate('ServiceDetailsReviews', {
+                  workerId: item.worker?.id || item.worker_id,
+                  bookingId: item.id,
+                  serviceName: item.service?.name,
+                  workerName: item.worker?.first_name && item.worker?.last_name
+                    ? `${item.worker.first_name} ${item.worker.last_name}`
+                    : t('chat.service_provider')
+                })}
                 style={styles.rateButton}>
-                <Text style={styles.rateButtonText}>Archive</Text>
+                <Text style={styles.rateButtonText}>{t('booking.actions.rate')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => navigation.navigate("EReceipt", { bookingId: item.id })}
                 style={styles.reorderButton}>
-                <Text style={styles.reorderButtonText}>View</Text>
+                <Text style={styles.reorderButtonText}>{t('booking.actions.view')}</Text>
               </TouchableOpacity>
             </View>
           </View>

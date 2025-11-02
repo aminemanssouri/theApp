@@ -6,8 +6,10 @@ import { ScrollView } from 'react-native-virtualized-view';
 import PaymentMethodItemConnected from '../components/PaymentMethodItemConnected';
 import Button from '../components/Button';
 import { useTheme } from '../theme/ThemeProvider';
+import { useI18n } from '../context/LanguageContext';
 
 const SettingsPayment = ({ navigation }) => {
+    const { t } = useI18n();
     const { colors, dark } = useTheme();
     /**
      * Render header
@@ -27,7 +29,7 @@ const SettingsPayment = ({ navigation }) => {
                     </TouchableOpacity>
                     <Text style={[styles.headerTitle, {
                         color: dark ? COLORS.white : COLORS.greyscale900
-                    }]}>Payment</Text>
+                    }]}>{t('settings.payment.title')}</Text>
                 </View>
                 <TouchableOpacity>
                     <Image
@@ -71,7 +73,7 @@ const SettingsPayment = ({ navigation }) => {
                     />
                 </ScrollView>
                 <Button
-                    title="Add New Card"
+                    title={t('settings.payment.add_new_card')}
                     filled
                     onPress={() => navigation.navigate('AddNewCard')}
                 />

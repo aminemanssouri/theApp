@@ -11,11 +11,13 @@ import RBSheet from "react-native-raw-bottom-sheet";
 import Button from '../components/Button';
 import { useAuth } from '../context/AuthContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useI18n } from '../context/LanguageContext';
 
 const Profile = ({ navigation }) => {
+  const { t } = useI18n();
   const refRBSheet = useRef();
   const { dark, colors, setScheme } = useTheme();
-  const { user, userProfile, loading: authLoading } = useAuth();
+  const { user, userProfile, loading: authLoading, signOut } = useAuth();
   const insets = useSafeAreaInsets();
 
   
@@ -49,7 +51,7 @@ const Profile = ({ navigation }) => {
           </TouchableOpacity>
           <Text style={[styles.headerTitle, {
             color: dark ? COLORS.white : COLORS.greyscale900
-          }]}>Profile</Text>
+          }]}>{t('profile.title')}</Text>
         </View>
         <TouchableOpacity>
           <Image
@@ -67,7 +69,18 @@ const Profile = ({ navigation }) => {
    * Render User Profile
    */
   const renderProfile = () => {
-    const [image, setImage] = useState(images.user1)
+    const [image, setImage] = useState(null)
+
+    // Get profile image from database or fallback to default
+    const getProfileImage = () => {
+      if (image) {
+        return image; // User just picked a new image
+      } else if (userProfile?.profile_picture) {
+        return { uri: userProfile.profile_picture }; // From database
+      } else {
+        return images.user1; // Default fallback
+      }
+    };
 
     const pickImage = async () => {
       try {
@@ -102,7 +115,7 @@ const Profile = ({ navigation }) => {
       <View style={styles.profileContainer}>
         <View>
           <Image
-            source={image}
+            source={getProfileImage()}
             resizeMode='cover'
             style={styles.avatar}
           />
@@ -136,28 +149,18 @@ const Profile = ({ navigation }) => {
       <View style={styles.settingsContainer}>
         <SettingsItem
           icon={icons.calendar}
-          name="My Booking"
+          name={t('profile.my_booking')}
           onPress={() => navigation.navigate("MyBookings")}
         />
         <SettingsItem
           icon={icons.userOutline}
-          name="Edit Profile"
+          name={t('profile.edit_profile')}
           onPress={() => navigation.navigate("EditProfile")}
         />
         <SettingsItem
-          icon={icons.bell2}
-          name="Notification"
-          onPress={() => navigation.navigate("SettingsNotifications")}
-        />
-        <SettingsItem
-          icon={icons.wallet2Outline}
-          name="Payment"
-          onPress={() => navigation.navigate("SettingsPayment")}
-        />
-        <SettingsItem
           icon={icons.shieldOutline}
-          name="Security"
-          onPress={() => navigation.navigate("SettingsSecurity")}
+          name={t('change password')}
+          onPress={() => navigation.navigate("ChangePassword")}
         />
         <TouchableOpacity
           onPress={() => navigation.navigate("SettingsLanguage")}
@@ -172,12 +175,12 @@ const Profile = ({ navigation }) => {
             />
             <Text style={[styles.settingsName, {
               color: dark ? COLORS.white : COLORS.greyscale900
-            }]}>Language & Region</Text>
+            }]}>{t('profile.language_region')}</Text>
           </View>
           <View style={styles.rightContainer}>
             <Text style={[styles.rightLanguage, {
               color: dark ? COLORS.white : COLORS.greyscale900
-            }]}>English (US)</Text>
+            }]}>{t('profile.current_language')}</Text>
             <Image
               source={icons.arrowRight}
               resizeMode='contain'
@@ -199,7 +202,7 @@ const Profile = ({ navigation }) => {
             />
             <Text style={[styles.settingsName, {
               color: dark ? COLORS.white : COLORS.greyscale900
-            }]}>Dark Mode</Text>
+            }]}>{t('profile.dark_mode')}</Text>
           </View>
           <View style={styles.rightContainer}>
             <Switch
@@ -214,18 +217,13 @@ const Profile = ({ navigation }) => {
         </TouchableOpacity>
         <SettingsItem
           icon={icons.lockedComputerOutline}
-          name="Privacy Policy"
+          name={t('profile.privacy_policy')}
           onPress={() => navigation.navigate("SettingsPrivacyPolicy")}
         />
         <SettingsItem
           icon={icons.infoCircle}
-          name="Help Center"
+          name={t('profile.help_center')}
           onPress={() => navigation.navigate("HelpCenter")}
-        />
-        <SettingsItem
-          icon={icons.people4}
-          name="Invite Friends"
-          onPress={() => navigation.navigate("InviteFriends")}
         />
         <TouchableOpacity
           onPress={() => refRBSheet.current.open()}
@@ -240,7 +238,7 @@ const Profile = ({ navigation }) => {
             />
             <Text style={[styles.logoutName, {
               color: "red"
-            }]}>Logout</Text>
+            }]}>{t('profile.logout')}</Text>
           </View>
         </TouchableOpacity>
       </View>
@@ -281,16 +279,16 @@ const Profile = ({ navigation }) => {
           }
         }}
       >
-        <Text style={styles.bottomTitle}>Logout</Text>
+        <Text style={styles.bottomTitle}>{t('profile.logout')}</Text>
         <View style={[styles.separateLine, {
           backgroundColor: dark ? COLORS.greyScale800 : COLORS.grayscale200,
         }]} />
         <Text style={[styles.bottomSubtitle, {
           color: dark ? COLORS.white : COLORS.black
-        }]}>Are you sure you want to log out?</Text>
+        }]}>{t('profile.logout_confirm')}</Text>
         <View style={styles.bottomContainer}>
           <Button
-            title="Cancel"
+            title={t('profile.cancel')}
             style={{
               width: (SIZES.width - 32) / 2 - 8,
               backgroundColor: dark ? COLORS.gray2 : COLORS.tansparentPrimary,
@@ -300,12 +298,21 @@ const Profile = ({ navigation }) => {
             textColor={dark ? COLORS.white : COLORS.primary}
             onPress={() => refRBSheet.current.close()}
           />
-            <Button
-      title="Yes, Logout"
-      filled
-      style={styles.logoutButton}
-      
-    />
+          <Button
+            title={t('profile.yes_logout')}
+            filled
+            style={styles.logoutButton}
+            onPress={async () => {
+              try {
+                await signOut();
+              } catch (e) {
+                // noop; errors already logged in context
+              } finally {
+                refRBSheet.current.close();
+                navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+              }
+            }}
+          />
         </View>
       </RBSheet>
     </View>

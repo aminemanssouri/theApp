@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, Image, Alert, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, Alert, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
 import React, { useCallback, useEffect, useReducer, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SIZES, icons, images } from '../constants';
@@ -14,8 +14,9 @@ import { useTheme } from '../theme/ThemeProvider';
 import { signUp } from '../lib/services/auth';
 import { signInWithGoogle } from '../lib/services/auth';
 import { supabase } from '../lib/supabase';
+import { t } from '../context/LanguageContext';
 
-const isTestMode = true;
+const isTestMode = false;
 
 const initialState = {
   inputValues: {
@@ -50,7 +51,7 @@ const Signup = ({ navigation }) => {
         if (inputValue !== passwordValue) {
           dispatchFormState({ 
             inputId: 'confirmPassword', 
-            validationResult: 'Passwords do not match', 
+            validationResult: t('auth.passwords_do_not_match'), 
             inputValue 
           })
         }
@@ -79,7 +80,7 @@ const Signup = ({ navigation }) => {
 
   useEffect(() => {
     if (error) {
-      Alert.alert('An error occured', error)
+      Alert.alert(t('common.error'), error)
     }
   }, [error])
 
@@ -107,33 +108,24 @@ const googleAuthHandler = async () => {
     // Check if we have a valid session
     const { data: sessionData } = await supabase.auth.getSession();
     if (sessionData?.session) {
-      console.log('Google authentication successful');
+      console.log('✅ Google authentication successful - AppNavigation will handle routing');
       
-      // Check if this is a first-time login (new user)
-      const isNewUser = sessionData.session.user?.app_metadata?.provider === 'google' && 
-                       !sessionData.session.user?.user_metadata?.profile_completed;
+      // Don't manually navigate - let AuthContext and AppNavigation handle it
+      // The SIGNED_IN event will trigger checkProfileCompletion
+      // and AppNavigation will show FillYourProfile or Main automatically
       
-      if (isNewUser) {
-        // New user - send to profile completion
-        navigation.navigate("FillYourProfile", { 
-          userId: sessionData.session.user.id,
-          email: sessionData.session.user.email
-        });
-      } else {
-        // Existing user - go to main screen
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'Main' }],
-        });
-      }
+      // Keep loading briefly for smooth transition
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 500);
     } else {
       console.log('Authentication completed but no session found');
-      Alert.alert('Error', 'Failed to create account. Please try again.');
+      Alert.alert(t('common.error'), t('auth.authentication_no_session'));
+      setIsLoading(false);
     }
   } catch (error) {
     console.error('Google auth error:', error);
-    Alert.alert('Error', error.message);
-  } finally {
+    Alert.alert(t('common.error'), error.message);
     setIsLoading(false);
   }
 };
@@ -145,22 +137,22 @@ const googleAuthHandler = async () => {
     const { email: emailError, password: passwordError, confirmPassword: confirmPasswordError } = formState.inputValidities
     
     if (!email || !password || !confirmPassword) {
-      Alert.alert('Error', 'Please fill in all fields')
+      Alert.alert(t('common.error'), t('auth.please_fill_all_fields'))
       return
     }
     
     if (emailError || passwordError || confirmPasswordError) {
-      Alert.alert('Error', 'Please correct the errors in the form')
+      Alert.alert(t('common.error'), t('auth.correct_errors_in_form'))
       return
     }
 
     if (!isChecked) {
-      Alert.alert('Error', 'Please accept the Privacy Policy')
+      Alert.alert(t('common.error'), t('auth.accept_privacy_policy'))
       return
     }
 
     if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match')
+      Alert.alert(t('common.error'), t('auth.passwords_do_not_match'))
       return
     }
 
@@ -168,24 +160,56 @@ const googleAuthHandler = async () => {
     setError(null)
 
     try {
+      console.log('🔄 Starting signup process for email:', email);
+      
       const { data, error } = await signUp(
         email,
         password,
-        '', // firstName - will be filled in next screen
-        '', // lastName - will be filled in next screen
-        'client' // userType
+        '', 
+        '', 
+        'client'
       )
 
+      console.log('📋 Signup response:', { data, error });
+
       if (error) {
-        setError(error.message)
-        Alert.alert('Sign Up Failed', error.message)
+        console.log('❌ Signup failed with error:', error.message);
+        Alert.alert(t('auth.sign_up_failed'), error.message)
       } else {
-        Alert.alert('Success', 'Account created successfully!')
-        navigation.navigate("FillYourProfile")
+        // Check if user needs email confirmation
+        if (data?.user && !data?.session) {
+          // User created but needs email confirmation
+          Alert.alert(
+            t('auth.check_email'), 
+            t('auth.confirmation_email_sent'),
+            [
+              {
+                text: t('common.ok'),
+                onPress: () => navigation.navigate('Login')
+              }
+            ]
+          )
+        } else if (data?.session) {
+          // User is immediately authenticated (email confirmation disabled)
+          console.log('✅ Signup successful, navigating to FillYourProfile');
+          Alert.alert(t('common.success'), t('auth.account_created_successfully'))
+          // Pass user data to FillYourProfile
+          navigation.navigate("FillYourProfile", {
+            userId: data.user.id,
+            email: data.user.email
+          })
+        } else if (data?.user) {
+          // User created, no session (could be email confirmation or other scenario)
+          console.log('✅ User created, navigating to FillYourProfile');
+          navigation.navigate("FillYourProfile", {
+            userId: data.user.id,
+            email: email // Use the email from form
+          })
+        }
       }
     } catch (err) {
-      setError(err.message)
-      Alert.alert('Error', err.message)
+      console.log('💥 Signup catch error:', err.message);
+      Alert.alert(t('common.error'), err.message)
     } finally {
       setIsLoading(false)
     }
@@ -193,100 +217,108 @@ const googleAuthHandler = async () => {
 
   return (
     <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <Header />
-        <ScrollView showsVerticalScrollIndicator={false}>
-          <View style={styles.logoContainer}>
-            <Image
-              source={images.logo}
-              resizeMode='contain'
-              style={styles.logo}
-            />
-          </View>
-          <Text style={[styles.title, {
-            color: dark ? COLORS.white : COLORS.black
-          }]}>Create Your Account</Text>
-          <Input
-            id="email"
-            onInputChanged={inputChangedHandler}
-            errorText={formState.inputValidities['email']}
-            placeholder="Email"
-            placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
-            icon={icons.email}
-            keyboardType="email-address"
-          />
-          <Input
-            onInputChanged={inputChangedHandler}
-            errorText={formState.inputValidities['password']}
-            autoCapitalize="none"
-            id="password"
-            placeholder="Password"
-            placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
-            icon={icons.padlock}
-            secureTextEntry={true}
-          />
-
-          <Input
-            onInputChanged={inputChangedHandler}
-            errorText={formState.inputValidities['confirmPassword']}
-            autoCapitalize="none"
-            id="confirmPassword"
-            placeholder="Confirm Password"
-            placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
-            icon={icons.padlock}
-            secureTextEntry={true}
-          />
-          <View style={styles.checkBoxContainer}>
-            <View style={{ flexDirection: 'row' }}>
-              <Checkbox
-                style={styles.checkbox}
-                value={isChecked}
-                color={isChecked ? COLORS.primary : dark ? COLORS.primary : "gray"}
-                onValueChange={setChecked}
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{ flex: 1 }}
+      >
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
+          <Header />
+          <ScrollView 
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
+          >
+            <View style={styles.logoContainer}>
+              <Image
+                source={images.logo}
+                resizeMode='contain'
+                style={styles.logo}
               />
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.privacy, {
-                  color: dark ? COLORS.white : COLORS.black
-                }]}>By continuing you accept our Privacy Policy</Text>
+            </View>
+            <Text style={[styles.title, {
+              color: dark ? COLORS.white : COLORS.black
+            }]}>{t('auth.create_account_title')}</Text>
+            <Input
+              id="email"
+              onInputChanged={inputChangedHandler}
+              errorText={formState.inputValidities['email']}
+              placeholder={t('auth.email')}
+              placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
+              icon={icons.email}
+              keyboardType="email-address"
+            />
+            <Input
+              onInputChanged={inputChangedHandler}
+              errorText={formState.inputValidities['password']}
+              autoCapitalize="none"
+              id="password"
+              placeholder={t('auth.password')}
+              placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
+              icon={icons.padlock}
+              secureTextEntry={true}
+            />
+
+            <Input
+              onInputChanged={inputChangedHandler}
+              errorText={formState.inputValidities['confirmPassword']}
+              autoCapitalize="none"
+              id="confirmPassword"
+              placeholder={t('auth.confirm_password')}
+              placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
+              icon={icons.padlock}
+              secureTextEntry={true}
+            />
+            <View style={styles.checkBoxContainer}>
+              <View style={{ flexDirection: 'row' }}>
+                <Checkbox
+                  style={styles.checkbox}
+                  value={isChecked}
+                  color={isChecked ? COLORS.primary : dark ? COLORS.primary : "gray"}
+                  onValueChange={setChecked}
+                />
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.privacy, {
+                    color: dark ? COLORS.white : COLORS.black
+                  }]}>{t('auth.accept_privacy_policy_label')}</Text>
+                </View>
               </View>
             </View>
-          </View>
-          <Button
-            title="Sign Up"
-            filled
-            onPress={handleSignUp}
-            style={styles.button}
-            isLoading={isLoading}
-          />
-          <View>
-            <OrSeparator text="or continue with" />
-            <View style={styles.socialBtnContainer}>
-              <SocialButton
-                icon={icons.appleLogo}
-                onPress={appleAuthHandler}
-                tintColor={dark ? COLORS.white : COLORS.black}
-              />
-              <SocialButton
-                icon={icons.facebook}
-                onPress={facebookAuthHandler}
-              />
-              <SocialButton
-                icon={icons.google}
-                onPress={googleAuthHandler}
-              />
+            <Button
+              title={t('auth.sign_up')}
+              filled
+              onPress={handleSignUp}
+              style={styles.button}
+              isLoading={isLoading}
+            />
+            <View>
+              <OrSeparator text={t('common.or_continue_with')} />
+              <View style={styles.socialBtnContainer}>
+                <SocialButton
+                  icon={icons.appleLogo}
+                  onPress={appleAuthHandler}
+                  tintColor={dark ? COLORS.white : COLORS.black}
+                />
+                <SocialButton
+                  icon={icons.facebook}
+                  onPress={facebookAuthHandler}
+                />
+                <SocialButton
+                  icon={icons.google}
+                  onPress={googleAuthHandler}
+                />
+              </View>
             </View>
+          </ScrollView>
+          <View style={styles.bottomContainer}>
+            <Text style={[styles.bottomLeft, {
+              color: dark ? COLORS.white : COLORS.black
+            }]}>{t('auth.already_have_account')}</Text>
+            <TouchableOpacity
+              onPress={() => navigation.navigate("Login")}>
+              <Text style={styles.bottomRight}>{" "}{t('auth.sign_in')}</Text>
+            </TouchableOpacity>
           </View>
-        </ScrollView>
-        <View style={styles.bottomContainer}>
-          <Text style={[styles.bottomLeft, {
-            color: dark ? COLORS.white : COLORS.black
-          }]}>Already have an account ?</Text>
-          <TouchableOpacity
-            onPress={() => navigation.navigate("Login")}>
-            <Text style={styles.bottomRight}>{" "}Sign In</Text>
-          </TouchableOpacity>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   )
 };
@@ -300,6 +332,10 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
     backgroundColor: COLORS.white
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 100 // Add space at bottom for the fixed bottom container
   },
   logo: {
     width: 100,
@@ -359,16 +395,19 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    marginTop: 0,
   },
   bottomContainer: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginVertical: 18,
+    paddingVertical: 17,
+    paddingHorizontal: 16,
+    backgroundColor: 'transparent',
     position: "absolute",
-    bottom: 12,
-    right: 0,
+    bottom: 0,
     left: 0,
+    right: 0,
   },
   bottomLeft: {
     fontSize: 14,

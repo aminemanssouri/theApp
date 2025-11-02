@@ -3,24 +3,21 @@ import React, { useState, useEffect } from 'react';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScrollView } from 'react-native-virtualized-view';
 import { images, COLORS, SIZES, icons } from "../constants";
-import { banners } from '../data'; // Keep banners as static for now
+import { banners } from '../data';
 import { 
   fetchHomepageData,
-  fetchServiceCategories,
   fetchAllCategories,
-  fetchActiveServices,
   transformCategories, 
-  transformServices,
   getWorkersForService
 } from '../lib/services/home';
 import { supabase } from '../lib/supabase';
 import SubHeaderItem from '../components/SubHeaderItem';
 import Category from '../components/Category';
 import ServiceCard from '../components/ServiceCard';
-// import ServiceDebugger from '../components/ServiceDebugger'; // Import the service debugger
 import { useTheme } from '../theme/ThemeProvider';
 import { useNotifications } from '../context/NotificationContext';
 import { useAuth } from '../context/AuthContext';
+import { t, useI18n } from '../context/LanguageContext';
 
 const Home = ({ navigation }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -28,7 +25,6 @@ const Home = ({ navigation }) => {
   const insets = useSafeAreaInsets();
   const { notifications, unreadCount, userNotificationStats, isUserAuthenticated } = useNotifications();
   const { user, userProfile } = useAuth();
-  
   // Supabase data states
   const [categories, setCategories] = useState([]);
   const [allCategories, setAllCategories] = useState([]);
@@ -42,53 +38,19 @@ const Home = ({ navigation }) => {
 
   // Handle notification icon press with detailed logging
   const handleNotificationPress = () => {
-    console.log('🔔 NOTIFICATION ICON CLICKED 🔔');
-    console.log('📱 Navigation: Navigating to Notifications screen');
+     
     
-    // Log user authentication status
-    console.log('👤 User Authentication Status:', {
-      isAuthenticated: isUserAuthenticated(),
-      userId: user?.id,
-      userEmail: user?.email,
-      userName: userProfile?.first_name || user?.email?.split('@')[0] || 'Unknown'
-    });
-    
-    // Log notification data
-    console.log('📊 Notification Statistics:', {
-      totalNotifications: notifications.length,
-      unreadCount: unreadCount,
-      userStats: userNotificationStats
-    });
-    
-    // Log recent notifications (first 5)
-    console.log('📋 Recent Notifications (first 5):', notifications.slice(0, 5).map(notification => ({
-      id: notification.id,
-      type: notification.type,
-      title: notification.title,
-      message: notification.message,
-      isRead: notification.is_read,
-      createdAt: notification.created_at,
-      relatedId: notification.related_id,
-      relatedType: notification.related_type,
-      channel: notification.channel
-    })));
+     
     
     // Log notification types breakdown
     const typeBreakdown = notifications.reduce((acc, notification) => {
       acc[notification.type] = (acc[notification.type] || 0) + 1;
       return acc;
     }, {});
-    console.log('📈 Notification Types Breakdown:', typeBreakdown);
-    
+     
     // Log unread notifications details
     const unreadNotifications = notifications.filter(n => !n.is_read);
-    console.log('🔴 Unread Notifications Details:', unreadNotifications.map(notification => ({
-      id: notification.id,
-      type: notification.type,
-      title: notification.title,
-      message: notification.message,
-      createdAt: notification.created_at
-    })));
+   
     
     // Navigate to notifications screen
     navigation.navigate("Notifications");
@@ -117,117 +79,49 @@ const Home = ({ navigation }) => {
     }
   };
 
-  // Fetch data from Supabase on component mount
+ 
+
+  // Refetch when language changes so names/descriptions are localized
+  const { language } = useI18n();
   useEffect(() => {
     loadHomepageData();
-    
-    // Add debug function to test SQL function directly using our helper function
-    const testSQLFunction = async () => {
-      try {
-        console.log('⚠️ TESTING SQL FUNCTION DIRECTLY ⚠️');
-        
-        // First get all services to test with
-        const { data: serviceData, error: serviceError } = await supabase
-          .from('services')
-          .select('id, name')
-          .limit(10);
-          
-        if (serviceError || !serviceData || !serviceData.length) {
-          console.error('❌ Could not find services to test with');
-          return;
-        }
-        
-        console.log(`Found ${serviceData.length} services to test:`);
-        
-        // Test with each service ID
-        for (const service of serviceData) {
-          console.log(`\n🔍 Testing service: ${service.name} (${service.id})`);
-          
-          // Use our helper function with the correct parameter syntax
-          const { data, error } = await getWorkersForService(service.id);
-          
-          if (error) {
-            console.error(`❌ SQL function error for ${service.name}:`, error);
-          } else {
-            console.log(`✅ SQL function result for ${service.name}: Found ${data?.length || 0} workers`);
-            if (data && data.length > 0) {
-              console.log(`First worker for ${service.name}:`, data[0].worker_full_name || `${data[0].first_name} ${data[0].last_name}`);
-            } else {
-              console.log(`No workers found for ${service.name}`);
-              
-              // Now check if there are actually worker_services for this service
-              const { data: workerServices, error: wsError } = await supabase
-                .from('worker_services')
-                .select('*')
-                .eq('service_id', service.id);
-                
-              if (wsError) {
-                console.error(`❌ Error checking worker_services for ${service.name}:`, wsError);
-              } else {
-                console.log(`✅ Direct check: ${workerServices?.length || 0} worker_services found for ${service.name}`);
-                if (workerServices && workerServices.length > 0) {
-                  console.log(`First worker_service for ${service.name}:`, workerServices[0]);
-                }
-              }
-            }
-          }
-        }
-      } catch (err) {
-        console.error('❌ Test function error:', err);
-      }
-    };
-    
-    // Run the test after a short delay
-    setTimeout(testSQLFunction, 2000);
-  }, []);
+  }, [language]);
 
   const loadHomepageData = async () => {
     try {
       setLoading(true);
-      console.log('🚀 LOADING HOMEPAGE DATA...');
-      
+       
       // Use the simplified fetchHomepageData function
       const { categories: homepageCategories, services: homepageServices, error } = 
         await fetchHomepageData();
       
       if (error) {
-        console.error('❌ ERROR FETCHING DATA:', error);
-        setLoading(false);
+         setLoading(false);
         return;
       }
       
-      console.log(`✅ Got ${homepageCategories?.length || 0} categories and ${homepageServices?.length || 0} services`);
-      
+       
       // Fetch all categories for "See all" functionality
       const { data: allCats } = await fetchAllCategories();
       const allTransformedCategories = transformCategories(allCats || []);
       
       // Set data to state
-      console.log('🔄 Updating state with data...');
-      setCategories(homepageCategories || []);
+       setCategories(homepageCategories || []);
       setAllCategories(allTransformedCategories || []);
       setServices(homepageServices || []); // Services are already processed
       
-      console.log('✅ STATE UPDATED');
-      
+       
       if (homepageServices?.length === 0) {
-        console.warn('⚠️ NO SERVICES FOUND TO DISPLAY');
-      } else {
-        console.log(`✅ SET ${homepageServices?.length || 0} SERVICES TO STATE`);
-        
+       } else {
+         
         // Log first service details
         if (homepageServices && homepageServices.length > 0) {
           const firstService = homepageServices[0];
-          console.log('FIRST SERVICE:', {
-            id: firstService.id,
-            name: firstService.name,
-            providerName: firstService.providerName
-          });
+         
         }
       }
       
-      console.log('✅ HOMEPAGE DATA LOADED SUCCESSFULLY');
-    } catch (error) {
+     } catch (error) {
       console.error('❌ Error loading homepage data:', error);
     } finally {
       setLoading(false);
@@ -238,7 +132,6 @@ const Home = ({ navigation }) => {
   const getBottomSpacing = () => {
     const baseTabHeight = 60;
     const safeAreaBottom = insets.bottom;
-    
     if (Platform.OS === 'ios') {
       return baseTabHeight + safeAreaBottom + 20; // Extra padding for iOS
     } else {
@@ -246,21 +139,50 @@ const Home = ({ navigation }) => {
     }
   };
 
-  const renderBannerItem = ({ item }) => (
-    <View style={styles.bannerContainer}>
-      <View style={styles.bannerTopContainer}>
-        <View>
-          <Text style={styles.bannerDicount}>{item.discount} OFF</Text>
-          <Text style={styles.bannerDiscountName}>{item.discountName}</Text>
+  // Map banner item to localized copy (use id-based mapping for stability)
+  const getBannerCopy = (item) => {
+    const nameKeyById = {
+      1: 'banners.today_special',
+      2: 'banners.weekend_sale',
+      3: 'banners.limited_time_offer',
+    };
+    const bottomTitleKeyById = {
+      1: 'banners.get_discount_next_order',
+      2: 'banners.special_discount_weekend',
+      3: 'banners.limited_time_hurry',
+    };
+    const bottomSubtitleKeyById = {
+      1: 'banners.only_valid_for_today',
+      2: 'banners.this_weekend_only',
+      3: 'banners.valid_until_supplies_last',
+    };
+
+    const discountLabel = t('banners.discount_label', { discount: item.discount }) || `${item.discount} OFF`;
+    const discountName = t(nameKeyById[item.id]) || item.discountName;
+    const bottomTitle = t(bottomTitleKeyById[item.id]) || item.bottomTitle;
+    const bottomSubtitle = t(bottomSubtitleKeyById[item.id]) || item.bottomSubtitle;
+
+    return { discountLabel, discountName, bottomTitle, bottomSubtitle };
+  };
+
+  const renderBannerItem = ({ item }) => {
+    const { discountLabel, discountName, bottomTitle, bottomSubtitle } = getBannerCopy(item);
+    return (
+      <View style={styles.bannerContainer}>
+        <View style={styles.bannerTopContainer}>
+          <View>
+            <Text style={styles.bannerDicount}>{discountLabel}</Text>
+            <Text style={styles.bannerDiscountName}>{discountName}</Text>
+          </View>
+          <Text style={styles.bannerDiscountNum}>{item.discount}</Text>
         </View>
-        <Text style={styles.bannerDiscountNum}>{item.discount}</Text>
+        <View style={styles.bannerBottomContainer}>
+          <Text style={styles.bannerBottomTitle}>{bottomTitle}</Text>
+          <Text style={styles.bannerBottomSubtitle}>{bottomSubtitle}</Text>
+        </View>
       </View>
-      <View style={styles.bannerBottomContainer}>
-        <Text style={styles.bannerBottomTitle}>{item.bottomTitle}</Text>
-        <Text style={styles.bannerBottomSubtitle}>{item.bottomSubtitle}</Text>
-      </View>
-    </View>
-  );
+    );
+  };
 
   const keyExtractor = (item) => item.id.toString();
 
@@ -276,24 +198,43 @@ const Home = ({ navigation }) => {
       />
     );
   };
-  /**
-  * Render Header
-  */
+
   const renderHeader = () => {
+    // Get user display name
+    const getDisplayName = () => {
+      if (userProfile?.first_name) {
+        return `Hi, ${userProfile.first_name}!`;
+      } else if (user?.email) {
+        return `Hi, ${user.email.split('@')[0]}!`;
+      }
+      return 'Hi, User!';
+    };
+
+    // Get profile image
+    const getProfileImage = () => {
+      if (userProfile?.profile_picture) {
+        return { uri: userProfile.profile_picture };
+      } else {
+        return images.user5; // Default fallback
+      }
+    };
+
     return (
       <View style={styles.headerContainer}>
         <View style={styles.headerLeft}>
           <TouchableOpacity
             onPress={() => navigation.navigate("PersonalProfile")}>
             <Image
-              source={images.user5}
+              source={getProfileImage()}
               resizeMode='cover'
               style={styles.avatar}
             />
           </TouchableOpacity>
           <Text style={[styles.username, { 
             color: dark? COLORS.white : COLORS.greyscale900
-          }]}>Hi, Joanna!</Text>
+
+          }]}>{getDisplayName()}</Text>
+
         </View>
         <TouchableOpacity
           onPress={handleNotificationPress}
@@ -340,7 +281,7 @@ const Home = ({ navigation }) => {
           style={styles.searchIcon}
         />
         <Text style={styles.searchPlaceholder}>
-          Search services...
+          {t('search.search_services')}
         </Text>
         <Image
           source={icons.filter}
@@ -382,39 +323,31 @@ const Home = ({ navigation }) => {
     )
   }
 
-  /**
-   * Render categories - Horizontally scrollable and acts as filters
-   */
+  
   const renderCategories = () => {
-    // Check if we have categories from database
-    if (!categories || categories.length === 0) {
-      return null; // Don't render if no categories
+     if (!categories || categories.length === 0) {
+      return null;  
     }
 
-    // Check if we already have an "All" category in the data
-    const hasAllCategory = categories.some(cat => cat.id === "all" || cat.name.toLowerCase() === "all");
+     const hasAllCategory = categories.some(cat => cat.id === "all" || cat.name.toLowerCase() === "all");
     
-    // Create a complete list of categories with "All" at the beginning if not already present
-    const allCategoriesList = hasAllCategory ? categories : [
-      { id: "all", name: "All", icon: icons.categoryAll || icons.categoryDefault }
+     const allCategoriesList = hasAllCategory ? categories : [
+      { id: "all", name: t('search.all'), icon: icons.categoryAll || icons.categoryDefault }
     ].concat(categories);
 
-    // Function to handle category selection
-    const handleCategoryPress = (categoryId) => {
+     const handleCategoryPress = (categoryId) => {
       if (categoryId === "all") {
-        // If "All" is selected, clear other selections
-        setSelectedCategories(["all"]);
+         setSelectedCategories(["all"]);
       } else {
-        // If a specific category is selected, only select that one
-        setSelectedCategories([categoryId]);
+         setSelectedCategories([categoryId]);
       }
     };
 
     return (
       <View style={styles.categoriesContainer}>
         <SubHeaderItem
-          title="Categories"
-          navTitle={allCategories.length > categories.length ? "See all" : ""}
+          title={t('search.categories')}
+          navTitle={allCategories.length > categories.length ? t('common.see_all') : ""}
           onPress={allCategories.length > categories.length ? 
             () => navigation.navigate("AllCategories") : null}
         />
@@ -452,14 +385,12 @@ const Home = ({ navigation }) => {
    * Render Top Services
    */
   const renderTopServices = () => {
-    console.log(`🔍 RENDERING SERVICES. Total services: ${services.length}, Selected categories: ${selectedCategories.join(', ')}`);
-    
+     
     if (!services || services.length === 0) {
-      console.warn('⚠️ NO SERVICES AVAILABLE TO RENDER');
-      return (
+       return (
         <View style={styles.noServicesContainer}>
           <Text style={[styles.noServicesText, { color: colors.text }]}>
-            No services found. Please try again later.
+            {t('service.no_services')}
           </Text>
         </View>
       );
@@ -494,8 +425,8 @@ const Home = ({ navigation }) => {
     return (
       <View>
         <SubHeaderItem
-          title="Popular Services"
-          navTitle="See all"
+          title={t('home.popular_services')}
+          navTitle={t('common.see_all')}
           onPress={() => navigation.navigate("AllServices", { showPopular: true })}
         />
         
@@ -516,6 +447,9 @@ const Home = ({ navigation }) => {
                   numReviews={item.numReviews}
                   worker={item.worker}
                   hasWorker={item.hasWorker}
+                  serviceId={item.serviceId}
+                  workerId={item.workerId}
+                  navigation={navigation}
                   onPress={() => {
                     if (item.hasWorker && item.workerId) {
                       navigation.navigate("WorkerDetails", { 
@@ -537,7 +471,7 @@ const Home = ({ navigation }) => {
         ) : (
           <View style={styles.noServicesContainer}>
             <Text style={[styles.noServicesText, { color: colors.text }]}>
-              No services found in this category
+              {t('service.no_services_in_category')}
             </Text>
           </View>
         )}
@@ -562,8 +496,8 @@ const Home = ({ navigation }) => {
           {/* {!loading && services && services.length > 0 && <ServiceDebugger services={services} />} */}
           
           {loading ? (
-            <View style={styles.loadingContainer}>
-              <Text style={[styles.loadingText, { color: colors.text }]}>Loading...</Text>
+            <View style={[styles.loadingContainer, { flex: 1 }]}>
+              <Text style={[styles.loadingText, { color: colors.text }]}>{t('common.loading')}</Text>
             </View>
           ) : (
             <>

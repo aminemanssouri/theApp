@@ -7,6 +7,7 @@ import { ScrollView } from 'react-native-virtualized-view';
 import PaymentMethodItem from '../components/PaymentMethodItem';
 import Button from '../components/Button';
 import { useTheme } from '../theme/ThemeProvider';
+import { t } from '../context/LanguageContext';
 
 const CancelBookingPaymentMethods = ({ navigation }) => {
   const [selectedItem, setSelectedItem] = useState(null);
@@ -48,14 +49,14 @@ const CancelBookingPaymentMethods = ({ navigation }) => {
                   style={styles.editPencilIcon}
                 />
               </View>
-              <Text style={styles.modalTitle}>Congratulations!</Text>
+              <Text style={styles.modalTitle}>{t('booking.cancel.refund_modal_title')}</Text>
               <Text style={[styles.modalSubtitle, {
                 color: dark ? COLORS.grayscale200 : COLORS.black,
               }]}>
-                You have successfully canceled your booking order. 80% funds will returned to your account.
+                {t('booking.cancel.refund_modal_msg')}
               </Text>
               <Button
-                title="Okay"
+                title={t('common.ok')}
                 filled
                 onPress={() => {
                   setModalVisible(false)
@@ -73,27 +74,27 @@ const CancelBookingPaymentMethods = ({ navigation }) => {
   return (
     <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <Header title="Cancel Booking" />
+        <Header title={t('booking.actions.cancel_booking')} />
         <ScrollView showsVerticalScrollIndicator={false}>
           <Text style={[styles.title, {
             color: dark ? COLORS.white : COLORS.greyscale900
-          }]}>Please select a payment refund method (only 80% will be refunded)</Text>
+          }]}>{t('booking.cancel.select_refund_method_note')}</Text>
           <PaymentMethodItem
-            checked={selectedItem === 'Paypal'}
-            onPress={() => handleCheckboxPress('Paypal')}
-            title="Paypal"
+            checked={selectedItem === 'PayPal'}
+            onPress={() => handleCheckboxPress('PayPal')}
+            title={t('payment.paypal')}
             icon={icons.paypal}
           />
           <PaymentMethodItem
             checked={selectedItem === 'Google Pay'}
             onPress={() => handleCheckboxPress('Google Pay')}
-            title="Google Pay"
+            title={t('payment.google_pay')}
             icon={icons.google}
           />
           <PaymentMethodItem
             checked={selectedItem === 'Apple Pay'}
             onPress={() => handleCheckboxPress('Apple Pay')}
-            title="Apple Pay"
+            title={t('payment.apple_pay')}
             icon={icons.apple}
             tintColor={dark ? COLORS.white : COLORS.black}
           />
@@ -104,7 +105,7 @@ const CancelBookingPaymentMethods = ({ navigation }) => {
             icon={icons.creditCard}
           />
           <Button
-            title="Add New Card"
+            title={t('settings.payment.add_new_card')}
             onPress={() => { navigation.navigate("AddNewCard") }}
             style={{
               width: SIZES.width - 32,
@@ -121,13 +122,13 @@ const CancelBookingPaymentMethods = ({ navigation }) => {
           <View style={styles.refundContainer}>
             <Text style={[styles.paidText, {
               color: dark ? COLORS.grayscale400 : COLORS.grayscale700,
-            }]}>Paid: $16.00</Text>
+            }]}>{t('booking.cancel.paid_label', { amount: '16.00' })}</Text>
             <Text style={[styles.refundText, {
               color: dark ? COLORS.white : COLORS.greyscale900,
-            }]}>Refund: $14.40</Text>
+            }]}>{t('booking.cancel.refund_label', { amount: '14.40' })}</Text>
           </View>
           <Button
-            title="Continue"
+            title={t('common.continue')}
             filled
             style={styles.continueBtn}
             onPress={() => { setModalVisible(true); }}

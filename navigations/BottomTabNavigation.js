@@ -5,14 +5,19 @@ import { COLORS, FONTS, icons } from '../constants';
 import { Bookings, Favourite, Home, Inbox, Profile } from '../screens';
 import { useTheme } from '../theme/ThemeProvider';
 import { useNotifications } from '../context/NotificationContext';
+import { useChat } from '../context/ChatContext';
 import NotificationBadge from '../components/NotificationBadge';
+import { useI18n } from '../context/LanguageContext';
+
 // Removed safe area context dependency
 
 const Tab = createBottomTabNavigator();
 
 const BottomTabNavigation = () => {
+    const { t } = useI18n();
     const { dark } = useTheme();
     const { unreadCount } = useNotifications();
+    const { chatUnreadCount } = useChat();
     // Manual safe area calculation
     const getSafeAreaBottom = () => Platform.OS === 'ios' ? 34 : 0;
     const { width } = Dimensions.get('window');
@@ -24,12 +29,12 @@ const BottomTabNavigation = () => {
                 tabBarShowLabel: false,
                 headerShown: false,
                 sceneContainerStyle: {
-                    paddingTop: 0, // Force remove any default top padding
-                    marginTop: 0,  // Force remove any default top margin
+                    paddingTop: 0, 
+                    marginTop: 0,  
                 },
                 tabBarStyle: {
                     position: 'absolute',
-                    bottom: Platform.OS === 'android' ? 22 : 0, // Lift above Android navigation
+                    bottom: Platform.OS === 'android' ? 0 : 0, // Lift above Android navigation
                     left: isSmallScreen ? 5 : 10,
                     right: isSmallScreen ? 5 : 10,
                     height: Platform.OS === 'ios' ? 75 + getSafeAreaBottom() : 60,
@@ -83,7 +88,7 @@ const BottomTabNavigation = () => {
                                 textAlign: 'center',
                                 numberOfLines: 1,
                             }} numberOfLines={1}>
-                                Home
+                                {t('navigation.home')}
                             </Text>
                         </View>
                     ),
@@ -124,7 +129,7 @@ const BottomTabNavigation = () => {
                                 fontSize: isSmallScreen ? 8 : 9,
                                 textAlign: 'center',
                             }} numberOfLines={1}>
-                                Bookings
+                                {t('navigation.bookings')}
                             </Text>
                         </View>
                     ),
@@ -160,7 +165,7 @@ const BottomTabNavigation = () => {
                                 fontSize: 9,
                                 textAlign: 'center',
                             }} numberOfLines={1}>
-                                Favourite
+                                {t('navigation.favorites')}
                             </Text>
                         </View>
                     ),
@@ -202,10 +207,10 @@ const BottomTabNavigation = () => {
                                     fontSize: 9,
                                     textAlign: 'center',
                                 }} numberOfLines={1}>
-                                    Inbox
+                                    {t('navigation.inbox')}
                                 </Text>
                             </View>
-                            <NotificationBadge count={unreadCount} />
+                            <NotificationBadge count={chatUnreadCount} />
                         </View>
                     ),
                 }}
@@ -240,7 +245,7 @@ const BottomTabNavigation = () => {
                                 fontSize: 9,
                                 textAlign: 'center',
                             }} numberOfLines={1}>
-                                Profile
+                                {t('navigation.profile')}
                             </Text>
                         </View>
                     ),

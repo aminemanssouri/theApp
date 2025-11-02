@@ -6,6 +6,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import { getCompletedBookings } from '../lib/services/booking';
 import { FontAwesome } from "@expo/vector-icons";
+import { t } from '../context/LanguageContext';
 
 const CompletedBooking = forwardRef((props, ref) => {
   const [bookings, setBookings] = useState([]);
@@ -77,11 +78,11 @@ const CompletedBooking = forwardRef((props, ref) => {
           marginBottom: 8,
           fontSize: 18,
           fontFamily: 'bold'
-        }}>No Completed Bookings</Text>
+        }}>{t('booking.empty.completed_title')}</Text>
         <Text style={{
           color: dark ? COLORS.grayscale400 : COLORS.grayscale700,
           textAlign: 'center'
-        }}>You don't have any completed bookings yet.</Text>
+        }}>{t('booking.empty.completed_sub')}</Text>
       </View>
     );
   }
@@ -114,7 +115,7 @@ const CompletedBooking = forwardRef((props, ref) => {
                 />
                 <View style={styles.reviewContainer}>
                   <FontAwesome name="star" size={12} color="orange" />
-                  <Text style={styles.rating}>{item.worker?.average_rating || "N/A"}</Text>
+                  <Text style={styles.rating}>{item.worker?.average_rating || t('common.not_available')}</Text>
                 </View>
               </View>
               <View style={styles.detailsRightContainer}>
@@ -123,7 +124,7 @@ const CompletedBooking = forwardRef((props, ref) => {
                 }]}>
                   {item.worker?.first_name && item.worker?.last_name
                     ? `${item.worker.first_name} ${item.worker.last_name}`
-                    : "Service Provider"}
+                    : t('chat.service_provider')}
                 </Text>
                 <Text style={[styles.address, {
                   color: dark ? COLORS.grayscale400 : COLORS.grayscale700,
@@ -133,7 +134,7 @@ const CompletedBooking = forwardRef((props, ref) => {
                     <Text style={styles.totalPrice}>€{item.total_amount || item.price}</Text>
                   </View>
                   <View style={styles.statusContainer}>
-                    <Text style={styles.statusText}>Completed</Text>
+                    <Text style={styles.statusText}>{t('booking.status.completed')}</Text>
                   </View>
                 </View>
               </View>
@@ -146,7 +147,7 @@ const CompletedBooking = forwardRef((props, ref) => {
               <TouchableOpacity
                 onPress={() => navigation.navigate("EReceipt", { bookingId: item.id })}
                 style={styles.receiptBtn}>
-                <Text style={styles.receiptBtnText}>View E-Receipt</Text>
+                <Text style={styles.receiptBtnText}>{t('booking.actions.view_e_receipt')}</Text>
               </TouchableOpacity>
             </View>
           </TouchableOpacity>

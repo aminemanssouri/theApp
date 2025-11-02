@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import ProviderLocationMap from '../components/ProviderLocationMap';
 import { ScrollView } from 'react-native-virtualized-view';
 import { useTheme } from '../theme/ThemeProvider';
+import { t } from '../context/LanguageContext';
 
 const ProfileServices = () => {
     const { colors, dark } = useTheme();
@@ -23,19 +24,19 @@ const ProfileServices = () => {
 
     return (
         <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-            <Text style={[styles.title, { color: dark ? COLORS.white : COLORS.greyscale900 }]}>Description</Text>
+            <Text style={[styles.title, { color: dark ? COLORS.white : COLORS.greyscale900 }]}>{t('profile_services.description_title')}</Text>
             <Text style={[styles.description, { 
                 marginBottom: 10,
                 color: dark ? COLORS.grayscale200 : COLORS.grayscale700,
                 }]} numberOfLines={showFullDescription ? undefined : initialNumberOfLines}>
-                Introducing our friendly cleaner! They're here to make your home sparkle. With their attention to detail and reliable service, you can count on them to leave your space fresh and tidy. Whether it's dusting, mopping, or vacuuming, they've got you covered. Sit back, relax, and let our cleaner take care of the dirty work for you!
+                {t('profile_services.description_body')}
             </Text>
             <TouchableOpacity onPress={toggleDescription}>
-                <Text style={{ color: COLORS.primary }}>{showFullDescription ? 'View Less' : 'View More'}</Text>
+                <Text style={{ color: COLORS.primary }}>{showFullDescription ? t('profile_services.view_less') : t('profile_services.view_more')}</Text>
             </TouchableOpacity>
             <Text style={[styles.title, { 
                 color: dark ? COLORS.white : COLORS.greyscale900
-            }]}>Service Type</Text>
+            }]}>{t('profile_services.service_type')}</Text>
             <View style={styles.typeContainer}>
                 <Image
                     source={icons.category}
@@ -44,16 +45,16 @@ const ProfileServices = () => {
                 />
                 <Text style={[styles.description, { 
                     color: dark ? COLORS.grayscale200 : COLORS.grayscale700
-                }]}>{"  "}Cleaning</Text>
+                }]}> {t('service.category.cleaning')}</Text>
             </View>
             <Text style={[styles.title, { 
                  color: dark ? COLORS.white : COLORS.greyscale900
-            }]}>Location</Text>
+            }]}>{t('profile_services.location')}</Text>
             <View style={styles.locationContainer}>
                 <Ionicons name="location-outline" size={14} color={COLORS.primary} />
                 <Text style={[styles.description, { 
                      color: dark ? COLORS.grayscale200 : COLORS.grayscale700
-                }]}>{"  "}255 Grand Park Avenue, New York.</Text>
+                }]}>{"  "}{t('profile_services.location_example')}</Text>
             </View>
          </ScrollView>
     )

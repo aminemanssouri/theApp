@@ -8,6 +8,7 @@ import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
 import { MyBookingCompleted, MyBookingsCancelled, MyBookingsUpcoming } from '../tabs';
 import Header from '../components/Header';
 import { useTheme } from '../theme/ThemeProvider';
+import { useI18n } from '../context/LanguageContext';
 
 
 const renderScene = SceneMap({
@@ -19,6 +20,7 @@ const renderScene = SceneMap({
 const MyBookings = ({ navigation }) => {
   const layout = useWindowDimensions();
   const { dark, colors } = useTheme();
+  const { t, language } = useI18n();
   const insets = getSafeAreaInsets();
 
   // Calculate bottom spacing to avoid tab bar overlap
@@ -35,11 +37,11 @@ const MyBookings = ({ navigation }) => {
 
   const [index, setIndex] = React.useState(0);
 
-  const [routes] = React.useState([
-    { key: 'first', title: 'Upcoming' },
-    { key: 'second', title: 'Completed' },
-    { key: 'third', title: 'Cancelled'}
-  ])
+  const routes = React.useMemo(() => ([
+    { key: 'first', title: t('bookings.tab_upcoming') },
+    { key: 'second', title: t('bookings.tab_completed') },
+    { key: 'third', title: t('bookings.tab_cancelled') }
+  ]), [language])
 
   const renderTabBar = props => (
     <TabBar
@@ -48,11 +50,13 @@ const MyBookings = ({ navigation }) => {
         backgroundColor: COLORS.primary
       }}
       style={{
-        backgroundColor: colors.background
+        backgroundColor: colors.background,
+        shadowColor: 'transparent',
+        elevation: 0,
       }}
       renderLabel={({ route, focused, color }) => (
         <Text style={[{ 
-            color: focused ? COLORS.primary : (dark ? COLORS.gray3 : COLORS.grayscale700),
+            color: focused ? COLORS.primary : (dark ? COLORS.black : COLORS.black),
             fontFamily: focused ? "semiBold" : "regular",
             fontSize: 16
             }]}>
@@ -68,8 +72,10 @@ const MyBookings = ({ navigation }) => {
         flex: 1, 
         backgroundColor: colors.background
       }}>
-        <View style={{ paddingHorizontal: 16, paddingTop: 16 }}>
+
+        <View style={{ paddingHorizontal: 16, paddingTop: 37 }}>
           <Header title="My Bookings" />
+
         </View>
         <TabView
           navigationState={{ index, routes }}

@@ -5,19 +5,20 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Header from '../components/Header';
 import Button from '../components/Button';
 import { useTheme } from '../theme/ThemeProvider';
+import { t } from '../context/LanguageContext';
 
 const ForgotPasswordMethods = ({ navigation }) => {
-  const [selectedMethod, setSelectedMethod] = useState('sms');
   const { colors, dark } = useTheme();
 
-  const handleMethodPress = (method) => {
-    setSelectedMethod(method);
+  const handleContinue = () => {
+    navigation.navigate('ForgotPasswordEmail');
   };
   
   return (
     <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <Header title="Forgot Password" />
+        <Header title={t('auth.forgot_password_title')} />
+
         <ScrollView showsVerticalScrollIndicator={false}>
           <View style={styles.passwordContainer}>
             <Image
@@ -28,33 +29,11 @@ const ForgotPasswordMethods = ({ navigation }) => {
           </View>
           <Text style={[styles.title, {
             color: dark ? COLORS.white : COLORS.greyscale900
-          }]}>Select which contact details
-            should we use to reset your password</Text>
+          }]}>{t('auth.reset_instructions')}</Text>
+
           <TouchableOpacity
-            style={[
-              styles.methodContainer,
-              selectedMethod === 'sms' && { borderColor: COLORS.primary, borderWidth: 2 }, // Customize the border color for SMS
-            ]}
-            onPress={() => handleMethodPress('sms')}>
-            <View style={styles.iconContainer}>
-              <Image
-                source={icons.chat}
-                resizeMode='contain'
-                style={styles.icon} />
-            </View>
-            <View>
-              <Text style={styles.methodTitle}>via SMS:</Text>
-              <Text style={[styles.methodSubtitle, {
-                color: dark ? COLORS.white : COLORS.black
-              }]}>+1 111 ******99</Text>
-            </View>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.methodContainer,
-              selectedMethod === 'email' && { borderColor: COLORS.primary, borderWidth: 2 }, // Customize the border color for Email
-            ]}
-            onPress={() => handleMethodPress('email')}>
+            style={[styles.methodContainer, { borderColor: COLORS.primary, borderWidth: 2 }]}
+            onPress={handleContinue}>
             <View style={styles.iconContainer}>
               <Image
                 source={icons.email}
@@ -62,23 +41,18 @@ const ForgotPasswordMethods = ({ navigation }) => {
                 style={styles.icon} />
             </View>
             <View>
-              <Text style={styles.methodTitle}>via Email:</Text>
+              <Text style={styles.methodTitle}>{t('auth.via_email')}</Text>
               <Text style={[styles.methodSubtitle, {
                 color: dark ? COLORS.white : COLORS.black
-              }]}>and***ley@yourdomain.com</Text>
+              }]}>{t('auth.reset_via_email_desc')}</Text>
             </View>
           </TouchableOpacity>
+
           <Button
-            title="Continue"
+            title={t('common.continue')}
             filled
             style={styles.button}
-            onPress={() =>
-              navigation.navigate(
-                selectedMethod === "sms"
-                  ? 'ForgotPasswordPhoneNumber'
-                  : 'ForgotPasswordEmail'
-              )
-            }
+            onPress={handleContinue}
           />
         </ScrollView>
       </View>

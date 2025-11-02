@@ -16,56 +16,68 @@ import {
   Alert
 } from 'react-native';
 import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
-import { getConversationMessages, sendMessage, subscribeToNewMessages } from '../lib/services/chat';
+import { getConversationMessages, sendMessage, subscribeToNewMessages, autoMarkMessageAsRead } from '../lib/services/chat';
 import { getWorkerByConversation } from '../lib/services/workers';
 import { useAuth } from '../context/AuthContext';
+import { useChat } from '../context/ChatContext';
 import { useTheme } from '../theme/ThemeProvider';
 import { COLORS, SIZES, icons } from '../constants';
 import { Ionicons } from '@expo/vector-icons';
 import MessageBubble from '../components/MessageBubble';
 import ChatInput from '../components/ChatInput';
 import defaultAvatar from '../assets/images/avatar.jpeg';
-import { getSafeAreaBottom } from '../utils/safeAreaUtils';
+import { getSafeAreaBottom, getSafeAreaTop } from '../utils/safeAreaUtils';
+import { useI18n } from '../context/LanguageContext';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
-function formatDate(dateStr) {
-  const date = new Date(dateStr);
-  const today = new Date();
-  if (
-    date.getDate() === today.getDate() &&
-    date.getMonth() === today.getMonth() &&
-    date.getFullYear() === today.getFullYear()
-  ) {
-    return 'Today';
-  }
-  const yesterday = new Date();
-  yesterday.setDate(today.getDate() - 1);
-  if (
-    date.getDate() === yesterday.getDate() &&
-    date.getMonth() === yesterday.getMonth() &&
-    date.getFullYear() === yesterday.getFullYear()
-  ) {
-    return 'Yesterday';
-  }
-  return date.toLocaleDateString();
-}
-
 const Chat = () => {
+  const { t } = useI18n();
   const { user } = useAuth();
+  const { markConversationAsRead } = useChat();
   const { colors, dark } = useTheme();
   const route = useRoute();
   const navigation = useNavigation();
   const conversationId = route.params?.conversationId;
-  const workerInfo = route.params?.workerInfo; // Worker info from WorkerDetails
+  const workerInfo = route.params?.workerInfo; // Worker info from Chats or WorkerDetails
   const notificationData = route.params?.notificationData;
   const [messages, setMessages] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // Start with false for instant UI
+  const [messagesReady, setMessagesReady] = useState(true); // Start ready for instant UI
   const [error, setError] = useState(null);
   const [isTyping, setIsTyping] = useState(false);
   const [isOtherTyping, setIsOtherTyping] = useState(false);
   const [inputText, setInputText] = useState('');
   const [chatPartner, setChatPartner] = useState(workerInfo); // Store worker info
+  const [showLoading, setShowLoading] = useState(false); // delayed spinner
+  
+  const flatListRef = useRef();
+  const didInitialScroll = useRef(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const headerAnim = useRef(new Animated.Value(1)).current; // Start visible
+  const fadeAnim = useRef(new Animated.Value(1)).current; // Start visible
+  
+  const formatDateLocalized = (dateStr) => {
+    const date = new Date(dateStr);
+    const today = new Date();
+    if (
+      date.getDate() === today.getDate() &&
+      date.getMonth() === today.getMonth() &&
+      date.getFullYear() === today.getFullYear()
+    ) {
+      return t('chat.today');
+    }
+    const yesterday = new Date();
+    yesterday.setDate(today.getDate() - 1);
+    if (
+      date.getDate() === yesterday.getDate() &&
+      date.getMonth() === yesterday.getMonth() &&
+      date.getFullYear() === yesterday.getFullYear()
+    ) {
+      return t('chat.yesterday');
+    }
+    return date.toLocaleDateString();
+  };
   
   // Log notification data if coming from notification
   useEffect(() => {
@@ -77,94 +89,103 @@ const Chat = () => {
   const handleInputTextChange = (text) => {
     setInputText(text);
   };
-  const flatListRef = useRef();
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
-  const headerAnim = useRef(new Animated.Value(0)).current;
-  const fadeAnim = useRef(new Animated.Value(0)).current;
 
-  // Using utility function for safe area calculation
-
-  // Animation for header and content
+  // Animation for header and content (already visible for instant UI)
   const animateIn = () => {
-    Animated.parallel([
-      Animated.timing(headerAnim, {
-        toValue: 1,
-        duration: 400,
-        useNativeDriver: true,
-      }),
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 400,
-        useNativeDriver: true,
-      }),
-    ]).start();
+    // No animation needed - already visible
   };
 
+  // Load messages immediately on mount with delayed loading overlay
   useEffect(() => {
     if (!conversationId) return;
-    setLoading(true);
-    
-    // Load messages
+    let isActive = true;
+    const timer = setTimeout(() => {
+      if (isActive) setShowLoading(true);
+    }, 400);
+
     getConversationMessages(conversationId)
-      .then(setMessages)
-      .catch(setError)
+      .then((msgs) => {
+        if (!isActive) return;
+        setMessages(msgs);
+        didInitialScroll.current = false;
+      })
+      .catch((err) => {
+        if (!isActive) return;
+        setError(err);
+      })
       .finally(() => {
-        setLoading(false);
-        animateIn();
+        if (!isActive) return;
+        clearTimeout(timer);
+        setShowLoading(false);
       });
-      
-    // If we don't have worker info already, try to fetch it from conversation
-    if (!chatPartner && user) {
-      getWorkerByConversation(conversationId, user.id)
-        .then(({ data }) => {
-          if (data) {
-            setChatPartner({
-              id: data.id,
-              name: data.full_name || 'Professional', 
-              avatar_url: data.Image
-            });
-            console.log('Set chat partner:', data.full_name);
-          }
-        })
-        .catch(err => console.error('Error loading worker info:', err));
-    }
+
+    return () => {
+      isActive = false;
+      clearTimeout(timer);
+    };
+  }, [conversationId]);
+
+  // Load worker info only if not already provided
+  useEffect(() => {
+    if (!conversationId || !user || chatPartner) return;
+    
+    getWorkerByConversation(conversationId, user.id)
+      .then(({ data }) => {
+        if (data) {
+          setChatPartner({
+            id: data.id,
+            name: data.full_name || undefined, 
+            avatar_url: data.Image
+          });
+        }
+      })
+      .catch(err => console.error('Error loading worker info:', err));
   }, [conversationId, user, chatPartner]);
+
+  // Mark messages as read when screen gains focus
+  useFocusEffect(
+    React.useCallback(() => {
+      if (conversationId) {
+        markConversationAsRead(conversationId);
+        
+        // If opened from notification, mark the specific message as read
+        if (notificationData?.message_id && user) {
+          console.log('📖 Marking notification message as read:', notificationData.message_id);
+          autoMarkMessageAsRead(notificationData.message_id, user.id);
+        }
+      }
+    }, [conversationId, markConversationAsRead, notificationData, user])
+  );
 
   // Real-time subscription
   useEffect(() => {
-    if (!conversationId) return;
-    const channel = subscribeToNewMessages(conversationId, (newMsg) => {
+    if (!conversationId || !user) return;
+    const channel = subscribeToNewMessages(conversationId, async (newMsg) => {
       setMessages((prev) => {
         const filtered = prev.filter(
           (msg) => !(msg.pending && msg.content === newMsg.content && msg.sender_id === newMsg.sender_id)
         );
         return [...filtered, newMsg];
       });
+      
+      // Auto-mark message as read if it's not from the current user and the chat is active
+      if (newMsg.sender_id !== user.id) {
+        console.log('📖 Auto-marking message as read:', newMsg.id);
+        await autoMarkMessageAsRead(newMsg.id, user.id);
+      }
     });
     return () => {
       if (channel) channel.unsubscribe();
     };
-  }, [conversationId]);
+  }, [conversationId, user]);
 
   useEffect(() => {
     const onKeyboardShow = (e) => {
       setKeyboardHeight(e.endCoordinates.height);
-      // Reset any potential layout issues
-      setTimeout(() => {
-        if (flatListRef.current) {
-          flatListRef.current.scrollToEnd({ animated: true });
-        }
-      }, 100);
     };
     
     const onKeyboardHide = () => {
       setKeyboardHeight(0);
-      // Force layout recalculation when keyboard hides
-      setTimeout(() => {
-        if (flatListRef.current) {
-          flatListRef.current.scrollToEnd({ animated: false });
-        }
-      }, 50);
     };
 
     const showSub = Keyboard.addListener('keyboardDidShow', onKeyboardShow);
@@ -195,14 +216,14 @@ const Chat = () => {
     try {
       await sendMessage(conversationId, user.id, tempMsg.content);
     } catch (err) {
-      setError(err.message || err.toString() || 'Failed to send message');
+      setError(err.message || err.toString() || t('chat.failed_to_send'));
       setMessages((prev) => prev.filter((msg) => msg.id !== tempId));
-      Alert.alert('Error', 'Failed to send message. Please try again.');
+      Alert.alert(t('common.error'), t('chat.failed_to_send'));
     }
   };
 
   const handleAttachment = () => {
-    Alert.alert('Attachment', 'Attachment feature coming soon!');
+    Alert.alert(t('common.coming_soon'), t('chat.attachment_coming_soon'));
   };
 
   const handleTyping = (typing) => {
@@ -211,16 +232,11 @@ const Chat = () => {
   };
 
   const renderHeader = () => (
-    <Animated.View 
+    <View 
       style={[
         styles.header, 
         { 
           backgroundColor: dark ? COLORS.dark1 : COLORS.white,
-          opacity: headerAnim,
-          transform: [{ translateY: headerAnim.interpolate({
-            inputRange: [0, 1],
-            outputRange: [-20, 0]
-          })}]
         }
       ]}
     >
@@ -250,21 +266,21 @@ const Chat = () => {
         </View>
         <View style={styles.headerText}>
           <Text style={[styles.headerName, { color: dark ? COLORS.white : COLORS.black }]}>
-            {chatPartner?.name || 'Service Provider'}
+            {chatPartner?.name || t('chat.service_provider')}
           </Text>
           {chatPartner && (
-            <Text style={[styles.headerStatus, { color: dark ? COLORS.grayscale400 : COLORS.grayscale600 }]}>
-              Professional
+            <Text style={[styles.headerStatus, { color: dark ? COLORS.grayscale400 : COLORS.grayscale600 }]}> 
+              {t('chat.professional')}
             </Text>
           )}
           {notificationData && (
-            <Text style={[styles.notificationSubtitle, { color: dark ? COLORS.gray3 : COLORS.gray3 }]}>
-              New message
+            <Text style={[styles.notificationSubtitle, { color: dark ? COLORS.gray3 : COLORS.gray3 }]}> 
+              {t('chat.new_message')}
             </Text>
           )}
         </View>
       </View>
-    </Animated.View>
+    </View>
   );
 
   const renderDateSeparator = (date) => (
@@ -286,7 +302,7 @@ const Chat = () => {
     else {
       const curr = messages[index];
       const prev = messages[index - 1];
-      if (curr && prev && formatDate(curr.created_at) !== formatDate(prev.created_at)) {
+      if (curr && prev && formatDateLocalized(curr.created_at) !== formatDateLocalized(prev.created_at)) {
         showDate = true;
       }
     }
@@ -298,12 +314,8 @@ const Chat = () => {
     const isFirstInGroup = !prevMessage || prevMessage.sender_id !== item.sender_id;
 
     return (
-      <Animated.View 
-        style={[
-          { opacity: fadeAnim }
-        ]}
-      >
-        {showDate && renderDateSeparator(formatDate(item.created_at))}
+      <View>
+        {showDate && renderDateSeparator(formatDateLocalized(item.created_at))}
         <MessageBubble
           message={item.content}
           isMe={isMe}
@@ -314,33 +326,38 @@ const Chat = () => {
           timestamp={item.created_at}
           status={item.pending ? 'pending' : 'read'}
         />
-      </Animated.View>
+      </View>
     );
   };
 
-  if (loading) {
-    return (
-      <View style={[styles.loadingContainer, { backgroundColor: dark ? COLORS.dark1 : COLORS.white }]}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
-        <Text style={[styles.loadingText, { color: dark ? COLORS.white : COLORS.black }]}>
-          Loading conversation...
-        </Text>
-      </View>
-    );
-  }
+  // Skeleton/Empty state for instant UI
+  const renderEmptyMessages = () => (
+    <View style={styles.emptyMessagesContainer}>
+      <Text style={[styles.emptyMessagesText, { color: dark ? COLORS.grayscale400 : COLORS.grayscale600 }]}>
+        {t('')}
+      </Text>
+    </View>
+  );
 
   if (error) {
     return (
       <View style={[styles.errorContainer, { backgroundColor: dark ? COLORS.dark1 : COLORS.white }]}>
         <Ionicons name="alert-circle" size={48} color={COLORS.error} />
-        <Text style={[styles.errorText, { color: dark ? COLORS.white : COLORS.black }]}>
-          {error?.message || error?.toString() || 'An error occurred.'}
+        <Text style={[styles.errorText, { color: dark ? COLORS.white : COLORS.black }]}> 
+          {error?.message || error?.toString() || t('common.error')}
         </Text>
         <TouchableOpacity 
           style={styles.retryButton}
-          onPress={() => window.location.reload()}
+          onPress={() => {
+            setError(null);
+            getConversationMessages(conversationId)
+              .then((msgs) => {
+                setMessages(msgs);
+              })
+              .catch(setError);
+          }}
         >
-          <Text style={styles.retryButtonText}>Retry</Text>
+          <Text style={styles.retryButtonText}>{t('chat.retry')}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -351,44 +368,57 @@ const Chat = () => {
       <StatusBar 
         barStyle={dark ? 'light-content' : 'dark-content'}
         backgroundColor={dark ? COLORS.dark1 : COLORS.white}
+        translucent={false}
       />
-      {renderHeader()}
+      <View style={{ paddingTop: getSafeAreaTop() }}>
+        {renderHeader()}
+      </View>
       <KeyboardAvoidingView
         style={styles.keyboardAvoidingView}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
-        enabled={true}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={0}
+        enabled={Platform.OS === 'ios'}
       >
         <FlatList
-          ref={flatListRef}
-          data={messages}
+          data={messages.slice().reverse()}
           keyExtractor={item => item.id}
-          renderItem={renderMessage}
+          renderItem={({ item, index }) => {
+            const originalIndex = messages.length - 1 - index;
+            return renderMessage({ item, index: originalIndex });
+          }}
+          inverted
           contentContainerStyle={[
             styles.messagesContainer,
             { 
-              paddingBottom: keyboardHeight > 0 ? keyboardHeight + 20 : getSafeAreaBottom() + 100,
+              paddingTop: getSafeAreaBottom() + 20,
               flexGrow: 1
             }
           ]}
           keyboardShouldPersistTaps="handled"
-          onContentSizeChange={() => {
-            if (flatListRef.current) {
-              flatListRef.current.scrollToEnd({ animated: false });
-            }
+          maintainVisibleContentPosition={{
+            minIndexForVisible: 0,
+            autoscrollToTopThreshold: 10
           }}
           showsVerticalScrollIndicator={false}
           style={styles.messagesList}
           removeClippedSubviews={true}
-          maxToRenderPerBatch={10}
-          windowSize={10}
+          maxToRenderPerBatch={15}
+          windowSize={8}
+          initialNumToRender={20}
+          updateCellsBatchingPeriod={50}
+          ListEmptyComponent={renderEmptyMessages}
         />
+        {showLoading && (
+          <View style={styles.loadingOverlay} pointerEvents="none">
+            <ActivityIndicator size="large" color={COLORS.primary} />
+          </View>
+        )}
         
         <ChatInput
           onSend={handleSend}
           onAttachment={handleAttachment}
           onTyping={handleTyping}
-          placeholder="Type a message..."
+          placeholder={t('chat.type_message')}
           maxLength={1000}
           disabled={false}
           showAttachment={false}
@@ -406,16 +436,6 @@ const Chat = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    fontFamily: 'regular',
   },
   errorContainer: {
     flex: 1,
@@ -472,16 +492,6 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 20,
   },
-  onlineIndicator: {
-    position: 'absolute',
-    bottom: 2,
-    right: 2,
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    borderWidth: 2,
-    borderColor: COLORS.white,
-  },
   headerText: {
     flex: 1,
   },
@@ -494,14 +504,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: 'regular',
   },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  headerActionButton: {
-    padding: 8,
-    marginLeft: 4,
-  },
   keyboardAvoidingView: {
     flex: 1,
   },
@@ -510,6 +512,27 @@ const styles = StyleSheet.create({
   },
   messagesContainer: {
     paddingTop: 16,
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.05)'
+  },
+  emptyMessagesContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  emptyMessagesText: {
+    fontSize: 16,
+    fontFamily: 'regular',
+    textAlign: 'center',
   },
   dateSeparatorContainer: {
     alignItems: 'center',

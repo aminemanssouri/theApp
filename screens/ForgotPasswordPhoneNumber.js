@@ -6,6 +6,7 @@ import Header from '../components/Header';
 import Checkbox from 'expo-checkbox';
 import Button from '../components/Button';
 import { useTheme } from '../theme/ThemeProvider';
+import { t } from '../context/LanguageContext';
 
 const ForgotPasswordPhoneNumber = ({ navigation }) => {
     const [error, setError] = useState(null);
@@ -17,7 +18,7 @@ const ForgotPasswordPhoneNumber = ({ navigation }) => {
 
     useEffect(() => {
         if (error) {
-            Alert.alert('An error occured', error)
+            Alert.alert(t('common.error'), error)
         }
     }, [error]);
 
@@ -108,7 +109,8 @@ const ForgotPasswordPhoneNumber = ({ navigation }) => {
     return (
         <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
             <View style={[styles.container, { backgroundColor: colors.background }]}>
-                <Header title="Forgot Password" />
+                <Header title={t('auth.forgot_password_title')} />
+
                 <ScrollView style={{ marginVertical: 54 }} showsVerticalScrollIndicator={false}>
                     <View style={styles.logoContainer}>
                         <Image
@@ -119,7 +121,8 @@ const ForgotPasswordPhoneNumber = ({ navigation }) => {
                     </View>
                     <Text style={[styles.title, {
                         color: dark ? COLORS.white : COLORS.black
-                    }]}>Enter to Your Phone Number</Text>
+                    }]}>{t('auth.enter_your_phone_number')}</Text>
+
                     <View style={[styles.inputContainer, { backgroundColor: dark ? COLORS.dark2 : COLORS.greyscale500 }]}>
                         <TouchableOpacity
                             style={styles.selectFlagContainer}
@@ -145,11 +148,12 @@ const ForgotPasswordPhoneNumber = ({ navigation }) => {
                         {/* Phone Number Text Input */}
                         <TextInput
                             style={[styles.input, { color: dark ? COLORS.white : COLORS.black }]}
-                            placeholder="Enter your phone number"
+                            placeholder={t('auth.enter_your_phone_number')}
                             placeholderTextColor={COLORS.gray}
                             selectionColor="#111"
                             keyboardType="numeric"
                         />
+
                     </View>
                     <View style={styles.checkBoxContainer}>
                         <View style={{ flexDirection: 'row' }}>
@@ -162,19 +166,22 @@ const ForgotPasswordPhoneNumber = ({ navigation }) => {
                             <View style={{ flex: 1 }}>
                                 <Text style={[styles.privacy, {
                                     color: dark ? COLORS.white : COLORS.black
-                                }]}>Remenber me</Text>
+                                }]}>{t('auth.remember_me')}</Text>
+
                             </View>
                         </View>
                     </View>
                     <Button
-                        title="Reset Password"
+                        title={t('auth.reset_password')}
                         filled
                         onPress={() => navigation.navigate("OTPVerification")}
                         style={styles.button}
                     />
+
                     <TouchableOpacity
                         onPress={() => navigation.navigate("Login")}>
-                        <Text style={styles.forgotPasswordBtnText}>Remenber the password?</Text>
+                        <Text style={styles.forgotPasswordBtnText}>{t('auth.remember_password')}</Text>
+
                     </TouchableOpacity>
                     <View>
                     </View>
@@ -182,10 +189,12 @@ const ForgotPasswordPhoneNumber = ({ navigation }) => {
                 <View style={styles.bottomContainer}>
                     <Text style={[styles.bottomLeft, {
                         color: dark ? COLORS.white : COLORS.black
-                    }]}>Don't have an account ?</Text>
+                    }]}>{t('auth.dont_have_account')}</Text>
+
                     <TouchableOpacity
                         onPress={() => navigation.navigate("Signup")}>
-                        <Text style={styles.bottomRight}>{" "}Sign Up</Text>
+                        <Text style={styles.bottomRight}>{" "}{t('auth.sign_up')}</Text>
+
                     </TouchableOpacity>
                 </View>
             </View>

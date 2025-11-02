@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { COLORS, icons } from '../constants';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNotifications } from '../context/NotificationContext';
+import { t } from '../context/LanguageContext';
+
 import { useTheme } from '../theme/ThemeProvider';
 import { useAuth } from '../context/AuthContext';
 import NotificationCard from '../components/NotificationCard';
@@ -53,7 +55,7 @@ const Notifications = ({ navigation }) => {
     console.log('🔔 NOTIFICATION CLICKED - Full notification data:', notification);
     
     if (!isUserAuthenticated()) {
-      Alert.alert('Authentication Required', 'Please log in to view notifications');
+      Alert.alert(t('notifications.auth_required'), t('notifications.please_login'));
       navigation.navigate('Login');
       return;
     }
@@ -112,6 +114,8 @@ const Notifications = ({ navigation }) => {
               console.log('🧭 Navigating to Chat screen with conversationId:', conversationId);
               navigation.navigate('Chat', { 
                 conversationId: conversationId,
+                // pass workerId like Inbox does for consistent header/user context
+                workerId: related_id,
                 notificationData: {
                   title,
                   message,
@@ -121,11 +125,11 @@ const Notifications = ({ navigation }) => {
               console.log('✅ Navigation to Chat completed');
             } else {
               console.error('❌ No conversation ID returned from getOrCreateConversation');
-              Alert.alert('Error', 'Unable to create conversation. Please try again.');
+              Alert.alert(t('common.error'), t('notifications.unable_to_create_conversation'));
             }
           } catch (error) {
             console.error('❌ Error getting conversation:', error);
-            Alert.alert('Error', 'Unable to open chat. Please try again.');
+            Alert.alert(t('common.error'), t('notifications.unable_to_open_chat'));
           }
         } else {
           console.log('⚠️ Message notification missing related_id or related_type is not "user"');
@@ -177,36 +181,36 @@ const Notifications = ({ navigation }) => {
 
   const handleMarkAllAsRead = async () => {
     if (!isUserAuthenticated()) {
-      Alert.alert('Authentication Required', 'Please log in to manage notifications');
+      Alert.alert(t('notifications.auth_required'), t('notifications.please_login'));
       return;
     }
 
     try {
       await markAllAsRead();
     } catch (error) {
-      Alert.alert('Error', 'Failed to mark all notifications as read');
+      Alert.alert(t('common.error'), t('notifications.failed_mark_all'));
     }
   };
 
   const handleClearAll = () => {
     if (!isUserAuthenticated()) {
-      Alert.alert('Authentication Required', 'Please log in to manage notifications');
+      Alert.alert(t('notifications.auth_required'), t('notifications.please_login'));
       return;
     }
 
     Alert.alert(
-      'Clear All Notifications',
-      'Are you sure you want to clear all notifications? This action cannot be undone.',
+      t('notifications.clear_all_title'),
+      t('notifications.clear_all_message'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Clear All',
+          text: t('notifications.clear_all_button'),
           style: 'destructive',
           onPress: async () => {
             try {
               await deleteAll();
             } catch (error) {
-              Alert.alert('Error', 'Failed to clear all notifications');
+              Alert.alert(t('common.error'), t('notifications.failed_clear_all'));
             }
           }
         }
@@ -221,7 +225,7 @@ const Notifications = ({ navigation }) => {
           onPress={() => navigation.goBack()}
           style={[styles.headerIconContainer, {
             borderColor: dark ? COLORS.dark3 : COLORS.grayscale200
-          }]}>
+          }]}> 
           <Image
             source={icons.back}
             resizeMode='contain'
@@ -230,41 +234,28 @@ const Notifications = ({ navigation }) => {
             }]}
           />
         </TouchableOpacity>
-        <View style={styles.headerTitleContainer}>
-          <Text style={[styles.headerTitle, {
-            color: dark ? COLORS.white : COLORS.greyscale900
-          }]}>Notifications</Text>
-          {unreadCount > 0 && (
-            <View style={styles.unreadBadge}>
-              <Text style={styles.unreadBadgeText}>{unreadCount}</Text>
-            </View>
-          )}
-        </View>
-        <View style={styles.headerActions}>
-          {notifications.length > 0 && (
-            <>
-              <TouchableOpacity
-                onPress={handleMarkAllAsRead}
-                style={styles.headerActionButton}>
-                <Text style={[styles.markAllRead, {
-                  color: COLORS.primary
-                }]}>Mark All Read</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={handleClearAll}
-                style={styles.headerActionButton}>
-                <Text style={[styles.clearAll, {
-                  color: COLORS.error
-                }]}>Clear All</Text>
-              </TouchableOpacity>
-            </>
-          )}
-        </View>
+        <View style={styles.headerCenter} />
+        {notifications.length > 0 ? (
+          <TouchableOpacity
+            onPress={handleClearAll}
+            style={styles.headerRightButton}
+            accessibilityRole="button"
+            accessibilityLabel={t('notifications.clear_all')}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            activeOpacity={0.8}
+          >
+            <Image
+              source={icons.trash}
+              resizeMode='contain'
+              style={styles.headerRightIcon}
+            />
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.headerRightSpacer} />
+        )}
       </View>
     )
   };
-
-
 
   const renderNotificationItem = ({ item }) => (
     <NotificationCard
@@ -284,11 +275,13 @@ const Notifications = ({ navigation }) => {
           />
           <Text style={[styles.emptyTitle, {
             color: dark ? COLORS.white : COLORS.greyscale900
-          }]}>Login to see notifications</Text>
+          }]}>{t('notifications.login_to_see')}</Text>
+
           <Text style={[styles.emptySubtitle, {
             color: dark ? COLORS.gray3 : COLORS.gray3
           }]}>
-            Sign in to your account to view and manage your notifications
+            {t('notifications.sign_in_to_view')}
+
           </Text>
         </View>
       );
@@ -303,11 +296,13 @@ const Notifications = ({ navigation }) => {
         />
         <Text style={[styles.emptyTitle, {
           color: dark ? COLORS.white : COLORS.greyscale900
-        }]}>No notifications yet</Text>
+        }]}>{t('notifications.empty_title')}</Text>
+
         <Text style={[styles.emptySubtitle, {
           color: dark ? COLORS.gray3 : COLORS.gray3
         }]}>
-          You'll see your notifications here when they arrive
+          {t('notifications.empty_subtitle')}
+
         </Text>
       </View>
     );
@@ -320,7 +315,7 @@ const Notifications = ({ navigation }) => {
 
         <FlatList
           data={notifications}
-          keyExtractor={item => item.id}
+          keyExtractor={item => String(item.id)}
           renderItem={renderNotificationItem}
           refreshControl={
             <RefreshControl
@@ -378,6 +373,11 @@ const styles = StyleSheet.create({
     fontFamily: "bold",
     color: COLORS.black
   },
+  headerCenter: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   unreadBadge: {
     backgroundColor: COLORS.primary,
     borderRadius: 10,
@@ -388,24 +388,38 @@ const styles = StyleSheet.create({
     marginLeft: 8
   },
   unreadBadgeText: {
-    color: COLORS.white,
-    fontSize: 12,
-    fontFamily: 'bold',
-    paddingHorizontal: 4
-  },
-  headerAction: {
-    fontSize: 14,
-    fontFamily: "medium",
-    color: COLORS.primary
   },
   headerActionButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-    backgroundColor: COLORS.secondaryWhite,
-    marginLeft: 8
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 20,
+    marginLeft: 12,
+    maxWidth: '65%',
+    // shadow for iOS
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    // elevation for Android
+    elevation: 1,
   },
-
+  headerActionButtonLight: {
+    backgroundColor: 'transparent',
+  },
+  headerActionButtonDark: {
+    backgroundColor: 'transparent',
+  },
+  headerActionLabel: {
+    fontSize: 14,
+    color: COLORS.error,
+    fontFamily: 'medium',
+    lineHeight: 18,
+    textAlign: 'center',
+    flexShrink: 1,
+    maxWidth: '100%'
+  },
   headerNoti: {
     flexDirection: "row",
     alignItems: "center",
@@ -435,12 +449,24 @@ const styles = StyleSheet.create({
     fontFamily: "bold",
     color: COLORS.white
   },
+  headerRightSpacer: {
+    width: 46, // matches headerIconContainer width for perfect centering
+  },
+  headerRightButton: {
+    height: 46,
+    width: 46,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 999,
+  },
+  headerRightIcon: {
+    width: 22,
+    height: 22,
+    tintColor: COLORS.error,
+  },
   headerActions: {
     flexDirection: 'row',
     alignItems: 'center'
-  },
-  headerActionButton: {
-    marginLeft: 12
   },
   markAllRead: {
     fontSize: 14,
@@ -448,9 +474,14 @@ const styles = StyleSheet.create({
     fontFamily: "medium"
   },
   clearAll: {
+    // deprecated by headerActionLabel; kept for backward compatibility
     fontSize: 14,
     color: COLORS.error,
-    fontFamily: "medium"
+    fontFamily: "medium",
+    lineHeight: 18,
+    textAlign: 'center',
+    flexShrink: 1,
+    flexWrap: 'wrap'
   },
   emptyListContainer: {
     flex: 1,

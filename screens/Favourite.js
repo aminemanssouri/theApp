@@ -1,26 +1,31 @@
-import { View, Text, StyleSheet, TouchableOpacity, Image, FlatList, Platform } from 'react-native';
-import React, { useRef, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Image, FlatList, Platform, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
 import { COLORS, SIZES, icons } from '../constants';
 import { getSafeAreaInsets } from '../utils/safeAreaUtils';
 import { ScrollView } from 'react-native-virtualized-view';
-import { category, myWishlistServices as initialWishlistServices } from '../data';
-import RBSheet from "react-native-raw-bottom-sheet";
-import Button from '../components/Button';
+import { category } from '../data';
 import WishlistServiceCard from '../components/WishlistServiceCard';
 import { useTheme } from '../theme/ThemeProvider';
+import { useAuth } from '../context/AuthContext';
+import { getUserFavoriteServices, getUserFavoriteWorkers, removeFavoriteById, getUserFavorites } from '../lib/services/favorites';
+import { supabase } from '../lib/supabase';
+import { useI18n } from '../context/LanguageContext';
 
 const Favourite = ({ navigation }) => {
-    const refRBSheet = useRef();
-    const [selectedWishlistItem, setSelectedWishlistItem] = useState(null);
-    const [myWishlistServices, setMyWishlistServices] = useState(initialWishlistServices || []);
+    const [myWishlistServices, setMyWishlistServices] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+
     const { colors, dark } = useTheme();
+    const { user } = useAuth();
+    const { t } = useI18n();
     const insets = getSafeAreaInsets();
 
     // Calculate bottom spacing to avoid tab bar overlap
     const getBottomSpacing = () => {
         const baseTabHeight = 60;
         const safeAreaBottom = insets.bottom;
-        
+
         if (Platform.OS === 'ios') {
             return baseTabHeight + safeAreaBottom + 20;
         } else {
@@ -28,22 +33,164 @@ const Favourite = ({ navigation }) => {
         }
     };
 
-    const handleRemoveBookmark = () => {
-        // Implement your logic to remove the selectedWishlistItem from the bookmark list
-        if (selectedWishlistItem) {
-            const updatedBookmarkCourses = myWishlistServices.filter(
-                (course) => course.id !== selectedWishlistItem.id
-            );
-            setMyWishlistServices(updatedBookmarkCourses);
+    // Normalize a service favorite to card props
+    const mapServiceFavoriteToCard = (fav) => {
+        const svc = fav.services;
+        return {
+            id: fav.id,
+            favoriteId: fav.favorite_id,
+            favoriteType: 'service',
+            name: svc?.name || t('favorites.unknown_service'),
+            image: icons.category, // placeholder icon image
+            providerName: svc?.service_categories?.name || t('favorites.service'),
+            price: svc?.base_price || 0,
+            isOnDiscount: false,
+            oldPrice: undefined,
+            rating: 0,
+            numReviews: 0,
+        };
+    };
 
-            // Close the bottom sheet
-            refRBSheet.current.close();
+    // Normalize a worker/worker-service favorite to card props
+    const mapWorkerFavoriteToCard = (fav) => {
+        const w = fav.workers;
+        const fullName = [w?.first_name, w?.last_name].filter(Boolean).join(' ').trim();
+        // If worker-service, show service name primarily
+        const svcName = fav.isWorkerService ? fav?.serviceMetadata?.service_name : null;
+        return {
+            id: fav.id,
+            favoriteId: fav.favorite_id,
+            favoriteType: fav.isWorkerService ? 'worker_service' : 'worker',
+            name: svcName || fullName || t('favorites.unknown_worker'),
+            image: w?.Image ? { uri: w.Image } : require('../assets/images/avatar.jpeg'),
+            providerName: fav.isWorkerService ? fullName : t('favorites.worker'),
+            price: w?.hourly_rate || 0,
+            isOnDiscount: false,
+            oldPrice: undefined,
+            rating: w?.average_rating || 0,
+            numReviews: w?.total_jobs || 0,
+            workerId: w?.id,
+            serviceId: fav?.serviceMetadata?.service_id,
+        };
+    };
+
+    // Load user's favorite services and workers from database, normalize for UI
+    const loadFavorites = async () => {
+        if (!user?.id) {
+            console.log('No user ID found, cannot load favorites');
+            setLoading(false);
+            return;
+        }
+
+        try {
+            const services = await getUserFavoriteServices(user.id);
+            const workers = await getUserFavoriteWorkers(user.id);
+
+            // Normalize to card items
+            const serviceCards = (services || []).map(mapServiceFavoriteToCard);
+            const workerCards = (workers || []).map(mapWorkerFavoriteToCard);
+            let allFavorites = [...serviceCards, ...workerCards];
+
+            // Sort by created_at from original favorites if present, else leave as is
+            // Note: our mapped objects keep id but not created_at; optional: re-fetch order already descending
+
+            setMyWishlistServices(allFavorites);
+
+            if (allFavorites.length === 0) {
+                console.log('No favorites found for user');
+            }
+        } catch (error) {
+            console.error('Error loading favorites:', error);
+            setMyWishlistServices([]);
+        } finally {
+            setLoading(false);
         }
     };
-    
-    /**
-     * Render header
-     */
+
+    // Handle bookmark press - remove favorite directly without modal
+    const handleBookmarkPress = async (item) => {
+        if (!item || !user?.id) return;
+
+        try {
+            console.log('🗑️ Removing favorite from Favourites screen:', item);
+
+            if (item.favoriteType === 'worker_service') {
+                // For worker-service combinations, handle complex metadata
+                const favorites = await getUserFavorites(user.id);
+                const targetFavorite = favorites.find(fav =>
+                    fav.favorite_type === 'worker' &&
+                    fav.favorite_id === item.workerId
+                );
+
+                if (targetFavorite) {
+                    const metadata = targetFavorite.metadata;
+
+                    // Check if single service or multiple services
+                    if (metadata?.service_id === item.serviceId) {
+                        // Single service - remove entire favorite
+                        console.log('🗑️ Removing single service favorite');
+                        await supabase.from('favorites').delete().eq('id', targetFavorite.id);
+                    } else if (metadata?.services && Array.isArray(metadata.services)) {
+                        // Multiple services - remove just this service from array
+                        const updatedServices = metadata.services.filter(s => s.service_id !== item.serviceId);
+
+                        if (updatedServices.length === 0) {
+                            // No services left, remove entire favorite
+                            console.log('🗑️ No services left, removing entire favorite');
+                            await supabase.from('favorites').delete().eq('id', targetFavorite.id);
+                        } else if (updatedServices.length === 1) {
+                            // Only one service left, convert back to single service structure
+                            console.log('🗑️ Converting back to single service');
+                            const updatedMetadata = {
+                                service_id: updatedServices[0].service_id,
+                                service_name: updatedServices[0].service_name,
+                                is_worker_service: true
+                            };
+                            await supabase.from('favorites')
+                                .update({ metadata: updatedMetadata })
+                                .eq('id', targetFavorite.id);
+                        } else {
+                            // Multiple services remain, update array
+                            console.log('🗑️ Updating services array');
+                            const updatedMetadata = {
+                                ...metadata,
+                                services: updatedServices
+                            };
+                            await supabase.from('favorites')
+                                .update({ metadata: updatedMetadata })
+                                .eq('id', targetFavorite.id);
+                        }
+                    }
+                }
+            } else {
+                // For service or worker favorites, use the database record ID
+                console.log('🗑️ Removing simple favorite');
+                await removeFavoriteById(item.id, user.id);
+            }
+
+            // Update local state
+            const updatedFavorites = myWishlistServices.filter(
+                (favorite) => favorite.id !== item.id
+            );
+            setMyWishlistServices(updatedFavorites);
+
+            // Optional: Show a brief toast/feedback that item was removed
+            console.log('✅ Favorite removed:', item.name);
+        } catch (error) {
+            console.error('❌ Error removing favorite:', error);
+            Alert.alert(t('common.error'), t('favorites.failed_remove'));
+        }
+    };
+
+    useEffect(() => {
+        loadFavorites();
+        const unsub = navigation?.addListener?.('focus', () => {
+            loadFavorites();
+        });
+        return unsub;
+    }, [navigation, user?.id]);
+
+    /** Render header */
     const renderHeader = () => {
         return (
             <View style={styles.headerContainer}>
@@ -53,106 +200,85 @@ const Favourite = ({ navigation }) => {
                         <Image
                             source={icons.arrowBack}
                             resizeMode='contain'
-                            style={[styles.backIcon, { 
-                                tintColor: dark? COLORS.white : COLORS.greyscale900
+                            style={[styles.backIcon, {
+                                tintColor: dark ? COLORS.white : COLORS.greyscale900
                             }]}
                         />
                     </TouchableOpacity>
-                    <Text style={[styles.headerTitle, { 
-                        color: dark? COLORS.white : COLORS.greyscale900
+                    <Text style={[styles.headerTitle, {
+                        color: dark ? COLORS.white : COLORS.greyscale900
                     }]}>
-                        My Wishlist
+                        {t('favorites.title')}
                     </Text>
                 </View>
                 <TouchableOpacity>
                     <Image
                         source={icons.moreCircle}
                         resizeMode='contain'
-                        style={[styles.moreIcon, { 
-                            tintColor: dark? COLORS.secondaryWhite : COLORS.greyscale900
+                        style={[styles.moreIcon, {
+                            tintColor: dark ? COLORS.secondaryWhite : COLORS.greyscale900
                         }]}
                     />
                 </TouchableOpacity>
             </View>
         )
     }
-    /**
-       * Render my bookmark courses
-       */
+
+    /** Render my bookmark services */
     const renderMyWishlistServices = () => {
-        const [selectedCategories, setSelectedCategories] = useState(["1"]);
-
-        const filteredServices = myWishlistServices.filter(course => selectedCategories.includes("1") || selectedCategories.includes(course.categoryId));
-
-        // Category item
-        const renderCategoryItem = ({ item }) => (
-            <TouchableOpacity
-                style={{
-                    backgroundColor: selectedCategories.includes(item.id) ? COLORS.primary : "transparent",
-                    padding: 10,
-                    marginVertical: 5,
-                    borderColor: COLORS.primary,
-                    borderWidth: 1.3,
-                    borderRadius: 24,
-                    marginRight: 12,
-                }}
-                onPress={() => toggleCategory(item.id)}>
-                <Text style={{
-                    color: selectedCategories.includes(item.id) ? COLORS.white : COLORS.primary
-                }}>{item.name}</Text>
-            </TouchableOpacity>
-        );
-
-        // Toggle category selection
-        const toggleCategory = (categoryId) => {
-            const updatedCategories = [...selectedCategories];
-            const index = updatedCategories.indexOf(categoryId);
-
-            if (index === -1) {
-                updatedCategories.push(categoryId);
-            } else {
-                updatedCategories.splice(index, 1);
-            }
-
-            setSelectedCategories(updatedCategories);
-        };
-
         return (
             <View>
-                <View style={styles.categoryContainer}>
+                {loading ? (
+                    <View style={styles.loadingContainer}>
+                        <Text style={[styles.loadingText, { color: dark ? COLORS.white : COLORS.black }]}>
+                            {t('favorites.loading')}
+                        </Text>
+                    </View>
+                ) : myWishlistServices.length === 0 ? (
+                    <View style={styles.emptyContainer}>
+                        <Text style={[styles.emptyText, { color: dark ? COLORS.white : COLORS.black }]}>
+                            {t('favorites.empty_title')}
+                        </Text>
+                        <Text style={[styles.emptySubtext, { color: dark ? COLORS.white : COLORS.greyscale600 }]}>
+                            {t('favorites.empty_sub')}
+                        </Text>
+                    </View>
+                ) : (
                     <FlatList
-                        data={category}
+                        data={myWishlistServices}
                         keyExtractor={item => item.id}
-                        showsHorizontalScrollIndicator={false}
-                        horizontal
-                        renderItem={renderCategoryItem}
+                        refreshing={loading}
+                        onRefresh={loadFavorites}
+                        renderItem={({ item }) => {
+                            return (
+                                <WishlistServiceCard
+                                    name={item.name}
+                                    image={item.image}
+                                    providerName={item.providerName}
+                                    price={item.price}
+                                    isOnDiscount={item.isOnDiscount}
+                                    oldPrice={item.oldPrice}
+                                    rating={item.rating}
+                                    numReviews={item.numReviews}
+                                    onPress={() => {
+                                        if (item.favoriteType === 'worker') {
+                                            navigation.navigate("WorkerDetails", { workerId: item.workerId || item.favoriteId });
+                                        } else if (item.favoriteType === 'worker_service') {
+                                            navigation.navigate("WorkerDetails", {
+                                                workerId: item.workerId,
+                                                serviceId: item.serviceId
+                                            });
+                                        } else {
+                                            navigation.navigate("ServiceDetails", { serviceId: item.favoriteId });
+                                        }
+                                    }}
+                                    categoryId={item.categoryId}
+                                    bookmarkOnPress={() => handleBookmarkPress(item)}
+                                />
+                            )
+                        }}
                     />
-                </View>
-                <FlatList
-                    data={filteredServices}
-                    keyExtractor={item => item.id}
-                    renderItem={({ item }) => {
-                        return (
-                            <WishlistServiceCard
-                                name={item.name}
-                                image={item.image}
-                                providerName={item.providerName}
-                                price={item.price}
-                                isOnDiscount={item.isOnDiscount}
-                                oldPrice={item.oldPrice}
-                                rating={item.rating}
-                                numReviews={item.numReviews}
-                                onPress={() => navigation.navigate("ServiceDetails")}
-                                categoryId={item.categoryId}
-                                bookmarkOnPress={() => {
-                                    // Show the bookmark item in the bottom sheet
-                                    setSelectedWishlistItem(item);
-                                    refRBSheet.current.open()
-                                }}
-                            />
-                        )
-                    }}
-                />
+                )}
             </View>
         )
     }
@@ -161,7 +287,7 @@ const Favourite = ({ navigation }) => {
         <View style={[styles.area, { backgroundColor: colors.background }]}>
             <View style={[styles.container, { backgroundColor: colors.background }]}>
                 {renderHeader()}
-                <ScrollView 
+                <ScrollView
                     showsVerticalScrollIndicator={false}
                     contentContainerStyle={{
                         paddingBottom: getBottomSpacing(),
@@ -170,72 +296,6 @@ const Favourite = ({ navigation }) => {
                     {renderMyWishlistServices()}
                 </ScrollView>
             </View>
-            <RBSheet
-                ref={refRBSheet}
-                closeOnDragDown={true}
-                closeOnPressMask={false}
-                height={380}
-                customStyles={{
-                    wrapper: {
-                        backgroundColor: "rgba(0,0,0,0.5)",
-                    },
-                    draggableIcon: {
-                        backgroundColor: dark ? COLORS.greyscale300 : COLORS.greyscale300,
-                    },
-                    container: {
-                        borderTopRightRadius: 32,
-                        borderTopLeftRadius: 32,
-                        height: 380,
-                        backgroundColor: dark ? COLORS.dark2 : COLORS.white,
-                        alignItems: "center",
-                        width: "100%"
-                    }
-                }}>
-                <Text style={[styles.bottomSubtitle, { 
-                    color: dark ? COLORS.white : COLORS.black
-                }]}>Remove from Bookmark?</Text>
-                <View style={styles.separateLine} />
-
-                <View style={[styles.selectedBookmarkContainer, { 
-                    ackgroundColor: dark ? COLORS.dark2 : COLORS.tertiaryWhite
-                }]}>
-                    <WishlistServiceCard
-                        name={selectedWishlistItem?.name}
-                        image={selectedWishlistItem?.image}
-                        providerName={selectedWishlistItem?.providerName}
-                        price={selectedWishlistItem?.price}
-                        isOnDiscount={selectedWishlistItem?.isOnDiscount}
-                        oldPrice={selectedWishlistItem?.oldPrice}
-                        rating={selectedWishlistItem?.rating}
-                        numReviews={selectedWishlistItem?.numReviews}
-                        onPress={() => navigation.navigate("ServiceDetails")}
-                        categoryId={selectedWishlistItem?.categoryId}
-                        containerStyles={{
-                            backgroundColor: COLORS.white
-                        }}
-                    />
-                </View>
-
-                <View style={styles.bottomContainer}>
-                    <Button
-                        title="Cancel"
-                        style={{
-                            width: (SIZES.width - 32) / 2 - 8,
-                            backgroundColor: dark ? COLORS.dark3 : COLORS.tansparentPrimary,
-                            borderRadius: 32,
-                            borderColor: dark ? COLORS.dark3 : COLORS.tansparentPrimary
-                        }}
-                        textColor={dark ? COLORS.white : COLORS.primary}
-                        onPress={() => refRBSheet.current.close()}
-                    />
-                    <Button
-                        title="Yes, Remove"
-                        filled
-                        style={styles.removeButton}
-                        onPress={handleRemoveBookmark}
-                    />
-                </View>
-            </RBSheet>
         </View>
     )
 };
@@ -243,21 +303,16 @@ const Favourite = ({ navigation }) => {
 const styles = StyleSheet.create({
     area: {
         flex: 1,
-        backgroundColor: COLORS.white,
-            paddingTop: Platform.OS === 'android' ? 25 : 0,
-
+        paddingTop: Platform.OS === 'android' ? 25 : 0,
     },
-container: {
-    flex: 1,
-    backgroundColor: COLORS.white,
-    paddingHorizontal: 16, 
-     marginBottom: 32,
-    paddingVertical: 16,
-
-  },
+    container: {
+        flex: 1,
+        paddingHorizontal: 16,
+        paddingVertical: 16,
+    },
     headerContainer: {
         flexDirection: "row",
-            alignItems: "center",
+        alignItems: "center",
         justifyContent: "space-between",
         marginBottom: 14
     },
@@ -265,14 +320,12 @@ container: {
         flexDirection: "row",
         alignItems: "center"
     },
-  
     headerTitle: {
         fontSize: 22,
         fontFamily: 'bold',
         color: COLORS.black,
         marginLeft: 12
-    }, 
-    
+    },
     backIcon: {
         height: 24,
         width: 24,
@@ -283,49 +336,32 @@ container: {
         height: 24,
         tintColor: COLORS.black
     },
-    categoryContainer: {
-        marginTop: 0
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingVertical: 50
     },
-    bottomContainer: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        marginVertical: 16,
-        paddingHorizontal: 16,
-        width: "100%"
+    loadingText: {
+        fontSize: 16,
+        fontFamily: 'medium'
     },
-    cancelButton: {
-        width: (SIZES.width - 32) / 2 - 8,
-        backgroundColor: COLORS.tansparentPrimary,
-        borderRadius: 32
+    emptyContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingVertical: 50
     },
-    removeButton: {
-        width: (SIZES.width - 32) / 2 - 8,
-        backgroundColor: COLORS.primary,
-        borderRadius: 32
+    emptyText: {
+        fontSize: 18,
+        fontFamily: 'bold',
+        marginBottom: 8
     },
-    bottomTitle: {
-        fontSize: 24,
-        fontFamily: "semiBold",
-        color: "red",
-        textAlign: "center",
-    },
-    bottomSubtitle: {
-        fontSize: 22,
-        fontFamily: "bold",
-        color: COLORS.greyscale900,
-        textAlign: "center",
-        marginVertical: 12
-    },
-    selectedBookmarkContainer: {
-        marginVertical: 16
-    },
-    separateLine: {
-        width: "100%",
-        height: .2,
-        backgroundColor: COLORS.greyscale300,
-        marginHorizontal: 16
+    emptySubtext: {
+        fontSize: 14,
+        fontFamily: 'regular',
+        textAlign: 'center'
     }
 })
 
-export default Favourite
+export default Favourite;

@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, Image, FlatList, TouchableOpacity } from 'react
 import React from 'react';
 import { COLORS, SIZES, images } from "../constants";
 import ReviewStars from './ReviewStars';
+import { t } from '../context/LanguageContext';
 
 const WorkerCard = ({ worker, onSelect }) => {
   return (
@@ -18,9 +19,9 @@ const WorkerCard = ({ worker, onSelect }) => {
         <Text style={styles.workerName}>{worker.first_name} {worker.last_name}</Text>
         <View style={styles.ratingContainer}>
           <ReviewStars rating={worker.average_rating} size={14} />
-          <Text style={styles.reviewCount}>({worker.total_jobs} jobs)</Text>
+          <Text style={styles.reviewCount}>{t('worker.jobs_count', { count: worker.total_jobs })}</Text>
         </View>
-        <Text style={styles.price}>${worker.custom_price || worker.hourly_rate}/hr</Text>
+        <Text style={styles.price}>${worker.custom_price || worker.hourly_rate}{t('worker.per_hour')}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -30,14 +31,14 @@ const ServiceWorkers = ({ workers, onSelectWorker }) => {
   if (!workers || workers.length === 0) {
     return (
       <View style={styles.noWorkersContainer}>
-        <Text style={styles.noWorkersText}>No workers available for this service</Text>
+        <Text style={styles.noWorkersText}>{t('worker.none_for_service')}</Text>
       </View>
     );
   }
   
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Available Service Providers</Text>
+      <Text style={styles.title}>{t('worker.available_providers')}</Text>
       <FlatList
         data={workers}
         keyExtractor={(item) => item.id}

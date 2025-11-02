@@ -13,6 +13,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../constants';
 import { useTheme } from '../theme/ThemeProvider';
+import { useI18n } from '../context/LanguageContext';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -20,7 +21,8 @@ const ChatInput = ({
   onSend, 
   onAttachment, 
   onTyping,
-  placeholder = "Type a message...",
+  placeholder,
+
   maxLength = 1000,
   disabled = false,
   showAttachment = true,
@@ -31,9 +33,12 @@ const ChatInput = ({
   onChangeText
 }) => {
   const { dark } = useTheme();
+  const { t } = useI18n();
+
   const [isFocused, setIsFocused] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const inputRef = useRef(null);
+  const effectivePlaceholder = placeholder ?? t('chat.type_message');
   
   // Animations
   const inputScale = useRef(new Animated.Value(1)).current;
@@ -189,7 +194,7 @@ const ChatInput = ({
               ]}
               value={value}
               onChangeText={handleTextChange}
-              placeholder={placeholder}
+              placeholder={effectivePlaceholder}
               placeholderTextColor={dark ? COLORS.grayscale400 : COLORS.grayscale500}
               onSubmitEditing={handleSend}
               returnKeyType="send"
@@ -255,7 +260,7 @@ const ChatInput = ({
             <View style={[styles.dot, { backgroundColor: dark ? COLORS.grayscale400 : COLORS.grayscale600 }]} />
           </View>
           <Text style={[styles.typingText, { color: dark ? COLORS.grayscale400 : COLORS.grayscale600 }]}>
-            Typing...
+            {t('chat.typing')}
           </Text>
         </View>
       )}

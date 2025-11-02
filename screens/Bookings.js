@@ -1,64 +1,52 @@
-import { View, Text, StyleSheet, TouchableOpacity, Image, useWindowDimensions,Platform } from 'react-native';
-import React, { useRef, useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Image, useWindowDimensions, Platform } from 'react-native';
+import React, { useRef, useCallback, useEffect, useMemo } from 'react';
 import { COLORS, SIZES, icons } from '../constants'
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeProvider';
-import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
+import { TabView, TabBar } from 'react-native-tab-view';
 import { CancelledBooking, CompletedBooking, UpcomingBooking } from '../tabs';
-
-const renderScene = SceneMap({
-  first: UpcomingBooking,
-  second: CompletedBooking,
-  third: CancelledBooking
-});
-
+import { useI18n } from '../context/LanguageContext';
 
 const MyBooking = ({ navigation }) => {
   const layout = useWindowDimensions();
   const { dark, colors } = useTheme();
+  const { t, language } = useI18n();
+
+  useEffect(() => {
+    console.log('Theme Debug - Dark mode:', dark);
+    console.log('Theme Debug - Background color:', colors.background);
+    console.log('Theme Debug - Text color:', colors.text);
+  }, [dark, colors]);
 
   const [index, setIndex] = React.useState(0);
-  const [routes] = React.useState([
-    { key: 'first', title: 'Upcoming' },
-    { key: 'second', title: 'Completed' },
-    { key: 'third', title: 'Cancelled' }
-  ]);
+  const routes = useMemo(() => ([
+    { key: 'first', title: t('bookings.tab_upcoming') },
+    { key: 'second', title: t('bookings.tab_completed') },
+    { key: 'third', title: t('bookings.tab_cancelled') }
+  ]), [language]);
 
-  // Refs to access child component methods
   const upcomingRef = useRef(null);
   const completedRef = useRef(null);
   const cancelledRef = useRef(null);
 
-  // Handle tab change with refresh
   const handleIndexChange = useCallback((newIndex) => {
     setIndex(newIndex);
-    
-    // Trigger refresh on the newly selected tab
+
     setTimeout(() => {
       switch (newIndex) {
         case 0:
-          // Refresh Upcoming bookings
-          if (upcomingRef.current?.refreshData) {
-            upcomingRef.current.refreshData();
-          }
+          upcomingRef.current?.refreshData?.();
           break;
         case 1:
-          // Refresh Completed bookings
-          if (completedRef.current?.refreshData) {
-            completedRef.current.refreshData();
-          }
+          completedRef.current?.refreshData?.();
           break;
         case 2:
-          // Refresh Cancelled bookings
-          if (cancelledRef.current?.refreshData) {
-            cancelledRef.current.refreshData();
-          }
+          cancelledRef.current?.refreshData?.();
           break;
       }
-    }, 100); // Small delay to ensure tab transition is smooth
+    }, 100);
   }, []);
 
-  // Custom render scene to pass refs
   const renderScene = ({ route }) => {
     switch (route.key) {
       case 'first':
@@ -80,58 +68,61 @@ const MyBooking = ({ navigation }) => {
       }}
       style={{
         backgroundColor: colors.background,
+        shadowColor: 'transparent',
+        elevation: 0,
       }}
       renderLabel={({ route, focused }) => (
-        <Text style={[{
-          color: focused ? COLORS.primary : (dark ? COLORS.white : COLORS.greyscale900),
+        <Text style={{
+          color: focused ? COLORS.primary : (dark ? COLORS.white : colors.text),
           fontSize: 16,
           fontFamily: "semiBold"
-        }]}>
+        }}>
           {route.title}
         </Text>
       )}
     />
-  )
-  /**
- * Render header
- */
+  );
+
   const renderHeader = () => {
+    const iconColor = dark ? COLORS.white : COLORS.black;
+    const textColor = dark ? COLORS.white : COLORS.black;
+
     return (
       <View style={styles.headerContainer}>
         <View style={styles.headerLeft}>
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
             <Image
               source={icons.back}
               resizeMode='contain'
-              style={[styles.backIcon, {
-                tintColor: dark ? COLORS.white : COLORS.greyscale900
-              }]}
+              style={[styles.backIcon, { tintColor: iconColor }]}
             />
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, {
-            color: dark ? COLORS.white : COLORS.greyscale900
-          }]}>
-            My Booking
+          <Text style={[styles.headerTitle, { color: textColor }]}>
+            {t('bookings.title')}
           </Text>
         </View>
         <TouchableOpacity>
           <Image
             source={icons.moreCircle}
             resizeMode='contain'
-            style={[styles.moreIcon, {
-              tintColor: dark ? COLORS.white : COLORS.greyscale900
-            }]}
+            style={[styles.moreIcon, { tintColor: iconColor }]}
           />
         </TouchableOpacity>
       </View>
     )
   }
+
+  const [forceUpdate, setForceUpdate] = React.useState(0);
+  useEffect(() => {
+    setForceUpdate(prev => prev + 1);
+  }, [dark]);
+
   return (
     <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         {renderHeader()}
         <TabView
+          key={`tabview-${forceUpdate}`}
           navigationState={{ index, routes }}
           renderScene={renderScene}
           onIndexChange={handleIndexChange}
@@ -144,24 +135,19 @@ const MyBooking = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-   area: {
-     flex: 1,
-     backgroundColor: COLORS.white,
-  
-   },
- container: {
+  area: {
     flex: 1,
-    backgroundColor: COLORS.white,
+  },
+  container: {
+    flex: 1,
     padding: 16,
     marginBottom: 32,
     paddingVertical: 16,
-
   },
   headerContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
-        marginBottom: 14
-
+    marginBottom: 14
   },
   headerLeft: {
     flexDirection: "row",
@@ -170,19 +156,16 @@ const styles = StyleSheet.create({
   backIcon: {
     height: 24,
     width: 24,
-    tintColor: COLORS.black
   },
   headerTitle: {
     fontSize: 20,
     fontFamily: 'bold',
-    color: COLORS.black,
     marginLeft: 16
   },
   moreIcon: {
     width: 24,
     height: 24,
-    tintColor: COLORS.black
   },
-})
+});
 
 export default MyBooking

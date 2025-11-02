@@ -1,5 +1,6 @@
-import { View, Text, StyleSheet, TextInput } from 'react-native';
-import React, { useState } from 'react';
+import { View, Text, StyleSheet, TextInput, Alert } from 'react-native';
+import React, { useState, useCallback } from 'react';
+
 import { ScrollView } from 'react-native-virtualized-view';
 import { COLORS, SIZES } from "../constants";
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -7,23 +8,26 @@ import ReasonItem from '../components/ReasonItem';
 import Button from '../components/Button';
 import Header from '../components/Header';
 import { useTheme } from '../theme/ThemeProvider';
+import { useAuth } from '../context/AuthContext';
+import { cancelBooking } from '../lib/services/booking';
+import { t } from '../context/LanguageContext';
 
-const CancelBooking = ({ navigation }) => {
+const CancelBooking = ({ navigation, route }) => {
   const { colors, dark } = useTheme();
-  
+  const { user } = useAuth();
+  const bookingId = route?.params?.bookingId;
+  const [comment, setComment] = useState("");
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+
   /***
    * Render content
    */
   const renderContent = () => {
-    const [comment, setComment] = useState("");
-    const [selectedItem, setSelectedItem] = useState(null);
-
     const handleCheckboxPress = (itemTitle) => {
       if (selectedItem === itemTitle) {
-        // If the clicked item is already selected, deselect it
         setSelectedItem(null);
       } else {
-        // Otherwise, select the clicked item
         setSelectedItem(itemTitle);
       }
     };
@@ -31,55 +35,58 @@ const CancelBooking = ({ navigation }) => {
     const handleCommentChange = (text) => {
       setComment(text);
     };
+
     return (
       <View style={{ marginVertical: 12 }}>
         <Text style={[styles.inputLabel, {
           color: dark ? COLORS.grayscale100 : COLORS.greyscale900
-        }]}>Please select the reason for the cancellations</Text>
+        }]}>{t('booking.cancel.reason_prompt')}</Text>
         <View style={{ marginVertical: 16 }}>
           <ReasonItem
-            checked={selectedItem === 'Schedule change'} // Check if it's the selected item
-            onPress={() => handleCheckboxPress('Schedule change')} // Pass the item title
-            title="Schedule change"
+            checked={selectedItem === t('booking.cancel.reasons.schedule_change')}
+            onPress={() => handleCheckboxPress(t('booking.cancel.reasons.schedule_change'))}
+            title={t('booking.cancel.reasons.schedule_change')}
           />
           <ReasonItem
-            checked={selectedItem === 'Weather conditions'}
-            onPress={() => handleCheckboxPress('Weather conditions')}
-            title="Weather conditions"
+            checked={selectedItem === t('booking.cancel.reasons.weather_conditions')}
+            onPress={() => handleCheckboxPress(t('booking.cancel.reasons.weather_conditions'))}
+            title={t('booking.cancel.reasons.weather_conditions')}
           />
           <ReasonItem
-            checked={selectedItem === 'Unexpected Work'}
-            onPress={() => handleCheckboxPress('Unexpected Work')}
-            title="Unexpected Work"
+            checked={selectedItem === t('booking.cancel.reasons.unexpected_work')}
+            onPress={() => handleCheckboxPress(t('booking.cancel.reasons.unexpected_work'))}
+            title={t('booking.cancel.reasons.unexpected_work')}
           />
           <ReasonItem
-            checked={selectedItem === 'Childcare Issue'}
-            onPress={() => handleCheckboxPress('Childcare Issue')}
-            title="Childcare Issue"
+            checked={selectedItem === t('booking.cancel.reasons.childcare_issue')}
+            onPress={() => handleCheckboxPress(t('booking.cancel.reasons.childcare_issue'))}
+            title={t('booking.cancel.reasons.childcare_issue')}
           />
           <ReasonItem
-            checked={selectedItem === 'Travel Delays'}
-            onPress={() => handleCheckboxPress('Travel Delays')}
-            title="Travel Delays"
+            checked={selectedItem === t('booking.cancel.reasons.travel_delays')}
+            onPress={() => handleCheckboxPress(t('booking.cancel.reasons.travel_delays'))}
+            title={t('booking.cancel.reasons.travel_delays')}
           />
           <ReasonItem
-            checked={selectedItem === 'Others'}
-            onPress={() => handleCheckboxPress('Others')}
-            title="Others"
+            checked={selectedItem === t('booking.cancel.reasons.others')}
+            onPress={() => handleCheckboxPress(t('booking.cancel.reasons.others'))}
+            title={t('booking.cancel.reasons.others')}
           />
         </View>
         <Text style={[styles.inputLabel, {
           color: dark ? COLORS.grayscale100 : COLORS.greyscale900
-        }]}>Add detailed reason</Text>
+        }]}>{t('booking.cancel.add_detailed_reason')}</Text>
         <TextInput
           style={[styles.input, {
             color: dark ? COLORS.secondaryWhite : COLORS.greyscale900,
             borderColor: dark ? COLORS.grayscale100 : COLORS.greyscale900
           }]}
-          placeholder="Write your reason here..."
+          placeholder={t('booking.cancel.reason_placeholder')}
           placeholderTextColor={dark ? COLORS.secondaryWhite : COLORS.greyscale900}
           multiline={true}
           numberOfLines={4} // Set the number of lines you want to display initially
+          value={comment}
+          onChangeText={handleCommentChange}
         />
       </View>
     )
@@ -88,16 +95,40 @@ const CancelBooking = ({ navigation }) => {
   /**
       * Render submit buttons
       */
+  const handleSubmit = useCallback(async () => {
+    if (!bookingId || !user?.id) {
+      Alert.alert(t('booking.actions.cancel_booking'), t('booking.cancel.missing_info'));
+      return;
+    }
+    const reason = selectedItem === t('booking.cancel.reasons.others') ? comment : (selectedItem || comment || '');
+    try {
+      setSubmitting(true);
+      const res = await cancelBooking(bookingId, user.id, reason);
+      if (res?.success === false) {
+        Alert.alert(t('booking.alerts.cancel_failed_title'), res?.message || t('booking.alerts.cancel_failed_generic'));
+      } else {
+        Alert.alert(t('booking.alerts.cancel_success_title'), t('booking.alerts.cancel_success_msg'));
+        navigation.goBack();
+      }
+    } catch (e) {
+      Alert.alert(t('booking.alerts.cancel_failed_title'), e?.message || t('booking.alerts.cancel_failed_generic'));
+    } finally {
+      setSubmitting(false);
+    }
+  }, [bookingId, user?.id, selectedItem, comment, navigation]);
+
   const renderSubmitButton = () => {
     return (
       <View style={[styles.btnContainer, {
         backgroundColor: colors.background
       }]}>
         <Button
-          title="Submit"
+          title={t('common.submit')}
           filled
           style={styles.submitBtn}
-          onPress={() => navigation.navigate("CancelBookingPaymentMethods")}
+          onPress={handleSubmit}
+          loading={submitting}
+          disabled={submitting}
         />
       </View>
     )
@@ -106,7 +137,7 @@ const CancelBooking = ({ navigation }) => {
   return (
     <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <Header title="Cancel Booking" />
+        <Header title={t('booking.actions.cancel_booking')} />
         <ScrollView
           showsVerticalScrollIndicator={false}
         >

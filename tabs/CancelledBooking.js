@@ -6,6 +6,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import { getCancelledBookings } from '../lib/services/booking';
 import { FontAwesome } from "@expo/vector-icons";
+import { t } from '../context/LanguageContext';
 
 const CancelledBooking = forwardRef((props, ref) => {
   const [bookings, setBookings] = useState([]);
@@ -77,11 +78,11 @@ const CancelledBooking = forwardRef((props, ref) => {
           marginBottom: 8,
           fontSize: 18,
           fontFamily: 'bold'
-        }}>No Cancelled Bookings</Text>
+        }}>{t('booking.empty.cancelled_title')}</Text>
         <Text style={{
           color: dark ? COLORS.grayscale400 : COLORS.grayscale700,
           textAlign: 'center'
-        }}>You don't have any cancelled bookings.</Text>
+        }}>{t('booking.empty.cancelled_sub')}</Text>
       </View>
     );
   }
@@ -115,7 +116,7 @@ const CancelledBooking = forwardRef((props, ref) => {
                 />
                 <View style={styles.reviewContainer}>
                   <FontAwesome name="star" size={12} color="orange" />
-                  <Text style={styles.rating}>{item.worker?.average_rating || "N/A"}</Text>
+                  <Text style={styles.rating}>{item.worker?.average_rating || t('common.not_available')}</Text>
                 </View>
               </View>
               <View style={styles.detailsRightContainer}>
@@ -124,7 +125,7 @@ const CancelledBooking = forwardRef((props, ref) => {
                 }]}>
                   {item.worker?.first_name && item.worker?.last_name
                     ? `${item.worker.first_name} ${item.worker.last_name}`
-                    : "Service Provider"}
+                    : t('chat.service_provider')}
                 </Text>
                 <Text style={[styles.address, {
                   color: dark ? COLORS.grayscale400 : COLORS.grayscale700,
@@ -138,7 +139,7 @@ const CancelledBooking = forwardRef((props, ref) => {
                   }]}>
                     <Text style={[styles.statusText, {
                       color: COLORS.red
-                    }]}>Cancelled</Text>
+                    }]}>{t('booking.status.cancelled')}</Text>
                   </View>
                 </View>
               </View>
@@ -151,7 +152,7 @@ const CancelledBooking = forwardRef((props, ref) => {
               <TouchableOpacity
                 onPress={() => navigation.navigate("EReceipt", { bookingId: item.id })}
                 style={styles.receiptBtn}>
-                <Text style={styles.receiptBtnText}>View</Text>
+                <Text style={styles.receiptBtnText}>{t('booking.actions.view')}</Text>
               </TouchableOpacity>
             </View>
           </TouchableOpacity>

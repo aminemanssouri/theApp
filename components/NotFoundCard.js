@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, Image } from 'react-native';
 import React from 'react';
 import { COLORS, illustrations } from '../constants';
 import { useTheme } from '../theme/ThemeProvider';
+import { t } from '../context/LanguageContext';
 
 const NotFoundCard = () => {
   const { dark } = useTheme();
@@ -15,11 +16,10 @@ const NotFoundCard = () => {
       />
       <Text style={[styles.title, {
         color: dark ? COLORS.white : COLORS.black
-      }]}>Not Found</Text>
+      }]}>{t('errors.not_found_title')}</Text>
       <Text style={[styles.subtitle, {
         color: dark ? COLORS.white : COLORS.black
-      }]}>Sorry, the keyword you entered cannot be found,
-        please check again or search with another keyword.</Text>
+      }]}>{t('errors.not_found_subtitle')}</Text>
     </View>
   )
 };
