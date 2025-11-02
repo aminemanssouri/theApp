@@ -26,12 +26,30 @@ const defaultScreenOptions = {
 };
 
 // Navigation wrapper component to handle profileComplete changes
-const NavigationWrapper = () => {
-  const navigationRef = useRef();
-  const { user, loading: authLoading, profileComplete } = useAuth();
-  
+const NavigationWrapper = ({ navigationRef: externalRef }) => {
+  const { user, loading: authLoading, profileComplete, isPasswordRecovery } = useAuth();
+  const internalRef = useRef();
+  // Use external ref if provided, otherwise use internal ref
+  const navigationRef = externalRef || internalRef;
+
+  // Navigate to OTPVerification when password recovery is detected
+  useEffect(() => {
+    if (isPasswordRecovery && navigationRef.current && navigationRef.current.isReady()) {
+      console.log('🔑 Password recovery detected, navigating to OTPVerification');
+      setTimeout(() => {
+        navigationRef.current.navigate('OTPVerification');
+      }, 100);
+    }
+  }, [isPasswordRecovery]);
+
   // Handle navigation when profileComplete changes
   useEffect(() => {
+    // CRITICAL: Don't do any navigation if we're in password recovery mode
+    if (isPasswordRecovery) {
+      console.log('🔐 Skipping profile navigation - in password recovery mode');
+      return;
+    }
+    
     if (!user || authLoading) return;
     
     // Only navigate if we have a navigation ref
@@ -61,7 +79,7 @@ const NavigationWrapper = () => {
         });
       }
     }
-  }, [profileComplete, user, authLoading]);
+  }, [profileComplete, user, authLoading, isPasswordRecovery]);
   
   return <AppNavigationContent navigationRef={navigationRef} />;
 };
@@ -69,7 +87,7 @@ const NavigationWrapper = () => {
 const AppNavigationContent = ({ navigationRef }) => {
   const [isFirstLaunch, setIsFirstLaunch] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const { user, loading: authLoading, profileComplete } = useAuth();
+  const { user, loading: authLoading, profileComplete, isPasswordRecovery } = useAuth();
 
   useEffect(() => {
     const checkIfFirstLaunch = async () => {
@@ -98,16 +116,19 @@ const AppNavigationContent = ({ navigationRef }) => {
 
   // If auth is still loading AND we have no user, keep showing auth screens
   // This prevents white screen during login
+  // ALSO treat password recovery as "not logged in" so we show auth stack
   const shouldWaitForAuth = authLoading && !user;
+  const shouldShowAuthStack = !user || shouldWaitForAuth || isPasswordRecovery;
 
   console.log('🧭 Navigation Decision:', {
     hasUser: !!user,
-    profileComplete,
     authLoading,
+    profileComplete,
     shouldWaitForAuth,
-    willShowFillProfile: !!user && !profileComplete && !authLoading,
-    willShowMain: !!user && profileComplete && !authLoading,
-    willShowAuth: !user || shouldWaitForAuth
+    isPasswordRecovery, // Add this to see the state
+    willShowAuth: shouldShowAuthStack,
+    willShowFillProfile: user && !profileComplete && !authLoading && !isPasswordRecovery,
+    willShowMain: user && profileComplete && !authLoading && !isPasswordRecovery
   });
 
   // Deep link configuration
@@ -146,15 +167,15 @@ const AppNavigationContent = ({ navigationRef }) => {
       <Stack.Navigator 
         screenOptions={defaultScreenOptions}
         initialRouteName={
-          !user || shouldWaitForAuth 
+          shouldShowAuthStack
             ? (isFirstLaunch ? "Onboarding1" : "Welcome")
             : !profileComplete 
               ? "FillYourProfile" 
               : "Main"
         }
       >
-        {!user || shouldWaitForAuth ? (
-          // NOT LOGGED IN or WAITING FOR AUTH - Show authentication screens
+        {shouldShowAuthStack ? (
+          // NOT LOGGED IN or WAITING FOR AUTH or PASSWORD RECOVERY - Show authentication screens
           <>
             {isFirstLaunch && (
               <>
@@ -191,6 +212,7 @@ const AppNavigationContent = ({ navigationRef }) => {
               }}
             />
             {/* All other authenticated screens */}
+            <Stack.Screen name="OTPVerification" component={OTPVerification} options={getTransitionConfig('OTPVerification')} />
             <Stack.Screen name="EditProfile" component={EditProfile} options={getTransitionConfig('EditProfile')} />
             <Stack.Screen name="SettingsNotifications" component={SettingsNotifications} options={getTransitionConfig('SettingsNotifications')} />
             <Stack.Screen name='SettingsPayment' component={SettingsPayment} options={getTransitionConfig('SettingsPayment')} />

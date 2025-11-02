@@ -50,25 +50,25 @@ const Welcome = ({ navigation }) => {
     <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <Image source={images.logo} resizeMode="contain" style={styles.logo} />
-        <Text style={[styles.title, { color: colors.text }]}>Welcome Back!</Text>
+        <Text style={[styles.title, { color: colors.text }]}>{t('welcome.title')}</Text>
         <Text style={[styles.subtitle, { color: dark ? COLORS.white : "black" }]}>
-          Hello there, continue with and search the services from around the world.
+          {t('welcome.subtitle')}
         </Text>
         <View style={{ marginVertical: 32 }}>
           <SocialButtonV2 
-            title="Continue with Apple" 
+            title={t('welcome.continue_with_apple')}
             icon={icons.appleLogo} 
             onPress={() => navigation.navigate("Signup")}
             iconStyles={{ tintColor: dark ? COLORS.white : COLORS.black }} 
           />
           <SocialButtonV2 
-            title="Continue with Google" 
+            title={t('welcome.continue_with_google')}
             icon={icons.google} 
             onPress={googleAuthHandler}
             isLoading={isLoading}
           />
           <SocialButtonV2 
-            title="Continue with Email" 
+            title={t('welcome.continue_with_email')}
             icon={icons.email2} 
             onPress={() => navigation.navigate("Signup")} 
           />
@@ -76,22 +76,22 @@ const Welcome = ({ navigation }) => {
         <View style={{ flexDirection: "row" }}>
           <Text style={[styles.loginTitle, {
             color: dark ? COLORS.white : "black"
-          }]}>Already have account? </Text>
+          }]}>{t('welcome.already_have_account')} </Text>
           <TouchableOpacity
             onPress={() => navigation.navigate("Login")}>
-            <Text style={styles.loginSubtitle}>Log In</Text>
+            <Text style={styles.loginSubtitle}>{t('welcome.log_in')}</Text>
           </TouchableOpacity>
         </View>
       </View>
       <View style={styles.bottomContainer}>
         <Text style={[styles.bottomTitle, {
           color: dark ? COLORS.white : COLORS.black }]}>
-          By continuing, you accept the Terms Of Use and
+          {t('welcome.terms_text')}
         </Text>
         <TouchableOpacity onPress={() => navigation.navigate("Login")}>
           <Text style={[styles.bottomSubtitle, {
             color: dark ? COLORS.white : COLORS.black
-          }]}>Privacy Policy.</Text>
+          }]}>{t('welcome.privacy_policy')}</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

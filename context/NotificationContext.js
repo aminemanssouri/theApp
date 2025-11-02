@@ -65,14 +65,12 @@ export const NotificationProvider = ({ children }) => {
 
   const loadNotifications = async () => {
     if (!isUserAuthenticated()) {
-      console.log('🔒 User not authenticated - clearing notifications');
       setNotifications([]);
       setUnreadCount(0);
       return;
     }
     
     try {
-      console.log('📥 Loading notifications for user:', user.id);
       setLoading(true);
       const data = await getUserNotifications(user.id);
        
@@ -92,15 +90,12 @@ export const NotificationProvider = ({ children }) => {
 
   const loadUnreadCount = async () => {
     if (!isUserAuthenticated()) {
-      console.log('🔒 User not authenticated - setting unread count to 0');
       setUnreadCount(0);
       return;
     }
     
     try {
-      console.log('📊 Loading unread count for user:', user.id);
       const count = await getUnreadNotificationsCount(user.id);
-      console.log('✅ Unread count loaded:', count);
       setUnreadCount(count);
     } catch (error) {
       console.error('❌ Error loading unread count:', error);
@@ -129,18 +124,12 @@ export const NotificationProvider = ({ children }) => {
     }
     
     try {
-      console.log('🔵 Marking notification as read:', notificationId);
-      console.log('📊 Current notifications count:', notifications.length);
-      
       await markNotificationAsRead(notificationId, user.id);
       
       // Update notifications state with the new read status
       const updatedNotifications = notifications.map(n => 
         n.id === notificationId ? { ...n, is_read: true } : n
       );
-      
-      console.log('✅ Updated notifications count:', updatedNotifications.length);
-      console.log('✅ Notification marked as read successfully');
       
       setNotifications(updatedNotifications);
       
@@ -224,13 +213,11 @@ export const NotificationProvider = ({ children }) => {
 
     setRefreshing(true);
     try {
-      console.log('🔄 Refreshing notifications...');
       await Promise.all([
         loadNotifications(), 
         loadUnreadCount(),
         loadNotificationSettings()
       ]);
-      console.log('✅ Notifications refreshed successfully');
     } catch (error) {
       console.error('❌ Error refreshing notifications:', error);
     } finally {
@@ -304,13 +291,6 @@ export const NotificationProvider = ({ children }) => {
       
       // Subscribe to real-time updates
       const channel = subscribeToNotifications(user.id, (newNotification, eventType = 'INSERT') => {
-        console.log('🔔 Real-time notification received:', {
-          id: newNotification.id,
-          type: newNotification.type,
-          eventType: eventType,
-          isRead: newNotification.is_read
-        });
-
         setNotifications(prev => {
           // Enhanced duplicate detection
           const updated = dedupeNotifications([newNotification, ...prev]);
@@ -322,7 +302,6 @@ export const NotificationProvider = ({ children }) => {
       });
 
       return () => {
-        console.log('🔌 Unsubscribing from notifications channel');
         if (channel) {
           channel.unsubscribe();
         }
