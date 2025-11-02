@@ -20,69 +20,13 @@ const checkProfileCompletion = async (userId) => {
   try {
     console.log('🔍 Checking profile completion for user:', userId);
     
-    // Check if user has skipped profile setup
-    const skipKey = `profile_skipped_${userId}`;
-    console.log('📦 Checking AsyncStorage for key:', skipKey);
+    // ALWAYS return true - skip FillYourProfile screen for all users
+    console.log('✅ Profile completion check skipped - always returning true');
+    return true;
     
-    const wasSkipped = await AsyncStorage.getItem(skipKey);
-    console.log('📦 AsyncStorage result:', wasSkipped);
-    
-    if (wasSkipped === 'true') {
-      console.log('✅ Profile was skipped - allowing access');
-      return true;
-    }
-    
-    console.log('🔍 Fetching profile from database...');
-    
-    // Use maybeSingle() with a very short timeout
-    const queryPromise = supabase
-      .from('users')
-      .select('id, first_name, last_name, phone, email, address')
-      .eq('id', userId)
-      .maybeSingle();
-    
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Profile query timeout')), 500)
-    );
-    
-    let profile, error;
-    try {
-      const result = await Promise.race([queryPromise, timeoutPromise]);
-      profile = result.data;
-      error = result.error;
-      console.log('📊 Database query result:', { hasProfile: !!profile, hasFirstName: !!profile?.first_name, hasPhone: !!profile?.phone });
-    } catch (timeoutError) {
-      console.log('⏱️ Database query timed out after 500ms - assuming incomplete');
-      // On timeout, assume profile incomplete
-      return false;
-    }
-    
-    if (error) {
-      console.log('❌ Profile check error:', error);
-      return false;
-    }
-    
-    if (!profile) {
-      console.log('❌ No profile found for user');
-      return false;
-    }
-    
-    const hasFirstName = profile?.first_name && profile.first_name.trim().length > 0;
-    const hasPhone = profile?.phone && profile.phone.trim().length > 0;
-    const isComplete = !!(hasFirstName && hasPhone);
-    
-    console.log('✅ Profile check result:', {
-      hasProfile: !!profile,
-      hasFirstName,
-      hasPhone,
-      isComplete,
-      wasSkipped: wasSkipped === 'true'
-    });
-    
-    return isComplete;
   } catch (error) {
     console.error('💥 Profile completion check failed:', error);
-    return false;
+    return true; // Still return true even on error
   }
 };
 
@@ -214,6 +158,11 @@ export const AuthProvider = ({ children }) => {
         }
         
         console.log('✅ User signed in successfully');
+        
+        // IMPORTANT: Wait 500ms for session to fully establish (especially for OAuth)
+        await new Promise(resolve => setTimeout(resolve, 500));
+        console.log('⏱️ Session establishment delay complete');
+        
         const user = session.user;
         setUser(user);
         
@@ -271,7 +220,15 @@ export const AuthProvider = ({ children }) => {
         console.error('Error signing out:', error);
       }
     },
-    refreshUserProfile: () => fetchUserProfile(user?.id),
+    refreshUserProfile: async () => {
+      console.log('🔄 Manually refreshing user profile for:', user?.id);
+      if (user?.id) {
+        await fetchUserProfile(user.id);
+        console.log('✅ User profile refreshed');
+      } else {
+        console.log('⚠️ No user ID available for refresh');
+      }
+    },
     refreshProfileStatus
   };
 

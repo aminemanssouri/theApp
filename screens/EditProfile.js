@@ -60,6 +60,50 @@ const EditProfile = ({ navigation }) => {
 
   const [formState, dispatchFormState] = useReducer(reducer, getInitialState());
 
+  // Update form when userProfile changes (after refresh)
+  useEffect(() => {
+    if (userProfile) {
+      console.log('🔄 EditProfile: Updating form with new profile data:', userProfile.first_name);
+      // Update all form fields with new data
+      dispatchFormState({
+        type: 'FORM_INPUT_UPDATE',
+        inputId: 'firstName',
+        validationResult: { isValid: true },
+        inputValue: userProfile.first_name || ''
+      });
+      dispatchFormState({
+        type: 'FORM_INPUT_UPDATE',
+        inputId: 'lastName',
+        validationResult: { isValid: true },
+        inputValue: userProfile.last_name || ''
+      });
+      dispatchFormState({
+        type: 'FORM_INPUT_UPDATE',
+        inputId: 'phoneNumber',
+        validationResult: { isValid: true },
+        inputValue: userProfile.phone || ''
+      });
+      dispatchFormState({
+        type: 'FORM_INPUT_UPDATE',
+        inputId: 'address',
+        validationResult: { isValid: true },
+        inputValue: userProfile.address || ''
+      });
+      dispatchFormState({
+        type: 'FORM_INPUT_UPDATE',
+        inputId: 'city',
+        validationResult: { isValid: true },
+        inputValue: userProfile.city || ''
+      });
+      dispatchFormState({
+        type: 'FORM_INPUT_UPDATE',
+        inputId: 'zipCode',
+        validationResult: { isValid: true },
+        inputValue: userProfile.zip_code || ''
+      });
+    }
+  }, [userProfile?.first_name, userProfile?.last_name, userProfile?.phone, userProfile?.address, userProfile?.city, userProfile?.zip_code]);
+
   const genderOptions = [
     { label: 'Male', value: 'male' },
     { label: 'Female', value: 'female' },
