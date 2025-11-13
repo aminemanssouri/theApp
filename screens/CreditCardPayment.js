@@ -17,10 +17,11 @@ import { COLORS, SIZES } from '../constants';
 import { useTheme } from '../theme/ThemeProvider';
 import { StripeProvider, CardField, useStripe } from '@stripe/stripe-react-native';
 import { STRIPE_PUBLISHABLE_KEY } from '../config/stripe.config';
-import { processStripePayment } from '../lib/services/payment';
+import { createStripePaymentIntent, confirmStripePayment } from '../lib/services/payment';
 import { createBooking } from '../lib/services/booking';
 import { supabase } from '../lib/supabase';
 import { t } from '../context/LanguageContext';
+import PaymentSuccessAlert from '../components/PaymentSuccessAlert';
 
 const CreditCardPayment = ({ navigation, route }) => {
   const { dark, colors } = useTheme();
@@ -29,6 +30,7 @@ const CreditCardPayment = ({ navigation, route }) => {
   const [cardDetails, setCardDetails] = useState(null);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [showSuccessAlert, setShowSuccessAlert] = useState(false);
   
   const { bookingData, price, serviceName, workerName } = route.params || {};
 
@@ -43,35 +45,68 @@ const CreditCardPayment = ({ navigation, route }) => {
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
       
-      // Process payment through your backend
-      const paymentResult = await processStripePayment({
-        booking_id: bookingData.id,
-        payer_id: user?.id,
+      if (!user) {
+        Alert.alert(t('common.error'), 'User not authenticated');
+        setLoading(false);
+        return;
+      }
+
+      // Step 0: Create booking in database first
+      console.log('📝 Creating booking...');
+      const bookingResult = await createBooking(bookingData);
+      
+      if (!bookingResult.success) {
+        Alert.alert(t('common.error'), bookingResult.error || t('booking.failed_to_create_booking'));
+        setLoading(false);
+        return;
+      }
+
+      const createdBookingId = bookingResult.booking_id;
+      console.log('✅ Booking created with ID:', createdBookingId);
+
+      // Step 1: Create payment intent via Supabase Edge Function
+      const { success, clientSecret, paymentIntentId, error: intentError } = await createStripePaymentIntent({
+        booking_id: createdBookingId,
+        payer_id: user.id,
         amount: price,
         currency: 'EUR',
         customerEmail: email,
         customerName: name,
       });
 
-      if (paymentResult.success) {
-        // Update booking status
-        const { error: bookingError } = await supabase
-          .from('bookings')
-          .update({ 
-            status: 'confirmed',
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', bookingData.id);
+      if (!success || !clientSecret) {
+        Alert.alert(t('payment.payment_failed'), intentError || t('payment.failed_to_create_payment'));
+        setLoading(false);
+        return;
+      }
 
-        if (!bookingError) {
-          Alert.alert(
-            t('common.success'), 
-            t('payment.payment_processed_booking_confirmed'),
-            [{ text: t('common.ok', 'OK'), onPress: () => navigation.navigate('Main') }]
-          );
-        }
+      // Step 2: Confirm payment with Stripe using the card details
+      const { paymentIntent: confirmedPayment, error: stripeError } = await confirmPayment(clientSecret, {
+        paymentMethodType: 'Card',
+        paymentMethodData: {
+          billingDetails: {
+            name: name,
+            email: email,
+          },
+        },
+      });
+
+      if (stripeError) {
+        Alert.alert(t('payment.payment_failed'), stripeError.message);
+        setLoading(false);
+        return;
+      }
+
+      console.log('💳 Stripe payment confirmed:', confirmedPayment?.status);
+
+      // Step 3: Confirm payment and update booking via Supabase Edge Function
+      const confirmResult = await confirmStripePayment(paymentIntentId, createdBookingId, user.id);
+
+      if (confirmResult.success) {
+        setLoading(false);
+        setShowSuccessAlert(true);
       } else {
-        Alert.alert(t('payment.payment_failed'), paymentResult.error || t('payment.please_try_again'));
+        Alert.alert(t('payment.payment_failed'), confirmResult.error || t('payment.please_try_again'));
       }
     } catch (error) {
       console.error('Payment error:', error);
@@ -257,6 +292,17 @@ const CreditCardPayment = ({ navigation, route }) => {
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
+
+        <PaymentSuccessAlert
+          visible={showSuccessAlert}
+          onClose={() => {
+            setShowSuccessAlert(false);
+            navigation.navigate('Main');
+          }}
+          amount={price}
+          serviceName={serviceName}
+          workerName={workerName}
+        />
       </SafeAreaView>
     </StripeProvider>
   );

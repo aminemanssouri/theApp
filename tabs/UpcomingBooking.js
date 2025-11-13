@@ -222,13 +222,13 @@ const UpcomingBooking = forwardRef((props, ref) => {
             <View style={styles.buttonContainer}>
               <TouchableOpacity
                 onPress={() => openCancelSheet(item)}
-                style={styles.cancelBtn}>
-                <Text style={styles.cancelBtnText}>{t('booking.actions.cancel_booking')}</Text>
+                style={[styles.cancelBtn, { backgroundColor: COLORS.red }]}>
+                <FontAwesome name="times-circle" size={20} color={COLORS.white} />
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => navigation.navigate("EReceipt", { bookingId: item.id })}
                 style={styles.receiptBtn}>
-                <Text style={styles.receiptBtnText}>{t('booking.actions.view_e_receipt')}</Text>
+                <FontAwesome name="file-text-o" size={20} color={COLORS.white} />
               </TouchableOpacity>
             </View>
           </TouchableOpacity>
@@ -387,18 +387,16 @@ const styles = StyleSheet.create({
     width: (SIZES.width - 32) / 2 - 16,
     height: 36,
     borderRadius: 24,
-    backgroundColor: "transparent",
+    backgroundColor: COLORS.red,
     alignItems: "center",
     justifyContent: "center",
     marginTop: 6,
-    borderColor: COLORS.primary,
-    borderWidth: 1.4,
     marginBottom: 12
   },
   cancelBtnText: {
     fontSize: 16,
     fontFamily: "semiBold",
-    color: COLORS.primary,
+    color: COLORS.white,
   },
   receiptBtn: {
     width: (SIZES.width - 32) / 2 - 16,
@@ -408,8 +406,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginTop: 6,
-    borderColor: COLORS.primary,
-    borderWidth: 1.4,
     marginBottom: 12
   },
   receiptBtnText: {

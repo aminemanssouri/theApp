@@ -366,7 +366,7 @@ const ServiceCard = ({
                             color="orange"
                         />
                         <Text style={[styles.rating, { color: dark ? COLORS.greyscale300 : COLORS.grayscale700 }]}> {" "}{rating || '0.0'}</Text>
-                        <Text style={[styles.numReviews, { color: dark ? COLORS.greyscale300 : COLORS.grayscale700 }]}> |  {t('service.reviews_count', { count: numReviews || 0 })}</Text>
+                        <Text style={[styles.numReviews, { color: dark ? COLORS.greyscale300 : COLORS.grayscale700 }]}> {t('service.reviews_count',{ count: numReviews || 0 })}</Text>
                     </View>
                 </View>
             </TouchableOpacity>

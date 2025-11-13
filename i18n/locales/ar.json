@@ -15,12 +15,16 @@
     "submit": "إرسال",
     "retry": "إعادة المحاولة",
     "try_again": "أعد المحاولة",
-    "reset": "إعادة ضبط"
+    "reset": "إعادة ضبط",
+    "done": "تم",
+    "amount": "المبلغ",
+    "date": "التاريخ",
+    "service": "الخدمة"
   },
   "service": {
     "no_services": "لا توجد خدمات متاحة حاليًا",
     "no_services_in_category": "لا توجد خدمات في هذه الفئة",
-    "reviews_count": "{{count}} مراجعات",
+    "reviews_count": "({{count}})",
     "all_services": "جميع الخدمات",
     "loading_services": "جارٍ تحميل الخدمات...",
     "failed_load": "فشل تحميل الخدمات",
@@ -45,7 +49,9 @@
   "payment": {
     "service": "الخدمة",
     "provider": "المزوّد",
-    "google_pay": "Google Pay"
+    "google_pay": "Google Pay",
+    "success": "تم الدفع بنجاح!",
+    "booking_confirmed": "تمت معالجة الدفع بنجاح. تم تأكيد حجزك!"
   },
   "chat": {
     "service_provider": "مقدم الخدمة",

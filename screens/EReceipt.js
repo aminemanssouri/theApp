@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { COLORS, SIZES, icons } from '../constants';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ScrollView } from 'react-native-virtualized-view';
-import Barcode from '@kichiyaki/react-native-barcode-generator';
+import QRCode from 'react-native-qrcode-svg';
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Clipboard from 'expo-clipboard';
 import { useTheme } from '../theme/ThemeProvider';
@@ -136,10 +136,10 @@ const EReceipt = ({ navigation, route }) => {
    * Render content
    */
   const renderContent = () => {
-    const transactionId = booking?.id || 'N/A'; // Use booking ID as transaction ID
-    const bookingDate = booking?.booking_date ? new Date(booking.booking_date).toLocaleDateString() : 'N/A';
-    const bookingTime = booking?.start_time || 'N/A';
-    const endTime = booking?.end_time || 'N/A';
+    const transactionId = booking?.booking?.id || 'N/A'; // Use booking ID as transaction ID
+    const bookingDate = booking?.booking?.booking_date ? new Date(booking.booking.booking_date).toLocaleDateString() : 'N/A';
+    const bookingTime = booking?.booking?.start_time || 'N/A';
+    const endTime = booking?.booking?.end_time || 'N/A';
 
     const handleCopyToClipboard = async () => {
       await Clipboard.setStringAsync(transactionId);
@@ -148,22 +148,38 @@ const EReceipt = ({ navigation, route }) => {
 
     return (
       <View style={{ marginVertical: 22 }}>
-        <Barcode
-          format="EAN13"
-          value={booking?.id ? String(booking.id).padStart(12, '0').slice(0, 12) + '0' : "0123456789012"}
-          text={booking?.id ? String(booking.id).padStart(12, '0').slice(0, 12) + '0' : "0123456789012"}
-          width={SIZES.width - 64}
-          height={72}
-          style={{
-            marginBottom: 40,
-            backgroundColor: dark ? COLORS.dark1 : COLORS.white,
-          }}
-          lineColor={dark ? COLORS.white : COLORS.black}
-          textStyle={{
-            color: dark ? COLORS.white : COLORS.black
-          }}
-          maxWidth={SIZES.width - 64}
-        />
+        {/* QR Code with booking information */}
+        <View style={{ 
+          alignItems: 'center', 
+          marginBottom: 40,
+          padding: 20,
+          backgroundColor: dark ? COLORS.dark1 : COLORS.white,
+          borderRadius: 12
+        }}>
+          <QRCode
+            value={JSON.stringify({
+              bookingId: booking?.booking?.id,
+              service: booking?.service?.name,
+              worker: `${booking?.worker?.first_name} ${booking?.worker?.last_name}`,
+              date: booking?.booking?.booking_date,
+              time: booking?.booking?.start_time,
+              amount: booking?.booking?.total_amount,
+              status: booking?.booking?.status
+            })}
+            size={200}
+            color={dark ? COLORS.white : COLORS.black}
+            backgroundColor={dark ? COLORS.dark1 : COLORS.white}
+            quietZone={10}
+          />
+          <Text style={{ 
+            marginTop: 12, 
+            fontSize: 12, 
+            color: COLORS.gray,
+            textAlign: 'center'
+          }}>
+            Scan to verify booking
+          </Text>
+        </View>
         <View style={[styles.summaryContainer, {
           backgroundColor: dark ? COLORS.dark2 : COLORS.white,
           borderRadius: 6,
@@ -200,7 +216,7 @@ const EReceipt = ({ navigation, route }) => {
             <Text style={styles.viewLeft}>Address</Text>
             <Text style={[styles.viewRight, { 
                color: dark ? COLORS.white : COLORS.black
-            }]}>{booking?.address || 'N/A'}, {booking?.city || ''}</Text>
+            }]}>{booking?.booking?.address || 'N/A'}, {booking?.booking?.city || ''}</Text>
           </View>
         </View>
 
@@ -230,7 +246,7 @@ const EReceipt = ({ navigation, route }) => {
             <Text style={styles.viewLeft}>Status</Text>
             <Text style={[styles.viewRight, { 
                color: dark ? COLORS.white : COLORS.black
-            }]}>{booking?.status || 'N/A'}</Text>
+            }]}>{booking?.booking?.status || 'N/A'}</Text>
           </View>
         </View>
         <View style={[styles.summaryContainer, {
@@ -238,46 +254,73 @@ const EReceipt = ({ navigation, route }) => {
           borderRadius: 6,
         }]}>
           <View style={styles.viewContainer}>
-            <Text style={styles.viewLeft}>Price</Text>
+            <Text style={styles.viewLeft}>Service Price</Text>
             <Text style={[styles.viewRight, { 
                color: dark ? COLORS.white : COLORS.black
-            }]}>€{booking?.total_amount || '0'}</Text>
+            }]}>€{booking?.booking?.price || '0'}</Text>
           </View>
+          
+          {/* Display Addons */}
+          {booking?.addons && booking.addons.length > 0 && (
+            <>
+              <View style={{ marginVertical: 8 }}>
+                <Text style={[styles.viewLeft, { fontWeight: 'bold', fontSize: 14 }]}>Addons:</Text>
+              </View>
+              {booking.addons.map((addon, index) => (
+                <View key={index} style={styles.viewContainer}>
+                  <Text style={[styles.viewLeft, { paddingLeft: 10 }]}>
+                    {addon.addon?.name || 'Addon'} (x{addon.quantity})
+                  </Text>
+                  <Text style={[styles.viewRight, { 
+                    color: dark ? COLORS.white : COLORS.black
+                  }]}>€{(addon.price * addon.quantity).toFixed(2)}</Text>
+                </View>
+              ))}
+            </>
+          )}
+          
+          <View style={styles.viewContainer}>
+            <Text style={styles.viewLeft}>Admin Fee</Text>
+            <Text style={[styles.viewRight, { 
+               color: dark ? COLORS.white : COLORS.black
+            }]}>€{booking?.booking?.admin_fee || '0'}</Text>
+          </View>
+          
+          <View style={[styles.viewContainer, { borderTopWidth: 1, borderTopColor: COLORS.grayscale400, marginTop: 8, paddingTop: 8 }]}>
+            <Text style={[styles.viewLeft, { fontWeight: 'bold', fontSize: 16 }]}>Total Amount</Text>
+            <Text style={[styles.viewRight, { 
+               color: dark ? COLORS.white : COLORS.black,
+               fontWeight: 'bold',
+               fontSize: 16
+            }]}>€{booking?.booking?.total_amount || '0'}</Text>
+          </View>
+          
           <View style={styles.viewContainer}>
             <Text style={styles.viewLeft}>Payment Methods</Text>
             <Text style={[styles.viewRight, { 
                color: dark ? COLORS.white : COLORS.black
-            }]}>{booking?.payment_method || 'Card'}</Text>
+            }]}>Credit Card</Text>
           </View>
           <View style={styles.viewContainer}>
             <Text style={styles.viewLeft}>Created Date</Text>
             <Text style={[styles.viewRight, { 
                color: dark ? COLORS.white : COLORS.black
             }]}>
-              {booking?.created_at 
-                ? new Date(booking.created_at).toLocaleString()
+              {booking?.booking?.created_at 
+                ? new Date(booking.booking.created_at).toLocaleString()
                 : 'N/A'}
             </Text>
           </View>
           <View style={styles.viewContainer}>
-            <Text style={styles.viewLeft}>Transaction ID</Text>
-            <View style={styles.copyContentContainer}>
-              <Text style={styles.viewRight}>{transactionId}</Text>
-              <TouchableOpacity style={{ marginLeft: 8 }} onPress={handleCopyToClipboard}>
-                <MaterialCommunityIcons name="content-copy" size={24} color={COLORS.primary} />
-              </TouchableOpacity>
-            </View>
-          </View>
-          <View style={styles.viewContainer}>
             <Text style={styles.viewLeft}>Status</Text>
             <TouchableOpacity style={[styles.statusBtn, {
-              backgroundColor: booking?.status === 'completed' ? COLORS.green :
-                              booking?.status === 'confirmed' ? COLORS.primary :
-                              booking?.status === 'pending' ? COLORS.orange :
-                              booking?.status === 'cancelled' ? COLORS.red : COLORS.gray
+              backgroundColor: booking?.booking?.status === 'completed' ? COLORS.green :
+                              booking?.booking?.status === 'confirmed' ? COLORS.primary :
+                              booking?.booking?.status === 'pending' ? COLORS.orange :
+                              booking?.booking?.status === 'cancelled' ? COLORS.red : COLORS.gray
             }]}>
               <Text style={styles.statusBtnText}>
-                {booking?.status?.charAt(0).toUpperCase() + booking?.status?.slice(1) || 'Unknown'}
+                {booking?.booking?.status?.charAt(0).toUpperCase() + booking?.booking?.status?.slice(1) || 'Unknown'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -297,17 +340,25 @@ const EReceipt = ({ navigation, route }) => {
       </View>
       {/* Modal for dropdown selection */}
       <Modal
-        animationType="slide"
+        animationType="fade"
         transparent={true}
         visible={modalVisible}
       >
         <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
-          <View style={{ position: "absolute", top: 112, right: 12 }}>
-            <View style={{
+          <View style={{ flex: 1 }}>
+            <View style={{ 
+              position: "absolute", 
+              top: 112, 
+              right: 12,
               width: 202,
               padding: 16,
               backgroundColor: dark ? COLORS.dark2 : COLORS.tertiaryWhite,
-              borderRadius: 8
+              borderRadius: 8,
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.25,
+              shadowRadius: 3.84,
+              elevation: 5
             }}>
               <FlatList
                 data={dropdownItems}

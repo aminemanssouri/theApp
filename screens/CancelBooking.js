@@ -107,7 +107,15 @@ const CancelBooking = ({ navigation, route }) => {
       if (res?.success === false) {
         Alert.alert(t('booking.alerts.cancel_failed_title'), res?.message || t('booking.alerts.cancel_failed_generic'));
       } else {
-        Alert.alert(t('booking.alerts.cancel_success_title'), t('booking.alerts.cancel_success_msg'));
+        // Show refund information if available
+        let message = t('booking.alerts.cancel_success_msg');
+        if (res?.refund) {
+          message = t('booking.alerts.cancel_with_refund', {
+            refundAmount: res.refund.refundAmount?.toFixed(2),
+            cancellationFee: res.refund.cancellationFee?.toFixed(2)
+          });
+        }
+        Alert.alert(t('booking.alerts.cancel_success_title'), message);
         navigation.goBack();
       }
     } catch (e) {

@@ -37,7 +37,11 @@
     "invite": "Inviter",
     "update": "Mettre à jour",
     "save": "Enregistrer",
-    "saved_successfully": "Enregistré avec succès"
+    "saved_successfully": "Enregistré avec succès",
+    "done": "Terminé",
+    "amount": "Montant",
+    "date": "Date",
+    "service": "Service"
   },
   "auth": {
     "login_title": "Connectez-vous à votre compte",
@@ -107,7 +111,7 @@
   "service": {
     "no_services": "Aucun service trouvé. Veuillez réessayer plus tard.",
     "no_services_in_category": "Aucun service trouvé dans cette catégorie",
-    "reviews_count": "{{count}} avis",
+    "reviews_count": "({{count}})",
     "unknown_service": "Service inconnu",
     "all_services": "Tous les services",
     "loading_services": "Chargement des services...",
@@ -144,6 +148,8 @@
     "apple_pay_coming_soon": "Intégration Apple Pay bientôt disponible !",
     "failed_to_process": "Échec du traitement du paiement. Veuillez réessayer.",
     "card_payment": "Paiement par carte",
+    "success": "Paiement réussi !",
+    "booking_confirmed": "Votre paiement a été traité avec succès. Votre réservation est confirmée !",
     "payment_processed_booking_confirmed": "Paiement effectué et réservation confirmée !",
     "payment_failed": "Paiement échoué",
     "please_try_again": "Veuillez réessayer",
@@ -277,6 +283,7 @@
     "alerts": {
       "cancel_success_title": "Réservation annulée",
       "cancel_success_msg": "Votre réservation a été annulée avec succès.",
+      "cancel_with_refund": "Votre réservation a été annulée. Un remboursement de {{refundAmount}} € (80 %) sera traité sur votre moyen de paiement. Frais d'annulation : {{cancellationFee}} € (20 %).",
       "cancel_success_fee_note": "Des frais d'annulation de {{fee}} € s'appliquent en cas d'annulation tardive (moins de 24 heures avant l'heure du service).",
       "cancel_success_refund_note": "Un remboursement de 80 % sera effectué conformément à notre politique.",
       "cancel_failed_title": "Échec de l'annulation",

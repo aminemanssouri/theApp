@@ -39,7 +39,11 @@
     "next": "Avanti",
     "save": "Salva",
     "saved_successfully": "Salvato con successo",
-    "update": "Aggiorna"
+    "update": "Aggiorna",
+    "done": "Fatto",
+    "amount": "Importo",
+    "date": "Data",
+    "service": "Servizio"
   },
   "onboarding": {
     "screen1_title": "Trova Servizi Esperti",
@@ -159,6 +163,8 @@
     "add_more": "Aggiungi altro",
     "methods_saved_message": "I tuoi metodi di pagamento sono stati salvati.",
     "card_payment": "Pagamento con carta",
+    "success": "Pagamento riuscito!",
+    "booking_confirmed": "Il pagamento è stato elaborato con successo. La tua prenotazione è confermata!",
     "payment_processed_booking_confirmed": "Pagamento effettuato e prenotazione confermata!",
     "payment_failed": "Pagamento non riuscito",
     "please_try_again": "Per favore riprova",
@@ -206,7 +212,7 @@
   "service": {
     "no_services": "Nessun servizio trovato. Riprova più tardi.",
     "no_services_in_category": "Nessun servizio trovato in questa categoria",
-    "reviews_count": "{{count}} recensioni",
+    "reviews_count": "({{count}})",
     "unknown_service": "Servizio sconosciuto",
     "all_services": "Tutti i servizi",
     "all_categories": "Tutte le categorie",
@@ -399,6 +405,7 @@
     "alerts": {
       "cancel_success_title": "Prenotazione annullata",
       "cancel_success_msg": "La tua prenotazione è stata annullata con successo.",
+      "cancel_with_refund": "La tua prenotazione è stata annullata. Un rimborso di €{{refundAmount}} (80%) verrà elaborato sul tuo metodo di pagamento. Penale di cancellazione: €{{cancellationFee}} (20%).",
       "cancel_success_fee_note": "Si applica una penale di €{{fee}} per annullamento tardivo (entro 24 ore dall'ora del servizio).",
       "cancel_success_refund_note": "Verrà emesso un rimborso dell'80% secondo la nostra politica.",
       "cancel_failed_title": "Annullamento non riuscito",
