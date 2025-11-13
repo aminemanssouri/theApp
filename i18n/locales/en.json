@@ -38,7 +38,11 @@
     "skip": "Skip",
     "update": "Update",
     "save": "Save",
-    "saved_successfully": "Saved Successfully"
+    "saved_successfully": "Saved Successfully",
+    "done": "Done",
+    "amount": "Amount",
+    "date": "Date",
+    "service": "Service"
   },
   "auth": {
     "login_title": "Login to Your Account",
@@ -112,7 +116,7 @@
     "no_services": "No services found. Please try again later.",
     "no_services_in_category": "No services found in this category",
     "unknown_service": "Unknown Service",
-    "reviews_count": "{{count}} reviews",
+    "reviews_count": "({{count}})",
     "all_services": "All Services",
     "loading_services": "Loading services...",
     "failed_load": "Failed to load services",
@@ -148,6 +152,8 @@
     "apple_pay_coming_soon": "Apple Pay integration coming soon!",
     "failed_to_process": "Failed to process payment. Please try again.",
     "card_payment": "Card Payment",
+    "success": "Payment Successful!",
+    "booking_confirmed": "Your payment has been processed successfully. Your booking is confirmed!",
     "payment_processed_booking_confirmed": "Payment processed and booking confirmed!",
     "payment_failed": "Payment Failed",
     "please_try_again": "Please try again",
@@ -292,6 +298,7 @@
     "alerts": {
       "cancel_success_title": "Booking Cancelled",
       "cancel_success_msg": "Your booking has been cancelled successfully.",
+      "cancel_with_refund": "Your booking has been cancelled. A refund of €{{refundAmount}} (80%) will be processed to your payment method. Cancellation fee: €{{cancellationFee}} (20%).",
       "cancel_success_fee_note": "A cancellation fee of €{{fee}} applies due to late cancellation (within 24 hours of service time).",
       "cancel_success_refund_note": "A refund of 80% will be processed according to our policy.",
       "cancel_failed_title": "Cancellation Failed",

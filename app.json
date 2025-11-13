@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "scheme": "bricollano",
     "orientation": "portrait",
-    "icon": "./assets/logos/BRICOLLANO-logo-black.png",
+    "icon": "./assets/logos/iOS 15 App Icon_Rounded/icon-29@3x.png",
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/logos/BRICOLLANO-logo-blue.png",

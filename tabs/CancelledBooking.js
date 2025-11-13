@@ -158,7 +158,7 @@ const CancelledBooking = forwardRef((props, ref) => {
               <TouchableOpacity
                 onPress={() => navigation.navigate("EReceipt", { bookingId: item.id })}
                 style={styles.receiptBtn}>
-                <Text style={styles.receiptBtnText}>{t('booking.actions.view')}</Text>
+                <FontAwesome name="file-text-o" size={20} color={COLORS.white} />
               </TouchableOpacity>
             </View>
           </TouchableOpacity>
@@ -276,14 +276,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginTop: 6,
-    borderColor: COLORS.primary,
-    borderWidth: 1.4,
     marginBottom: 12
-  },
-  receiptBtnText: {
-    fontSize: 16,
-    fontFamily: "semiBold",
-    color: COLORS.white,
   },
   buttonContainer: {
     flexDirection: "row",

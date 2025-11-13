@@ -4,6 +4,8 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import * as Linking from 'expo-linking'
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from './lib/supabase'
+import { StripeProvider } from '@stripe/stripe-react-native'
+import { STRIPE_PUBLISHABLE_KEY } from './config/stripe.config'
 
 import { View } from 'react-native'
 import { useFonts } from 'expo-font'
@@ -159,25 +161,27 @@ export default function App() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <LanguageProvider defaultLanguage="it">
-        <AuthProvider>
-          <FavoritesProvider>
-            <ThemeProvider>
-              <ChatProvider>
-                <NotificationProvider>
-                  <StatusBar 
-                    backgroundColor="transparent" 
-                    translucent={true}
-                  />
-                  <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
-                    <AppNavigation navigationRef={navigationRef} />
-                  </View>
-                </NotificationProvider>
-              </ChatProvider>
-            </ThemeProvider>
-          </FavoritesProvider>
-        </AuthProvider>
-      </LanguageProvider>
+      <StripeProvider publishableKey={STRIPE_PUBLISHABLE_KEY}>
+        <LanguageProvider defaultLanguage="it">
+          <AuthProvider>
+            <FavoritesProvider>
+              <ThemeProvider>
+                <ChatProvider>
+                  <NotificationProvider>
+                    <StatusBar 
+                      backgroundColor="transparent" 
+                      translucent={true}
+                    />
+                    <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
+                      <AppNavigation navigationRef={navigationRef} />
+                    </View>
+                  </NotificationProvider>
+                </ChatProvider>
+              </ThemeProvider>
+            </FavoritesProvider>
+          </AuthProvider>
+        </LanguageProvider>
+      </StripeProvider>
     </GestureHandlerRootView>
   );
 }
