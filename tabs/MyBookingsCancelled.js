@@ -128,7 +128,7 @@ const MyBookingsCancelled = () => {
                       ? { uri: item.worker.Image }
                       : item.worker?.profile_picture
                       ? { uri: item.worker.profile_picture }
-                      : require('../assets/images/users/user1.jpeg')
+                      : images.user1
                   }
                   style={styles.itemImage}
                 />

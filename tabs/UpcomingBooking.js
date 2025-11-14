@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, Alert } from 'react-native';
 import React, { useRef, useState, useEffect, forwardRef, useImperativeHandle } from 'react';
-import { SIZES, COLORS } from '../constants';
+import { SIZES, COLORS, images } from '../constants';
 import RBSheet from "react-native-raw-bottom-sheet";
 import { useTheme } from '../theme/ThemeProvider';
 import { getUpcomingBookings, cancelBooking } from '../lib/services/booking';
@@ -172,7 +172,7 @@ const UpcomingBooking = forwardRef((props, ref) => {
                   source={
                     item.worker?.profile_picture 
                       ? { uri: item.worker.profile_picture }
-                      : require('../assets/images/users/user1.jpeg')
+                      : images.avatarurl
                   }
                   resizeMode='cover'
                   style={styles.serviceImage}
