@@ -47,6 +47,8 @@ const ForgotPasswordEmail = ({ navigation }) => {
         const { email } = formState.inputValues;
         const { email: emailError } = formState.inputValidities;
         
+        console.log('🔐 Reset password requested for:', email);
+        
         if (!email) {
             Alert.alert(t('common.error'), t('auth.please_enter_email'));
             return;
@@ -61,15 +63,22 @@ const ForgotPasswordEmail = ({ navigation }) => {
         setError(null);
         
         try {
+            console.log('📧 Calling sendPasswordResetEmail...');
             const { data, error } = await sendPasswordResetEmail(email);
             
             if (error) {
-                setError(error.message);
-                Alert.alert(t('common.error'), error.message);
+                console.error('❌ Reset email error:', error);
+                const errorMessage = error.message || 'Failed to send reset email';
+                setError(errorMessage);
+                Alert.alert(
+                    t('common.error'), 
+                    errorMessage + '\n\nPlease check:\n1. Email is correct\n2. Account exists\n3. Try again in 60 seconds'
+                );
             } else {
+                console.log('✅ Reset email sent successfully');
                 Alert.alert(
                     t('auth.email_sent'), 
-                    t('auth.check_email_for_reset_link'),
+                    `Password reset email sent to ${email}\n\nPlease check:\n• Inbox\n• Spam folder\n• Wait a few minutes\n\nNote: Supabase default emails may go to spam.`,
                     [
                         {
                             text: t('common.ok'),
@@ -79,8 +88,10 @@ const ForgotPasswordEmail = ({ navigation }) => {
                 );
             }
         } catch (err) {
-            setError(err.message);
-            Alert.alert(t('common.error'), err.message);
+            console.error('❌ Exception:', err);
+            const errorMessage = err.message || 'Unknown error occurred';
+            setError(errorMessage);
+            Alert.alert(t('common.error'), errorMessage);
         } finally {
             setIsLoading(false);
         }

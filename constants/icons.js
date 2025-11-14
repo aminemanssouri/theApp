@@ -1,520 +1,269 @@
-const addFileOutline = require("../assets/icons/add-file-outline.png");
-const addFile = require("../assets/icons/add-file.png");
-const arrowBack = require("../assets/icons/arrow-back.png");
-const arrowDown = require("../assets/icons/arrow-down.png");
-const arrowRight = require("../assets/icons/arrow-right.png"); 
-const arrowUp = require("../assets/icons/arrow-up.png");
-const bag = require("../assets/icons/bag.png");
-const bellOutline = require("../assets/icons/bell-outline.png"); 
-const bell = require("../assets/icons/bell.png");
-const bookmarkOutline = require("../assets/icons/bookmark-outline.png");
-const bookmark = require("../assets/icons/bookmark.png");
-const calendar = require("../assets/icons/calendar.png");
-const calendar2 = require("../assets/icons/calendar2.png");
-const calendar3 = require("../assets/icons/calendar3.png");
-const call = require("../assets/icons/call.png");
-const categoryOutline = require("../assets/icons/category-outline.png");
-const category = require("../assets/icons/category.png");
-const chatOutline = require("../assets/icons/chat-outline.png");
-const chat = require("../assets/icons/chat.png");
-const circleDown = require("../assets/icons/circle-down.png");
-const circleLeft = require("../assets/icons/circle-left.png");
-const circleRight = require("../assets/icons/circle-right.png");
-const circleUp = require("../assets/icons/circle-up.png");
-const discountOutline = require("../assets/icons/discount-outline.png");
-const discount = require("../assets/icons/discount.png");
-const document = require("../assets/icons/document.png");
-const documentOutline = require("../assets/icons/document-outline.png");
-const downloadFile = require("../assets/icons/download-file.png");
-const email = require("../assets/icons/email.png");
-const emailOutline = require("../assets/icons/email-outline.png");
-const exploreOutline = require("../assets/icons/explore-outline.png");
-const explore = require("../assets/icons/explore.png");
-const fileUploadOutline = require("../assets/icons/file-upload-outline.png");
-const fileUpload = require("../assets/icons/file-upload.png");
-const folderOutline = require("../assets/icons/folder-outline.png");
-const folder = require("../assets/icons/folder.png");
-const graph = require("../assets/icons/graph.png");
-const graphOutline = require("../assets/icons/graph-outline.png"); 
-const heartOutline = require("../assets/icons/heart-outline.png");
-const heart = require("../assets/icons/heart.png");
-const hide = require("../assets/icons/hide.png");
-const home = require("../assets/icons/home.png");
-const home2 = require("../assets/icons/home2.png");
-const home2Outline = require("../assets/icons/home2-outline.png");
-const image = require("../assets/icons/image.png");
-const infoCircle = require("../assets/icons/info-circle.png");
-const locationOutline = require("../assets/icons/location-outline.png");
-const location = require("../assets/icons/location.png");
-const lock = require("../assets/icons/lock.png");
-const lockedComputerOutline = require("../assets/icons/locked-computer-outline.png");
-const logout = require("../assets/icons/logout.png");
-const loupe = require("../assets/icons/loupe.png");
-const microphone = require("../assets/icons/microphone.png");
-const moreCircle = require("../assets/icons/more-circle.png");
-const moreHorizontal = require("../assets/icons/more-horizontal.png");
-const moreVertical = require("../assets/icons/more-vertical.png");
-const padlock = require("../assets/icons/padlock.png");
-const paperOutline = require("../assets/icons/paper-outline.png");
-const paper = require("../assets/icons/paper.png");
-const playOutline = require("../assets/icons/play-outline.png");
-const play = require("../assets/icons/play.png");
-const plus = require("../assets/icons/plus.png");
-const search = require("../assets/icons/search.png");
-const sendOutline = require("../assets/icons/send-outline.png");
-const send = require("../assets/icons/send.png");
-const settingOutline = require("../assets/icons/setting-outline.png");
-const setting2Outline = require("../assets/icons/setting2-outline.png");
-const settings = require("../assets/icons/settings.png");
-const shieldOutline = require("../assets/icons/shield-outline.png"); 
-const shield = require("../assets/icons/shield.png");
-const show = require("../assets/icons/show.png");
-const squareInfo = require("../assets/icons/square-info.png");
-const starOutline = require("../assets/icons/star-outline.png");
-const star = require("../assets/icons/star.png");
-const ticketOutline = require("../assets/icons/ticket-outline.png");
-const ticket = require("../assets/icons/ticket.png");
-const timeCircle = require("../assets/icons/time-circle.png");
-const trash = require("../assets/icons/trash.png");
-const unlock = require("../assets/icons/unlock.png");
-const upAndDownArrow = require("../assets/icons/up-and-down-arrow.png"); 
-const userOutline = require("../assets/icons/user-outline.png");
-const user = require("../assets/icons/user.png");
-const videoCameraOutline = require("../assets/icons/video-camera-outline.png");
-const videoCamera = require("../assets/icons/video-camera.png");
-const voiceCommandOutline = require("../assets/icons/voice-command-outline.png");
-const voiceOutline = require("../assets/icons/voice-outline.png");
-const voice = require("../assets/icons/voice.png");
-const volumeDown = require("../assets/icons/volume-down.png");
-const volumeUp = require("../assets/icons/volume-up.png");
-const wallet = require("../assets/icons/wallet.png");
-const walletOutline = require("../assets/icons/wallet-outline.png");
-const wallet2 = require("../assets/icons/wallet2.png");
-const wallet2Outline = require("../assets/icons/wallet2-outline.png");
-const appleLogo = require("../assets/icons/apple-logo.png");
-const google = require("../assets/icons/google.png");
-const facebook = require("../assets/icons/facebook.png");
-const back = require("../assets/icons/back.png");
-const back2 = require("../assets/icons/back2.png");
-const arrowLeft = require("../assets/icons/arrow-left.png");
-const microphone2 = require("../assets/icons/microphone2.png");
-const microphone3 = require("../assets/icons/microphone3.png");
-const profile = require("../assets/icons/profile.png");
-const content = require("../assets/icons/content.png");
-const download = require("../assets/icons/download.png");
-const download2 = require("../assets/icons/download2.png");
-const notification = require("../assets/icons/notification.png");
-const security = require("../assets/icons/security.png");
-const menu = require("../assets/icons/menu.png");
-const more = require("../assets/icons/more.png");
-const moreInformation = require("../assets/icons/more-information.png");
-const premium1 = require("../assets/icons/premium1.png");
-const premium2 = require("../assets/icons/premium2.png");
-const apple = require("../assets/icons/apple.png");
-const paypal = require("../assets/icons/paypal.png");
-const creditCard = require("../assets/icons/credit-card.png");
-const share = require("../assets/icons/share.png");
-const shareOutline = require("../assets/icons/share-outline.png");
-const internet = require("../assets/icons/internet.png");
-const internetOutline = require("../assets/icons/internet-outline.png");
-const downSquare = require("../assets/icons/down-square.png");
-const downSquare2 = require("../assets/icons/down-square2.png");
-const rss = require("../assets/icons/rss.png");
-const playButton = require("../assets/icons/play-button.png");
-const pause = require("../assets/icons/pause.png");
-const backwardPlay = require("../assets/icons/backward-play.png");
-const forwardPlay = require("../assets/icons/forward-play.png");
-const forwardPlay2 = require("../assets/icons/forward-play-2.png");
-const nextPlay = require("../assets/icons/next-play.png");
-const previousPlay = require("../assets/icons/previous-play.png");
-const speedometer =  require("../assets/icons/speedometer.png");
-const speedometer2 = require("../assets/icons/speedometer2.png");
-const stopwatch = require("../assets/icons/stopwatch.png");
-const cast = require("../assets/icons/cast.png");
-const history = require("../assets/icons/history.png");
-const userDefault = require("../assets/icons/user-default.png");
-const userDefault2 = require("../assets/icons/user-default2.png");
-const userDefault3 = require("../assets/icons/user-default3.png");
-const bell2 = require("../assets/icons/bell2.png");
-const bell3 = require("../assets/icons/bell3.png");
-const email2 = require("../assets/icons/email2.png");
-const cartOutline = require("../assets/icons/cart-outline.png");
-const cart = require("../assets/icons/cart.png");
-const chatBubble = require("../assets/icons/chat-bubble.png");
-const chatBubble2Outline = require("../assets/icons/chat-bubble2-outline.png");
-const chatBubble2 = require("../assets/icons/chat-bubble2.png");
-const document2Outline = require("../assets/icons/document2-outline.png");
-const document2 = require("../assets/icons/document2.png");
-const people = require("../assets/icons/people.png");
-const people2 = require("../assets/icons/people2.png");
-const people3 = require("../assets/icons/people3.png");
-const people4 = require("../assets/icons/people4.png");
-const mastercard = require("../assets/icons/mastercard.png");
-const facebook2 = require("../assets/icons/facebook2.png");
-const headset = require("../assets/icons/headset.png");
-const instagram = require("../assets/icons/instagram.png");
-const twitter = require("../assets/icons/twitter.png");
-const whatsapp = require("../assets/icons/whatsapp.png");
-const whatsapp2 = require("../assets/icons/whatsapp2.png");
-const world = require("../assets/icons/world.png");
-const world2 = require("../assets/icons/world2.png");
-const search2 = require("../assets/icons/search2.png");
-const search3 = require("../assets/icons/search3.png");
-const arrowDownSquare = require("../assets/icons/arrow-down-square.png");
-const arrowUpSquare = require("../assets/icons/arrow-up-square.png");
-const cancelSquare = require("../assets/icons/cancel-square.png");
-const cancelSquare2 = require("../assets/icons/cancel-square-2.png");
-const telephone = require("../assets/icons/telephone.png");
-const telephoneOutline = require("../assets/icons/telephone-outline.png");
-const mediumVolume = require("../assets/icons/medium-volume.png");
-const noSound = require("../assets/icons/no-sound.png");
-const videoCamera2 = require("../assets/icons/video-camera-2.png");
-const videoCamera2Off = require("../assets/icons/video-camera-2-off.png");
-const editPencil = require("../assets/icons/edit_pencil.png");
-const signature = require("../assets/icons/signature.png");
-const bookmark2 = require("../assets/icons/bookmark2.png");
-const bookmark2Outline = require("../assets/icons/bookmark2-outline.png");
-const notificationBell = require("../assets/icons/notification-bell.png");
-const notificationBell2 = require("../assets/icons/notification-bell2.png");
-const filter = require("../assets/icons/filter.png");
-const filter2 = require("../assets/icons/filter2.png");
-const filter3 = require("../assets/icons/filter3.png");
-const filter4 = require("../assets/icons/filter4.png");
-const box = require("../assets/icons/box.png");
-const rating = require("../assets/icons/rating.png");
-const star2 = require("../assets/icons/star2.png");
-const star3 = require("../assets/icons/star3.png");
-const star4 = require("../assets/icons/star4.png");
-const users = require("../assets/icons/users.png");
-const users2 = require("../assets/icons/users2.png");
-const time = require("../assets/icons/time.png");
-const clockTime = require("../assets/icons/clock-time.png");
-const figma = require("../assets/icons/figma.png");
-const heart2 = require("../assets/icons/heart2.png");
-const heart2Outline = require("../assets/icons/heart2_outline.png");
-const heart3 = require("../assets/icons/heart3.png");
-const heart4 = require("../assets/icons/heart4.png");
-const check = require("../assets/icons/check.png");
-const dashboardOutline = require("../assets/icons/dashboard-outline.png");
-const dashboard = require("../assets/icons/dashboard.png");
-const dashboard2 = require("../assets/icons/dashboard2.png");
-const dashboard2Outline = require("../assets/icons/dashboard2Outline.png");
-const send2 = require("../assets/icons/send2.png");
-const userLocation = require("../assets/icons/user-location.png");
-const bathtub = require("../assets/icons/bathtub.png");
-const bathtub2 = require("../assets/icons/bathtub2.png");
-const bed = require("../assets/icons/bed.png");
-const maximize = require("../assets/icons/maximize.png");
-const maximizeOutline = require("../assets/icons/maximize-outline.png");
-const car = require("../assets/icons/car.png");
-const car2 = require("../assets/icons/car2.png");
-const dumbell = require("../assets/icons/dumbell.png");
-const dumbell2 = require("../assets/icons/dumbell2.png");
-const fork = require("../assets/icons/fork.png");
-const laundry = require("../assets/icons/laundry.png");
-const pet = require("../assets/icons/pet.png");
-const pet2 = require("../assets/icons/pet2.png");
-const restaurant = require("../assets/icons/restaurant.png");
-const sport = require("../assets/icons/sport.png");
-const sport2 = require("../assets/icons/sport2.png");
-const swimming = require("../assets/icons/swimming.png");
-const swimming2 = require("../assets/icons/swimming2.png");
-const wifi = require("../assets/icons/wifi.png");
-const wifi2 = require("../assets/icons/wifi2.png");
-const pin = require("../assets/icons/pin.png");
-const pinOutline = require("../assets/icons/pin-outline.png");
-const calendar4   = require("../assets/icons/calendar4.png");
-const location2 = require("../assets/icons/location2.png");
-const location2Outline = require("../assets/icons/location2-outline.png");
-const location3 = require("../assets/icons/location3.png");
-const location4 = require("../assets/icons/location4.png");
-const location5 = require("../assets/icons/location5.png");
-const broom = require("../assets/icons/broom.png");
-const broom2 = require("../assets/icons/broom2.png");
-const broom2Outline = require("../assets/icons/broom2-outline.png");
-const car3 = require("../assets/icons/car3.png");
-const gardening = require("../assets/icons/gardening.png");
-const gardeningOutline = require("../assets/icons/gardening-outline.png");
-const laundryOutline = require("../assets/icons/laundry-outline.png");
-const paint1 = require("../assets/icons/paint1.png");
-const paint1Outline = require("../assets/icons/paint1-outline.png");
-const paint2 = require("../assets/icons/paint2.png");
-const paint2Outline = require("../assets/icons/paint2-outline.png");
-const plumbing = require("../assets/icons/plumbing.png");
-const plumbingOutline = require("../assets/icons/plumbing-outline.png");
-const plumbing2 = require("../assets/icons/plumbing2.png");
-const plumbing2Outline = require("../assets/icons/plumbing2-outline.png");
-const repair1 = require("../assets/icons/repair1.png");
-const repair1Outline = require("../assets/icons/repair1-outline.png");
-const repair2 = require("../assets/icons/repair2.png");
-const repair2Outline = require("../assets/icons/repair2-outline.png");
-const washingMachine = require("../assets/icons/washing-machine.png");
-const washingMachineOutline = require("../assets/icons/washing-machine-outline.png");
-const appliance = require("../assets/icons/appliance.png");
-const applianceOutline = require("../assets/icons/appliance-outline.png");
-const checked = require("../assets/icons/checked.png");
-const routing = require("../assets/icons/routing.png");
-const routingOutline = require("../assets/icons/routing-outline.png");
+import { REACT_APP_SUPABASE_URL } from '@env';
+
+// Supabase Storage base URL
+const STORAGE_BASE_URL = `${REACT_APP_SUPABASE_URL}/storage/v1/object/public/app-assets/assets`;
+
+// Helper function to get asset URL
+const getAssetUrl = (path) => ({ uri: `${STORAGE_BASE_URL}/${path}` });
 
 export default {
-    addFileOutline,
-    addFile,
-    arrowBack,
-    arrowDown,
-    arrowRight,
-    arrowUp,
-    bag,
-    bellOutline,
-    bell,
-    bookmarkOutline,
-    bookmark,
-    calendar,
-    calendar2,
-    calendar3,
-    call,
-    categoryOutline,
-    category,
-    chatOutline,
-    chat,
-    circleDown,
-    circleLeft,
-    circleRight,
-    circleUp,
-    discountOutline,
-    discount,
-    document,
-    documentOutline,
-    downloadFile,
-    email,
-    emailOutline,
-    exploreOutline,
-    explore,
-    fileUploadOutline,
-    fileUpload,
-    folderOutline,
-    folder,
-    graph,
-    graphOutline,
-    heartOutline,
-    heart,
-    hide,
-    home,
-    home2,
-    home2Outline,
-    image,
-    infoCircle,
-    locationOutline,
-    location,
-    lock,
-    lockedComputerOutline,
-    logout,
-    loupe,
-    microphone,
-    moreCircle,
-    moreHorizontal,
-    moreVertical,
-    padlock,
-    paperOutline,
-    paper,
-    playOutline,
-    play,
-    plus,
-    search,
-    sendOutline,
-    send,
-    settingOutline,
-    setting2Outline,
-    settings,
-    shieldOutline,
-    shield,
-    show,
-    squareInfo,
-    starOutline,
-    star,
-    ticketOutline,
-    ticket,
-    timeCircle,
-    trash,
-    unlock,
-    upAndDownArrow,
-    userOutline,
-    user,
-    videoCameraOutline,
-    videoCamera,
-    voiceCommandOutline,
-    voiceOutline,
-    voice,
-    volumeDown,
-    volumeUp,
-    wallet,
-    walletOutline,
-    wallet2,
-    wallet2Outline,
-    appleLogo,
-    google,
-    facebook,
-    back,
-    back2,
-    arrowLeft,
-    microphone2,
-    microphone3,
-    profile,
-    content,
-    download,
-    download2,
-    notification,
-    security,
-    more,
-    moreInformation,
-    menu,
-    premium1,
-    premium2,
-    apple,
-    paypal,
-    creditCard,
-    share,
-    shareOutline,
-    internet,
-    internetOutline,
-    downSquare,
-    downSquare2,
-    rss,
-    playButton,
-    pause,
-    backwardPlay,
-    forwardPlay,
-    forwardPlay2,
-    nextPlay,
-    previousPlay,
-    speedometer,
-    speedometer2,
-    stopwatch,
-    cast,
-    history,
-    userDefault,
-    userDefault2,
-    userDefault3,
-    bell2,
-    bell3,
-    email2,
-    cartOutline,
-    chatBubble,
-    chatBubble2Outline,
-    chatBubble2,
-    document2Outline,
-    document2,
-    people,
-    people2,
-    people3,
-    people4,
-    mastercard,
-    facebook2,
-    headset,
-    instagram,
-    twitter,
-    whatsapp,
-    whatsapp2,
-    world,
-    world2,
-    cart,
-    search2,
-    search3,
-    arrowDownSquare,
-    arrowUpSquare,
-    cancelSquare,
-    cancelSquare2,
-    telephone,
-    telephoneOutline,
-    mediumVolume,
-    noSound,
-    videoCamera2,
-    videoCamera2Off,
-    editPencil,
-    signature,
-    bookmark2,
-    bookmark2Outline,
-    notificationBell,
-    notificationBell2,
-    bookmarkOutline,
-    filter,
-    filter2,
-    filter3,
-    filter4,
-    box,
-    rating,
-    star2,
-    star3,
-    star4,
-    users,
-    users2,
-    time,
-    clockTime,
-    figma,
-    heart2,
-    heart2Outline,
-    heart3,
-    heart4,
-    check,
-    dashboardOutline,
-    dashboard,
-    dashboard2,
-    dashboard2Outline,
-    send2,
-    userLocation,
-    bathtub,
-    bathtub2,
-    bed,
-    maximize,
-    maximizeOutline,
-    car,
-    car2,
-    dumbell,
-    dumbell2,
-    fork,
-    laundry,
-    pet,
-    pet2,
-    restaurant,
-    sport,
-    sport2,
-    swimming,
-    swimming2,
-    wifi,
-    wifi2,
-    pin,
-    pinOutline,
-    calendar4,
-    location2,
-    location2Outline,
-    location3,
-    location4,
-    location5,
-    broom,
-    broom2,
-    broom2Outline,
-    car3,
-    gardening,
-    gardeningOutline,
-    laundryOutline,
-    paint1,
-    paint1Outline,
-    paint2,
-    paint2Outline,
-    plumbing,
-    plumbingOutline,
-    plumbing2,
-    plumbing2Outline,
-    repair1,
-    repair1Outline,
-    repair2,
-    repair2Outline,
-    washingMachine,
-    washingMachineOutline,
-    appliance,
-    applianceOutline,
-    checked,
-    routing,
-    routingOutline,
-    categoryAll: menu, // Using menu icon for the "All" category
-    categoryDefault: category // Default fallback icon for categories
-}
+    addFileOutline: getAssetUrl('icons/add-file-outline.png'),
+    addFile: getAssetUrl('icons/add-file.png'),
+    arrowBack: getAssetUrl('icons/arrow-back.png'),
+    arrowDown: getAssetUrl('icons/arrow-down.png'),
+    arrowRight: getAssetUrl('icons/arrow-right.png'),
+    arrowUp: getAssetUrl('icons/arrow-up.png'),
+    bag: getAssetUrl('icons/bag.png'),
+    bellOutline: getAssetUrl('icons/bell-outline.png'),
+    bell: getAssetUrl('icons/bell.png'),
+    bookmarkOutline: getAssetUrl('icons/bookmark-outline.png'),
+    bookmark: getAssetUrl('icons/bookmark.png'),
+    calendar: getAssetUrl('icons/calendar.png'),
+    calendar2: getAssetUrl('icons/calendar2.png'),
+    calendar3: getAssetUrl('icons/calendar3.png'),
+    call: getAssetUrl('icons/call.png'),
+    categoryOutline: getAssetUrl('icons/category-outline.png'),
+    category: getAssetUrl('icons/category.png'),
+    chatOutline: getAssetUrl('icons/chat-outline.png'),
+    chat: getAssetUrl('icons/chat.png'),
+    circleDown: getAssetUrl('icons/circle-down.png'),
+    circleLeft: getAssetUrl('icons/circle-left.png'),
+    circleRight: getAssetUrl('icons/circle-right.png'),
+    circleUp: getAssetUrl('icons/circle-up.png'),
+    discountOutline: getAssetUrl('icons/discount-outline.png'),
+    discount: getAssetUrl('icons/discount.png'),
+    document: getAssetUrl('icons/document.png'),
+    documentOutline: getAssetUrl('icons/document-outline.png'),
+    downloadFile: getAssetUrl('icons/download-file.png'),
+    email: getAssetUrl('icons/email.png'),
+    emailOutline: getAssetUrl('icons/email-outline.png'),
+    exploreOutline: getAssetUrl('icons/explore-outline.png'),
+    explore: getAssetUrl('icons/explore.png'),
+    fileUploadOutline: getAssetUrl('icons/file-upload-outline.png'),
+    fileUpload: getAssetUrl('icons/file-upload.png'),
+    folderOutline: getAssetUrl('icons/folder-outline.png'),
+    folder: getAssetUrl('icons/folder.png'),
+    graph: getAssetUrl('icons/graph.png'),
+    graphOutline: getAssetUrl('icons/graph-outline.png'),
+    heartOutline: getAssetUrl('icons/heart-outline.png'),
+    heart: getAssetUrl('icons/heart.png'),
+    hide: getAssetUrl('icons/hide.png'),
+    home: getAssetUrl('icons/home.png'),
+    home2: getAssetUrl('icons/home2.png'),
+    home2Outline: getAssetUrl('icons/home2-outline.png'),
+    image: getAssetUrl('icons/image.png'),
+    infoCircle: getAssetUrl('icons/info-circle.png'),
+    locationOutline: getAssetUrl('icons/location-outline.png'),
+    location: getAssetUrl('icons/location.png'),
+    lock: getAssetUrl('icons/lock.png'),
+    lockedComputerOutline: getAssetUrl('icons/locked-computer-outline.png'),
+    logout: getAssetUrl('icons/logout.png'),
+    loupe: getAssetUrl('icons/loupe.png'),
+    microphone: getAssetUrl('icons/microphone.png'),
+    moreCircle: getAssetUrl('icons/more-circle.png'),
+    moreHorizontal: getAssetUrl('icons/more-horizontal.png'),
+    moreVertical: getAssetUrl('icons/more-vertical.png'),
+    padlock: getAssetUrl('icons/padlock.png'),
+    paperOutline: getAssetUrl('icons/paper-outline.png'),
+    paper: getAssetUrl('icons/paper.png'),
+    playOutline: getAssetUrl('icons/play-outline.png'),
+    play: getAssetUrl('icons/play.png'),
+    plus: getAssetUrl('icons/plus.png'),
+    search: getAssetUrl('icons/search.png'),
+    sendOutline: getAssetUrl('icons/send-outline.png'),
+    send: getAssetUrl('icons/send.png'),
+    settingOutline: getAssetUrl('icons/setting-outline.png'),
+    setting2Outline: getAssetUrl('icons/setting2-outline.png'),
+    settings: getAssetUrl('icons/settings.png'),
+    shieldOutline: getAssetUrl('icons/shield-outline.png'),
+    shield: getAssetUrl('icons/shield.png'),
+    show: getAssetUrl('icons/show.png'),
+    squareInfo: getAssetUrl('icons/square-info.png'),
+    starOutline: getAssetUrl('icons/star-outline.png'),
+    star: getAssetUrl('icons/star.png'),
+    ticketOutline: getAssetUrl('icons/ticket-outline.png'),
+    ticket: getAssetUrl('icons/ticket.png'),
+    timeCircle: getAssetUrl('icons/time-circle.png'),
+    trash: getAssetUrl('icons/trash.png'),
+    unlock: getAssetUrl('icons/unlock.png'),
+    upAndDownArrow: getAssetUrl('icons/up-and-down-arrow.png'),
+    userOutline: getAssetUrl('icons/user-outline.png'),
+    user: getAssetUrl('icons/user.png'),
+    videoCameraOutline: getAssetUrl('icons/video-camera-outline.png'),
+    videoCamera: getAssetUrl('icons/video-camera.png'),
+    voiceCommandOutline: getAssetUrl('icons/voice-command-outline.png'),
+    voiceOutline: getAssetUrl('icons/voice-outline.png'),
+    voice: getAssetUrl('icons/voice.png'),
+    volumeDown: getAssetUrl('icons/volume-down.png'),
+    volumeUp: getAssetUrl('icons/volume-up.png'),
+    wallet: getAssetUrl('icons/wallet.png'),
+    walletOutline: getAssetUrl('icons/wallet-outline.png'),
+    wallet2: getAssetUrl('icons/wallet2.png'),
+    wallet2Outline: getAssetUrl('icons/wallet2-outline.png'),
+    appleLogo: getAssetUrl('icons/apple-logo.png'),
+    google: getAssetUrl('icons/google.png'),
+    facebook: getAssetUrl('icons/facebook.png'),
+    back: getAssetUrl('icons/back.png'),
+    back2: getAssetUrl('icons/back2.png'),
+    arrowLeft: getAssetUrl('icons/arrow-left.png'),
+    microphone2: getAssetUrl('icons/microphone2.png'),
+    microphone3: getAssetUrl('icons/microphone3.png'),
+    profile: getAssetUrl('icons/profile.png'),
+    content: getAssetUrl('icons/content.png'),
+    download: getAssetUrl('icons/download.png'),
+    download2: getAssetUrl('icons/download2.png'),
+    notification: getAssetUrl('icons/notification.png'),
+    security: getAssetUrl('icons/security.png'),
+    menu: getAssetUrl('icons/menu.png'),
+    more: getAssetUrl('icons/more.png'),
+    moreInformation: getAssetUrl('icons/more-information.png'),
+    premium1: getAssetUrl('icons/premium1.png'),
+    premium2: getAssetUrl('icons/premium2.png'),
+    apple: getAssetUrl('icons/apple.png'),
+    paypal: getAssetUrl('icons/paypal.png'),
+    creditCard: getAssetUrl('icons/credit-card.png'),
+    share: getAssetUrl('icons/share.png'),
+    shareOutline: getAssetUrl('icons/share-outline.png'),
+    internet: getAssetUrl('icons/internet.png'),
+    internetOutline: getAssetUrl('icons/internet-outline.png'),
+    downSquare: getAssetUrl('icons/down-square.png'),
+    downSquare2: getAssetUrl('icons/down-square2.png'),
+    rss: getAssetUrl('icons/rss.png'),
+    playButton: getAssetUrl('icons/play-button.png'),
+    pause: getAssetUrl('icons/pause.png'),
+    backwardPlay: getAssetUrl('icons/backward-play.png'),
+    forwardPlay: getAssetUrl('icons/forward-play.png'),
+    forwardPlay2: getAssetUrl('icons/forward-play-2.png'),
+    nextPlay: getAssetUrl('icons/next-play.png'),
+    previousPlay: getAssetUrl('icons/previous-play.png'),
+    speedometer: getAssetUrl('icons/speedometer.png'),
+    speedometer2: getAssetUrl('icons/speedometer2.png'),
+    stopwatch: getAssetUrl('icons/stopwatch.png'),
+    cast: getAssetUrl('icons/cast.png'),
+    history: getAssetUrl('icons/history.png'),
+    userDefault: getAssetUrl('icons/user-default.png'),
+    userDefault2: getAssetUrl('icons/user-default2.png'),
+    userDefault3: getAssetUrl('icons/user-default3.png'),
+    bell2: getAssetUrl('icons/bell2.png'),
+    bell3: getAssetUrl('icons/bell3.png'),
+    email2: getAssetUrl('icons/email2.png'),
+    cartOutline: getAssetUrl('icons/cart-outline.png'),
+    cart: getAssetUrl('icons/cart.png'),
+    chatBubble: getAssetUrl('icons/chat-bubble.png'),
+    chatBubble2Outline: getAssetUrl('icons/chat-bubble2-outline.png'),
+    chatBubble2: getAssetUrl('icons/chat-bubble2.png'),
+    document2Outline: getAssetUrl('icons/document2-outline.png'),
+    document2: getAssetUrl('icons/document2.png'),
+    people: getAssetUrl('icons/people.png'),
+    people2: getAssetUrl('icons/people2.png'),
+    people3: getAssetUrl('icons/people3.png'),
+    people4: getAssetUrl('icons/people4.png'),
+    mastercard: getAssetUrl('icons/mastercard.png'),
+    facebook2: getAssetUrl('icons/facebook2.png'),
+    headset: getAssetUrl('icons/headset.png'),
+    instagram: getAssetUrl('icons/instagram.png'),
+    twitter: getAssetUrl('icons/twitter.png'),
+    whatsapp: getAssetUrl('icons/whatsapp.png'),
+    whatsapp2: getAssetUrl('icons/whatsapp2.png'),
+    world: getAssetUrl('icons/world.png'),
+    world2: getAssetUrl('icons/world2.png'),
+    search2: getAssetUrl('icons/search2.png'),
+    search3: getAssetUrl('icons/search3.png'),
+    arrowDownSquare: getAssetUrl('icons/arrow-down-square.png'),
+    arrowUpSquare: getAssetUrl('icons/arrow-up-square.png'),
+    cancelSquare: getAssetUrl('icons/cancel-square.png'),
+    cancelSquare2: getAssetUrl('icons/cancel-square-2.png'),
+    telephone: getAssetUrl('icons/telephone.png'),
+    telephoneOutline: getAssetUrl('icons/telephone-outline.png'),
+    mediumVolume: getAssetUrl('icons/medium-volume.png'),
+    noSound: getAssetUrl('icons/no-sound.png'),
+    videoCamera2: getAssetUrl('icons/video-camera-2.png'),
+    videoCamera2Off: getAssetUrl('icons/video-camera-2-off.png'),
+    editPencil: getAssetUrl('icons/edit_pencil.png'),
+    signature: getAssetUrl('icons/signature.png'),
+    bookmark2: getAssetUrl('icons/bookmark2.png'),
+    bookmark2Outline: getAssetUrl('icons/bookmark2-outline.png'),
+    notificationBell: getAssetUrl('icons/notification-bell.png'),
+    notificationBell2: getAssetUrl('icons/notification-bell2.png'),
+    filter: getAssetUrl('icons/filter.png'),
+    filter2: getAssetUrl('icons/filter2.png'),
+    filter3: getAssetUrl('icons/filter3.png'),
+    filter4: getAssetUrl('icons/filter4.png'),
+    box: getAssetUrl('icons/box.png'),
+    rating: getAssetUrl('icons/rating.png'),
+    star2: getAssetUrl('icons/star2.png'),
+    star3: getAssetUrl('icons/star3.png'),
+    star4: getAssetUrl('icons/star4.png'),
+    users: getAssetUrl('icons/users.png'),
+    users2: getAssetUrl('icons/users2.png'),
+    time: getAssetUrl('icons/time.png'),
+    clockTime: getAssetUrl('icons/clock-time.png'),
+    figma: getAssetUrl('icons/figma.png'),
+    heart2: getAssetUrl('icons/heart2.png'),
+    heart2Outline: getAssetUrl('icons/heart2_outline.png'),
+    heart3: getAssetUrl('icons/heart3.png'),
+    heart4: getAssetUrl('icons/heart4.png'),
+    check: getAssetUrl('icons/check.png'),
+    dashboardOutline: getAssetUrl('icons/dashboard-outline.png'),
+    dashboard: getAssetUrl('icons/dashboard.png'),
+    dashboard2: getAssetUrl('icons/dashboard2.png'),
+    dashboard2Outline: getAssetUrl('icons/dashboard2Outline.png'),
+    send2: getAssetUrl('icons/send2.png'),
+    userLocation: getAssetUrl('icons/user-location.png'),
+    bathtub: getAssetUrl('icons/bathtub.png'),
+    bathtub2: getAssetUrl('icons/bathtub2.png'),
+    bed: getAssetUrl('icons/bed.png'),
+    maximize: getAssetUrl('icons/maximize.png'),
+    maximizeOutline: getAssetUrl('icons/maximize-outline.png'),
+    car: getAssetUrl('icons/car.png'),
+    car2: getAssetUrl('icons/car2.png'),
+    dumbell: getAssetUrl('icons/dumbell.png'),
+    dumbell2: getAssetUrl('icons/dumbell2.png'),
+    fork: getAssetUrl('icons/fork.png'),
+    laundry: getAssetUrl('icons/laundry.png'),
+    pet: getAssetUrl('icons/pet.png'),
+    pet2: getAssetUrl('icons/pet2.png'),
+    restaurant: getAssetUrl('icons/restaurant.png'),
+    sport: getAssetUrl('icons/sport.png'),
+    sport2: getAssetUrl('icons/sport2.png'),
+    swimming: getAssetUrl('icons/swimming.png'),
+    swimming2: getAssetUrl('icons/swimming2.png'),
+    wifi: getAssetUrl('icons/wifi.png'),
+    wifi2: getAssetUrl('icons/wifi2.png'),
+    pin: getAssetUrl('icons/pin.png'),
+    pinOutline: getAssetUrl('icons/pin-outline.png'),
+    calendar4: getAssetUrl('icons/calendar4.png'),
+    location2: getAssetUrl('icons/location2.png'),
+    location2Outline: getAssetUrl('icons/location2-outline.png'),
+    location3: getAssetUrl('icons/location3.png'),
+    location4: getAssetUrl('icons/location4.png'),
+    location5: getAssetUrl('icons/location5.png'),
+    broom: getAssetUrl('icons/broom.png'),
+    broom2: getAssetUrl('icons/broom2.png'),
+    broom2Outline: getAssetUrl('icons/broom2-outline.png'),
+    car3: getAssetUrl('icons/car3.png'),
+    gardening: getAssetUrl('icons/gardening.png'),
+    gardeningOutline: getAssetUrl('icons/gardening-outline.png'),
+    laundryOutline: getAssetUrl('icons/laundry-outline.png'),
+    paint1: getAssetUrl('icons/paint1.png'),
+    paint1Outline: getAssetUrl('icons/paint1-outline.png'),
+    paint2: getAssetUrl('icons/paint2.png'),
+    paint2Outline: getAssetUrl('icons/paint2-outline.png'),
+    plumbing: getAssetUrl('icons/plumbing.png'),
+    plumbingOutline: getAssetUrl('icons/plumbing-outline.png'),
+    plumbing2: getAssetUrl('icons/plumbing2.png'),
+    plumbing2Outline: getAssetUrl('icons/plumbing2-outline.png'),
+    repair1: getAssetUrl('icons/repair1.png'),
+    repair1Outline: getAssetUrl('icons/repair1-outline.png'),
+    repair2: getAssetUrl('icons/repair2.png'),
+    repair2Outline: getAssetUrl('icons/repair2-outline.png'),
+    washingMachine: getAssetUrl('icons/washing-machine.png'),
+    washingMachineOutline: getAssetUrl('icons/washing-machine-outline.png'),
+    appliance: getAssetUrl('icons/appliance.png'),
+    applianceOutline: getAssetUrl('icons/appliance-outline.png'),
+    checked: getAssetUrl('icons/checked.png'),
+    routing: getAssetUrl('icons/routing.png'),
+    routingOutline: getAssetUrl('icons/routing-outline.png'),
+    categoryAll: getAssetUrl('icons/menu.png'),
+    categoryDefault: getAssetUrl('icons/category.png'),
+};

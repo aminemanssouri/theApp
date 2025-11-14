@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, TouchableOpacity, Image, FlatList, Platform, Alert } from 'react-native';
 import React, { useState, useEffect } from 'react';
-import { COLORS, SIZES, icons } from '../constants';
+import { COLORS, SIZES,icons, images } from '../constants';
 import { getSafeAreaInsets } from '../utils/safeAreaUtils';
 import { ScrollView } from 'react-native-virtualized-view';
 import { category } from '../data';
@@ -62,7 +62,7 @@ const Favourite = ({ navigation }) => {
             favoriteId: fav.favorite_id,
             favoriteType: fav.isWorkerService ? 'worker_service' : 'worker',
             name: svcName || fullName || t('favorites.unknown_worker'),
-            image: w?.Image ? { uri: w.Image } : require('../assets/images/avatar.jpeg'),
+            image: w?.Image ? { uri: w.Image } : images.avatarurl,
             providerName: fav.isWorkerService ? fullName : t('favorites.worker'),
             price: w?.hourly_rate || 0,
             isOnDiscount: false,
