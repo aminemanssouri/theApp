@@ -118,15 +118,7 @@ const WorkerDetails = ({ route, navigation }) => {
             }]}
           />
         </TouchableOpacity>
-        <TouchableOpacity>
-          <Image
-            source={icons.bell}
-            resizeMode='contain'
-            style={[styles.bellIcon, { 
-              tintColor: dark ? COLORS.white : COLORS.greyscale900
-            }]}
-          />
-        </TouchableOpacity>
+        
       </View>
     )
   }

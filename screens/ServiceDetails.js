@@ -18,6 +18,7 @@ const renderScene = SceneMap({
 const ServiceDetails = (props) => {
   const layout = useWindowDimensions();
   const { dark, colors } = useTheme();
+  const { notifications, unreadCount, userNotificationStats, isUserAuthenticated } = useNotifications();
   const { user } = useAuth();
   const [msgLoading, setMsgLoading] = React.useState(false);
   const workerId = 'd7b6ef7e-bfaa-45f7-b196-c6d6c9cf540b'; // For test
@@ -44,15 +45,24 @@ const ServiceDetails = (props) => {
             }]}
           />
         </TouchableOpacity>
-        <TouchableOpacity>
-          <Image
-            source={icons.bell}
-            resizeMode='contain'
-            style={[styles.bellIcon, { 
-              tintColor: dark? COLORS.white : COLORS.greyscale900
-            }]}
-          />
-        </TouchableOpacity>
+         <TouchableOpacity
+                 onPress={handleNotificationPress}
+                 style={styles.notificationContainer}>
+                 <Image
+                   source={icons.bell}
+                   resizeMode='contain'
+                   style={[styles.bellIcon, { 
+                     tintColor: dark? COLORS.white : COLORS.greyscale900
+                   }]}
+                 />
+                 {unreadCount > 0 && (
+                   <View style={styles.notificationBadge}>
+                     <Text style={styles.notificationBadgeText}>
+                       {unreadCount > 99 ? '99+' : unreadCount}
+                     </Text>
+                   </View>
+                 )}
+               </TouchableOpacity>
       </View>
     )
   }
