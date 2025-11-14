@@ -164,33 +164,50 @@ export const AuthProvider = ({ children }) => {
         console.log('⏱️ Session establishment delay complete');
         
         const user = session.user;
+        console.log('👤 Setting user state:', user.id);
         setUser(user);
         setSession(session);
         
-        // Start profile check for OAuth users
-        setProfileCheckLoading(true);
-        console.log('🔄 Starting profile check for signed in user...');
+        // CRITICAL: Set main loading to false IMMEDIATELY after user is set
+        // This allows the app to navigate and render while profile loads in background
+        setLoading(false);
+        console.log('✅ Main loading set to FALSE - app can now render');
         
-        try {
-          // Load user profile
-          await fetchUserProfile(user.id);
-          
-          // Check profile completion
-          const isComplete = await checkProfileCompletion(user.id);
-          setProfileComplete(isComplete);
-          console.log('📊 Profile loaded. Complete:', isComplete);
-          
-          // Register push token
-          registerPushTokenForUser(user.id);
-        } catch (profileError) {
-          console.error('❌ Error loading profile after sign in:', profileError);
-          setProfileComplete(false);
-        } finally {
-          // CRITICAL: Set loading states to false after OAuth completes
-          setProfileCheckLoading(false);
-          setLoading(false);
-          console.log('✅ Auth loading complete after sign in');
-        }
+        // Start profile check for OAuth users (in background)
+        setProfileCheckLoading(true);
+        console.log('🔄 Starting background profile check...');
+        
+        // Load profile and check completion in background
+        (async () => {
+          try {
+            console.log('📥 Fetching user profile in background...');
+            // Load user profile with timeout
+            const profilePromise = fetchUserProfile(user.id);
+            const timeoutPromise = new Promise((_, reject) => 
+              setTimeout(() => reject(new Error('Profile fetch timeout')), 10000)
+            );
+            
+            await Promise.race([profilePromise, timeoutPromise]);
+            console.log('✅ User profile fetched');
+            
+            // Check profile completion
+            console.log('🔍 Checking profile completion...');
+            const isComplete = await checkProfileCompletion(user.id);
+            setProfileComplete(isComplete);
+            console.log('📊 Profile loaded. Complete:', isComplete);
+            
+            // Register push token
+            console.log('📱 Registering push token...');
+            registerPushTokenForUser(user.id);
+            console.log('✅ Push token registered');
+          } catch (profileError) {
+            console.error('❌ Error loading profile after sign in:', profileError);
+            setProfileComplete(true); // Still mark complete to not block UI
+          } finally {
+            setProfileCheckLoading(false);
+            console.log('✅ Profile check complete');
+          }
+        })();
       } else if (event === 'SIGNED_OUT') {
         console.log('👋 User signed out');
         setUser(null);
@@ -254,11 +271,14 @@ export const AuthProvider = ({ children }) => {
     refreshProfileStatus
   };
 
+  const combinedLoading = loading || profileCheckLoading;
   console.log('🔐 Auth State:', {
     hasUser: !!user,
     userId: user?.id,
     profileComplete,
-    loading: loading || profileCheckLoading
+    loading: combinedLoading,
+    _loading: loading,
+    _profileCheckLoading: profileCheckLoading
   });
 
   return (

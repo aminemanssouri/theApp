@@ -84,11 +84,6 @@ const Signup = ({ navigation }) => {
     }
   }, [error])
 
-  // implementing apple authentication
-  const appleAuthHandler = () => {
-    console.log("Apple Authentication")
-  };
-
   // implementing facebook authentication
   const facebookAuthHandler = () => {
     console.log("Facebook Authentication")
@@ -292,11 +287,6 @@ const googleAuthHandler = async () => {
             <View>
               <OrSeparator text={t('common.or_continue_with')} />
               <View style={styles.socialBtnContainer}>
-                <SocialButton
-                  icon={icons.appleLogo}
-                  onPress={appleAuthHandler}
-                  tintColor={dark ? COLORS.white : COLORS.black}
-                />
                 <SocialButton
                   icon={icons.facebook}
                   onPress={facebookAuthHandler}

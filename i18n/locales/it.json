@@ -61,15 +61,14 @@
     "get_started": "Inizia"
   },
   "welcome": {
-    "title": "Bentornato!",
-    "subtitle": "Ciao, continua e cerca i servizi da tutto il mondo.",
-    "continue_with_apple": "Continua con Apple",
+    "title": "Ti diamo il benvenuto",
+    "subtitle": "Connettiti con i fornitori di servizi nella tua zona e fai le cose in modo rapido ed efficiente.",
     "continue_with_google": "Continua con Google",
     "continue_with_email": "Continua con Email",
     "already_have_account": "Hai già un account?",
     "log_in": "Accedi",
-    "terms_text": "Continuando, accetti i Termini di Utilizzo e",
-    "privacy_policy": "Informativa sulla Privacy."
+    "terms_text": "Registrandoti, accetti i nostri Termini di Servizio e l'Informativa sulla Privacy.",
+    "privacy_policy": "Informativa sulla Privacy"
   },
   "auth": {
     "login_title": "Accedi al tuo account",

@@ -56,12 +56,6 @@ const Welcome = ({ navigation }) => {
         </Text>
         <View style={{ marginVertical: 32 }}>
           <SocialButtonV2 
-            title={t('welcome.continue_with_apple')}
-            icon={icons.appleLogo} 
-            onPress={() => navigation.navigate("Signup")}
-            iconStyles={{ tintColor: dark ? COLORS.white : COLORS.black }} 
-          />
-          <SocialButtonV2 
             title={t('welcome.continue_with_google')}
             icon={icons.google} 
             onPress={googleAuthHandler}

@@ -24,7 +24,7 @@ const Home = ({ navigation }) => {
   const { dark, colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { notifications, unreadCount, userNotificationStats, isUserAuthenticated } = useNotifications();
-  const { user, userProfile } = useAuth();
+  const { user, userProfile, loading: authLoading } = useAuth();
   // Supabase data states
   const [categories, setCategories] = useState([]);
   const [allCategories, setAllCategories] = useState([]);
@@ -82,21 +82,46 @@ const Home = ({ navigation }) => {
  
 
   // Refetch when language changes so names/descriptions are localized
+  // ALSO refetch when user becomes available (fixes Google login race condition)
+  // Wait for authLoading to complete before fetching data
   const { language } = useI18n();
   useEffect(() => {
+    console.log('🔄 Home: useEffect triggered - Loading homepage data', { 
+      hasUser: !!user, 
+      userId: user?.id,
+      userEmail: user?.email,
+      authLoading,
+      language,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Don't fetch data while auth is still loading
+    if (authLoading) {
+      console.log('⏸️ Home: Skipping data load - auth still loading');
+      return;
+    }
+    
     loadHomepageData();
-  }, [language]);
+  }, [language, user?.id, authLoading]);
 
   const loadHomepageData = async () => {
     try {
+      console.log('🔄 loadHomepageData: Starting data fetch...');
       setLoading(true);
        
       // Use the simplified fetchHomepageData function
       const { categories: homepageCategories, services: homepageServices, error } = 
         await fetchHomepageData();
       
+      console.log('📊 loadHomepageData: Fetch complete', {
+        categoriesCount: homepageCategories?.length || 0,
+        servicesCount: homepageServices?.length || 0,
+        hasError: !!error
+      });
+      
       if (error) {
-         setLoading(false);
+        console.error('❌ loadHomepageData: Error from fetchHomepageData:', error);
+        setLoading(false);
         return;
       }
       
@@ -106,24 +131,35 @@ const Home = ({ navigation }) => {
       const allTransformedCategories = transformCategories(allCats || []);
       
       // Set data to state
-       setCategories(homepageCategories || []);
+      console.log('💾 loadHomepageData: Setting state with data');
+      setCategories(homepageCategories || []);
       setAllCategories(allTransformedCategories || []);
       setServices(homepageServices || []); // Services are already processed
       
-       
+      console.log('✅ loadHomepageData: Data loaded successfully', {
+        categories: homepageCategories?.length || 0,
+        services: homepageServices?.length || 0
+      });
+      
       if (homepageServices?.length === 0) {
-       } else {
+        console.warn('⚠️ loadHomepageData: No services found');
+      } else {
          
         // Log first service details
         if (homepageServices && homepageServices.length > 0) {
           const firstService = homepageServices[0];
-         
+          console.log('📦 First service:', {
+            id: firstService.id,
+            name: firstService.name,
+            hasImage: !!firstService.image
+          });
         }
       }
       
      } catch (error) {
       console.error('❌ Error loading homepage data:', error);
     } finally {
+      console.log('🏁 loadHomepageData: Setting loading to false');
       setLoading(false);
     }
   };
