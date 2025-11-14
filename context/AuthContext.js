@@ -165,18 +165,40 @@ export const AuthProvider = ({ children }) => {
         
         const user = session.user;
         setUser(user);
+        setSession(session);
         
-        // Load user profile
-        const profile = await getUserProfile(user.id);
-        if (profile) {
+        // Start profile check for OAuth users
+        setProfileCheckLoading(true);
+        console.log('🔄 Starting profile check for signed in user...');
+        
+        try {
+          // Load user profile
+          await fetchUserProfile(user.id);
+          
+          // Check profile completion
           const isComplete = await checkProfileCompletion(user.id);
           setProfileComplete(isComplete);
           console.log('📊 Profile loaded. Complete:', isComplete);
+          
+          // Register push token
+          registerPushTokenForUser(user.id);
+        } catch (profileError) {
+          console.error('❌ Error loading profile after sign in:', profileError);
+          setProfileComplete(false);
+        } finally {
+          // CRITICAL: Set loading states to false after OAuth completes
+          setProfileCheckLoading(false);
+          setLoading(false);
+          console.log('✅ Auth loading complete after sign in');
         }
       } else if (event === 'SIGNED_OUT') {
         console.log('👋 User signed out');
         setUser(null);
+        setSession(null);
+        setUserProfile(null);
         setProfileComplete(false);
+        setProfileCheckLoading(false);
+        setLoading(false);
       }
     });
 

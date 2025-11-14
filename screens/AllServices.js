@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndi
 import React, { useState, useEffect } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { fetchActiveServices, transformServices } from '../lib/services/home';
-import { COLORS, SIZES } from "../constants";
+import { COLORS, icons, SIZES } from "../constants";
 import ServiceCard from '../components/ServiceCard';
 import { useTheme } from '../theme/ThemeProvider';
 import { t } from '../context/LanguageContext';
@@ -55,7 +55,7 @@ const AllServices = ({ navigation }) => {
           style={styles.backButton}
         >
           <Image 
-            source={require('../assets/icons/arrow-back.png')}
+            source={icons.arrowBack}
             style={[styles.backIcon, { tintColor: dark ? COLORS.white : COLORS.black }]}
           />
         </TouchableOpacity>

@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
-import { SIZES, COLORS } from '../constants';
+import { SIZES, COLORS,images } from '../constants';
 import { useTheme } from '../theme/ThemeProvider';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
@@ -109,7 +109,7 @@ const CancelledBooking = forwardRef((props, ref) => {
                   source={
                     item.worker?.profile_picture 
                       ? { uri: item.worker.profile_picture }
-                      : require('../assets/images/users/user1.jpeg')
+                      : images.user1
                   }
                   resizeMode='cover'
                   style={styles.serviceImage}
@@ -158,7 +158,7 @@ const CancelledBooking = forwardRef((props, ref) => {
               <TouchableOpacity
                 onPress={() => navigation.navigate("EReceipt", { bookingId: item.id })}
                 style={styles.receiptBtn}>
-                <Text style={styles.receiptBtnText}>{t('booking.actions.view')}</Text>
+                <FontAwesome name="file-text-o" size={20} color={COLORS.white} />
               </TouchableOpacity>
             </View>
           </TouchableOpacity>
@@ -276,14 +276,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginTop: 6,
-    borderColor: COLORS.primary,
-    borderWidth: 1.4,
     marginBottom: 12
-  },
-  receiptBtnText: {
-    fontSize: 16,
-    fontFamily: "semiBold",
-    color: COLORS.white,
   },
   buttonContainer: {
     flexDirection: "row",

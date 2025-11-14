@@ -33,3 +33,8 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
+
+# Assets migrated to Supabase Storage CDN
+assets/icons/
+assets/images/
+assets/illustrations/

@@ -70,9 +70,15 @@ const BookingDetails = ({ navigation, route }) => {
     const hourData = hoursData.find(h => h.id === startHour);
     if (!hourData) return '11:00';
     
-    const [hour] = hourData.hour.split(':');
+    const [hour, minute] = hourData.hour.split(':');
     const endHour = parseInt(hour) + hours;
-    return `${endHour.toString().padStart(2, '0')}:00`;
+    
+    // Handle overflow past 23:59 (wrap to next day or cap at 23:59)
+    if (endHour >= 24) {
+      return '23:59'; // Cap at end of day
+    }
+    
+    return `${endHour.toString().padStart(2, '0')}:${minute || '00'}`;
   };
   
   // Calculate price based on hours

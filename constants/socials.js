@@ -1,12 +1,18 @@
-const facebook = require("../assets/icons/socials/facebook.png");
-const instagram = require("../assets/icons/socials/instagram.png");
-const linkedin = require("../assets/icons/socials/linkedin.png");
-const messenger = require("../assets/icons/socials/messenger.png");
-const titktok = require("../assets/icons/socials/tiktok.png");
-const twitter = require("../assets/icons/socials/twitter.png");
-const wechat = require("../assets/icons/socials/wechat.png");
-const whatsapp = require("../assets/icons/socials/whatsappp.png");
-const yahoo = require("../assets/icons/socials/yahoo.png");
+import { REACT_APP_SUPABASE_URL } from '@env';
+
+const STORAGE_BASE_URL = `${REACT_APP_SUPABASE_URL}/storage/v1/object/public/app-assets/assets`;
+
+const getAssetUrl = (path) => ({ uri: `${STORAGE_BASE_URL}/${path}` });
+
+const facebook = getAssetUrl('icons/socials/facebook.png');
+const instagram = getAssetUrl('icons/socials/instagram.png');
+const linkedin = getAssetUrl('icons/socials/linkedin.png');
+const messenger = getAssetUrl('icons/socials/messenger.png');
+const titktok = getAssetUrl('icons/socials/tiktok.png');
+const twitter = getAssetUrl('icons/socials/twitter.png');
+const wechat = getAssetUrl('icons/socials/wechat.png');
+const whatsapp = getAssetUrl('icons/socials/whatsappp.png');
+const yahoo = getAssetUrl('icons/socials/yahoo.png');
 
 export default {
     facebook,

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, Image, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native';
 
-import { COLORS } from '../constants';
+import { COLORS,images} from '../constants';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../theme/ThemeProvider';
 import { useAuth } from '../context/AuthContext';
@@ -128,7 +128,7 @@ const MyBookingCompleted = () => {
                       ? { uri: item.worker.Image }
                       : item.worker?.profile_picture
                       ? { uri: item.worker.profile_picture }
-                      : require('../assets/images/users/user1.jpeg')
+                      : images.user1
                   }
                   style={styles.itemImage}
                 />
