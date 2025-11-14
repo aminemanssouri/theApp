@@ -37,6 +37,7 @@ export default function App() {
 
   // Handle deep links for password reset
   const navigationRef = useRef(null);
+  const subscriptionRef = useRef(null);
 
   const handleDeepLink = useCallback(async (url) => {
     console.log('🔗 Deep link received:', url);
@@ -133,17 +134,28 @@ export default function App() {
       if (url) {
         handleDeepLink(url);
       }
+    }).catch(error => {
+      console.error('Error getting initial URL:', error);
     });
 
     // Listen for URL changes
-    const subscription = Linking.addEventListener('url', (event) => {
-      console.log('🔔 Link event received:', event.url);
-      handleDeepLink(event.url);
-    });
+    try {
+      subscriptionRef.current = Linking.addEventListener('url', (event) => {
+        console.log('🔔 Link event received:', event.url);
+        handleDeepLink(event.url);
+      });
+    } catch (error) {
+      console.error('Error setting up deep link listener:', error);
+    }
 
     return () => {
-      if (subscription && typeof subscription.remove === 'function') {
-        subscription.remove();
+      try {
+        if (subscriptionRef.current && typeof subscriptionRef.current.remove === 'function') {
+          subscriptionRef.current.remove();
+          subscriptionRef.current = null;
+        }
+      } catch (error) {
+        console.error('Error removing deep link listener:', error);
       }
     };
   }, [handleDeepLink]);

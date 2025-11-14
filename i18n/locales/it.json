@@ -335,6 +335,7 @@
     "continue_with_price": "Continua - €{{price}}",
     "please_select_date": "Seleziona una data",
     "please_select_start_time": "Seleziona un orario di inizio",
+    "no_hours_available_today": "Nessun orario disponibile per oggi. Seleziona una data futura.",
     "your_address": "Il Tuo Indirizzo",
     "enter_service_address": "Inserisci l'Indirizzo del Servizio",
     "address_subtitle": "Fornisci l'indirizzo dove verrà eseguito il servizio",

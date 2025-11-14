@@ -49,6 +49,52 @@ const BookingDetails = ({ navigation, route }) => {
     return parseInt(hour) >= 19;
   };
 
+  // Filter hours based on selected date
+  const getAvailableHours = () => {
+    if (!selectedDate) return hoursData;
+    
+    // Check if selected date is today
+    const now = new Date();
+    const selected = new Date(selectedDate + 'T00:00:00'); // Ensure proper date parsing
+    
+    // Compare dates (ignore time)
+    const todayDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const selectedDateOnly = new Date(selected.getFullYear(), selected.getMonth(), selected.getDate());
+    const isToday = todayDate.getTime() === selectedDateOnly.getTime();
+    
+    console.log('🕐 Hour filtering:', {
+      selectedDate,
+      isToday,
+      currentHour: now.getHours(),
+      currentMinute: now.getMinutes()
+    });
+    
+    if (!isToday) {
+      // If it's a future date, show all hours
+      console.log('📅 Future date - showing all hours');
+      return hoursData;
+    }
+    
+    // If it's today, filter out past hours
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+    
+    const filtered = hoursData.filter(hourItem => {
+      const [hour, minute] = hourItem.hour.split(':').map(Number);
+      
+      // Show hour if it's at least 1 hour from now
+      const hourDiff = hour - currentHour;
+      
+      if (hourDiff > 1) return true; // More than 1 hour ahead
+      if (hourDiff === 1 && minute >= currentMinute) return true; // Exactly 1 hour ahead or more
+      
+      return false;
+    });
+    
+    console.log('⏰ Filtered hours for today:', filtered.length, 'out of', hoursData.length);
+    return filtered;
+  };
+
   const handleIncrease = () => {
     setCount(count + 1);
   };
@@ -63,6 +109,16 @@ const BookingDetails = ({ navigation, route }) => {
   const handleHourSelect = (hour) => {
     setSelectedHour(hour);
   };
+
+  // Reset selected hour when date changes (in case previously selected hour is no longer available)
+  React.useEffect(() => {
+    if (!selectedDate) return;
+    
+    const availableHours = getAvailableHours();
+    if (selectedHour && !availableHours.find(h => h.id === selectedHour)) {
+      setSelectedHour(null); // Clear selection if hour is no longer available
+    }
+  }, [selectedDate, selectedHour]); // Add selectedHour to dependencies
   
   // Calculate end time based on start time and hours
   const calculateEndTime = (startHour, hours) => {
@@ -232,9 +288,18 @@ const BookingDetails = ({ navigation, route }) => {
           <Text style={[styles.title, { 
             color: dark? COLORS.white : COLORS.greyscale900
           }]}>{t('booking.choose_start_time')}</Text>
+          
+          {selectedDate && getAvailableHours().length === 0 && (
+            <View style={styles.surchargeNotice}>
+              <Text style={styles.surchargeText}>
+                ⚠️ {t('booking.no_hours_available_today')}
+              </Text>
+            </View>
+          )}
+          
           <View style={{ marginVertical: 12 }}>
             <FlatList
-              data={hoursData}
+              data={getAvailableHours()}
               renderItem={renderHourItem}
               keyExtractor={(item) => item.id.toString()}
               horizontal={true}
