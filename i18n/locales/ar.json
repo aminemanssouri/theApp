@@ -5,6 +5,16 @@
     "tab_completed": "المكتملة",
     "tab_cancelled": "الملغاة"
   },
+  "welcome": {
+    "title": "مرحباً بك",
+    "subtitle": "تواصل مع مقدمي الخدمات في منطقتك وأنجز الأمور بسرعة وكفاءة.",
+    "continue_with_google": "المتابعة مع جوجل",
+    "continue_with_email": "المتابعة مع البريد الإلكتروني",
+    "already_have_account": "لديك حساب بالفعل؟",
+    "log_in": "تسجيل الدخول",
+    "terms_text": "بالتسجيل، فإنك توافق على شروط الخدمة وسياسة الخصوصية الخاصة بنا.",
+    "privacy_policy": "سياسة الخصوصية"
+  },
   "common": {
     "error": "خطأ",
     "success": "نجاح",

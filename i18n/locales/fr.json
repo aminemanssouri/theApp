@@ -78,7 +78,17 @@
     "new_password": "Nouveau mot de passe",
     "confirm_new_password": "Confirmer le nouveau mot de passe",
     "congratulations": "Félicitations !",
-    "account_ready_redirect": "Votre compte est prêt. Vous serez redirigé vers la page d’accueil dans quelques secondes."
+    "account_ready_redirect": "Votre compte est prêt. Vous serez redirigé vers la page d'accueil dans quelques secondes."
+  },
+  "welcome": {
+    "title": "Bienvenue",
+    "subtitle": "Connectez-vous avec les fournisseurs de services de votre région et faites les choses rapidement et efficacement.",
+    "continue_with_google": "Continuer avec Google",
+    "continue_with_email": "Continuer avec Email",
+    "already_have_account": "Vous avez déjà un compte ?",
+    "log_in": "Se connecter",
+    "terms_text": "En vous inscrivant, vous acceptez nos Conditions de Service et notre Politique de Confidentialité.",
+    "privacy_policy": "Politique de Confidentialité"
   },
   "navigation": {
     "home": "Accueil",

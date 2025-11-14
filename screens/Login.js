@@ -102,11 +102,6 @@ const Login = ({ navigation }) => {
     }
   };
 
-  // implementing apple authentication
-  const appleAuthHandler = () => {
-    console.log("Apple Authentication")
-  };
-
   // implementing facebook authentication
   const facebookAuthHandler = () => {
     console.log("Facebook Authentication")

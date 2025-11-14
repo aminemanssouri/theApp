@@ -523,6 +523,16 @@
     "english": "English",
     "italian": "Italian"
   },
+  "welcome": {
+    "title": "Let's you in",
+    "subtitle": "Connect with service providers in your area and get things done quickly and efficiently.",
+    "continue_with_google": "Continue with Google",
+    "continue_with_email": "Continue with Email",
+    "already_have_account": "Already have an account?",
+    "log_in": "Sign in",
+    "terms_text": "By signing up, you agree to our Terms of Service and Privacy Policy.",
+    "privacy_policy": "Privacy Policy"
+  },
   "banners": {
     "discount_label": "{{discount}} OFF",
     "today_special": "Today's Special",
