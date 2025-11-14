@@ -25,7 +25,9 @@ import { COLORS, SIZES, icons } from '../constants';
 import { Ionicons } from '@expo/vector-icons';
 import MessageBubble from '../components/MessageBubble';
 import ChatInput from '../components/ChatInput';
-import defaultAvatar from '../assets/images/avatar.jpeg';
+import { REACT_APP_SUPABASE_URL } from '@env';
+
+const defaultAvatar = { uri: `${REACT_APP_SUPABASE_URL}/storage/v1/object/public/app-assets/assets/images/avatar.jpeg` };
 import { getSafeAreaBottom, getSafeAreaTop } from '../utils/safeAreaUtils';
 import { useI18n } from '../context/LanguageContext';
 

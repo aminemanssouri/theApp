@@ -1,44 +1,52 @@
-const ornament = require("../assets/images/ornament.png");
+import { REACT_APP_SUPABASE_URL } from '@env';
 
-const onboarding1 = require("../assets/images/onboarding1.png");
-const onboarding2 = require("../assets/images/onboarding2.png");
-const onboarding3 = require("../assets/images/onboarding3.png");
-const onboarding4 = require("../assets/images/onboarding4.png");
-const onboarding5 = require("../assets/images/onboarding5.png");
-const onboarding6 = require("../assets/images/onboarding6.png");
-const onboarding7 = require("../assets/images/onboarding7.png");
-const onboarding8 = require("../assets/images/onboarding8.png");
-const onboarding9 = require("../assets/images/onboarding9.png");
-const onboarding10 = require("../assets/images/onboarding10.png");
+// Supabase Storage base URL
+const STORAGE_BASE_URL = `${REACT_APP_SUPABASE_URL}/storage/v1/object/public/app-assets/assets`;
 
-const user1 = require("../assets/images/users/user1.jpeg");
-const user2 = require("../assets/images/users/user2.jpeg");
-const user3 = require("../assets/images/users/user3.jpeg");
-const user4 = require("../assets/images/users/user4.jpeg");
-const user5 = require("../assets/images/users/user5.jpeg");
-const user6 = require("../assets/images/users/user6.jpeg");
-const user7 = require("../assets/images/users/user7.jpeg");
-const user8 = require("../assets/images/users/user8.jpeg");
-const user9 = require("../assets/images/users/user9.jpeg");
-const user10 = require("../assets/images/users/user10.jpeg");
-const user11 = require("../assets/images/users/user11.jpeg");
+// Helper function to get asset URL
+const getAssetUrl = (path) => `${STORAGE_BASE_URL}/${path}`;
 
-const avatar = require("../assets/images/avatar.jpeg");
-const logo = require("../assets/images/logo.png");
-const elipseCard = require("../assets/images/elipse-card.png");
-const rectangleCard = require("../assets/images/rectangle-card.png");
+const ornament = { uri: getAssetUrl('images/ornament.png') };
 
-const service1 = require("../assets/images/services/service1.jpeg");
-const service2 = require("../assets/images/services/service2.jpeg");
-const service3 = require("../assets/images/services/service3.jpeg");
-const service4 = require("../assets/images/services/service4.jpeg");
-const service5 = require("../assets/images/services/service5.jpeg");
-const service6 = require("../assets/images/services/service6.jpeg");
-const service7 = require("../assets/images/services/service7.jpeg");
-const service8 = require("../assets/images/services/service8.jpeg");
-const service9 = require("../assets/images/services/service9.jpeg");
-const service10 = require("../assets/images/services/service10.jpeg");
-const service11 = require("../assets/images/services/service11.jpeg");
+const onboarding1 = { uri: getAssetUrl('images/onboarding1.png') };
+const onboarding2 = { uri: getAssetUrl('images/onboarding2.png') };
+const onboarding3 = { uri: getAssetUrl('images/onboarding3.png') };
+const onboarding4 = { uri: getAssetUrl('images/onboarding4.png') };
+const onboarding5 = { uri: getAssetUrl('images/onboarding5.png') };
+const onboarding6 = { uri: getAssetUrl('images/onboarding6.png') };
+const onboarding7 = { uri: getAssetUrl('images/onboarding7.png') };
+const onboarding8 = { uri: getAssetUrl('images/onboarding8.png') };
+const onboarding9 = { uri: getAssetUrl('images/onboarding9.png') };
+const onboarding10 = { uri: getAssetUrl('images/onboarding10.png') };
+const avatarurl = { uri: getAssetUrl('images/user.png') };
+const user1 = { uri: getAssetUrl('images/users/user1.jpeg') };
+const user2 = { uri: getAssetUrl('images/users/user2.jpeg') };
+const user3 = { uri: getAssetUrl('images/users/user3.jpeg') };
+const user4 = { uri: getAssetUrl('images/users/user4.jpeg') };
+const user5 = { uri: getAssetUrl('images/users/user5.jpeg') };
+const user6 = { uri: getAssetUrl('images/users/user6.jpeg') };
+const user7 = { uri: getAssetUrl('images/users/user7.jpeg') };
+const user8 = { uri: getAssetUrl('images/users/user8.jpeg') };
+const user9 = { uri: getAssetUrl('images/users/user9.jpeg') };
+const user10 = { uri: getAssetUrl('images/users/user10.jpeg') };
+const user11 = { uri: getAssetUrl('images/users/user11.jpeg') };
+
+const avatar = { uri: getAssetUrl('images/avatar.jpeg') };
+const logo = { uri: getAssetUrl('images/logo.png') };
+const elipseCard = { uri: getAssetUrl('images/elipse-card.png') };
+const rectangleCard = { uri: getAssetUrl('images/rectangle-card.png') };
+
+const service1 = { uri: getAssetUrl('images/services/service1.jpeg') };
+const service2 = { uri: getAssetUrl('images/services/service2.jpeg') };
+const service3 = { uri: getAssetUrl('images/services/service3.jpeg') };
+const service4 = { uri: getAssetUrl('images/services/service4.jpeg') };
+const service5 = { uri: getAssetUrl('images/services/service5.jpeg') };
+const service6 = { uri: getAssetUrl('images/services/service6.jpeg') };
+const service7 = { uri: getAssetUrl('images/services/service7.jpeg') };
+const service8 = { uri: getAssetUrl('images/services/service8.jpeg') };
+const service9 = { uri: getAssetUrl('images/services/service9.jpeg') };
+const service10 = { uri: getAssetUrl('images/services/service10.jpeg') };
+const service11 = { uri: getAssetUrl('images/services/service11.jpeg') };
 
 export default {
     ornament,
@@ -80,5 +88,6 @@ export default {
     service8,
     service9,
     service10,
-    service11
+    service11,
+    avatarurl
 }

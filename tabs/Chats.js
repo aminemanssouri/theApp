@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useChat } from '../context/ChatContext';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../theme/ThemeProvider';
-import { COLORS, SIZES } from '../constants';
+import { COLORS, SIZES, images } from '../constants';
 import { Ionicons } from '@expo/vector-icons';
 import { useI18n } from '../context/LanguageContext';
 
@@ -286,7 +286,7 @@ const Chats = ({ searchQuery = '' }) => {
           {/* Avatar with online status */}
           <View style={[styles.avatarContainer, { backgroundColor: 'transparent' }]}>
             <Image
-              source={avatarUrl ? { uri: avatarUrl } : require('../assets/images/avatar.jpeg')}
+              source={avatarUrl ? { uri: avatarUrl } : images.avatarurl}
               style={styles.avatar}
             />
             <View style={[styles.onlineIndicator, { backgroundColor: COLORS.success }]} />
